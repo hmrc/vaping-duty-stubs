@@ -1,0 +1,3 @@
+# microservice specific routes
+
+GET        /hello-world             uk.gov.hmrc.vapingdutystubs.controllers.MicroserviceHelloWorldController.hello
