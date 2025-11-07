@@ -14,6 +14,7 @@ lazy val microservice = Project("vaping-duty-stubs", file("."))
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
   .settings(CodeCoverageSettings.settings: _*)
+  PlayKeys.playDefaultPort := 8142
 
 lazy val it = project
   .enablePlugins(PlayScala)
