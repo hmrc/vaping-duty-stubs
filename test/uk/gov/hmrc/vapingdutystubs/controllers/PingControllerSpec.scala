@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.controllers
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
+import play.api.http.Status
+import play.api.test.Helpers.*
+import play.api.test.{FakeRequest, Helpers}
 
-import java.time.Clock
+class PingControllerSpec
+  extends AnyWordSpec
+     with Matchers:
 
-class Module extends AppModule:
+  private val fakeRequest = FakeRequest("GET", "/ping")
 
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
-    Nil
+  private val controller  = new PingController(
+    Helpers.stubControllerComponents()
+    )
+
+  "GET /ping" should:
+    "return 200" in:
+      val result = controller.ping()(fakeRequest)
+      status(result) shouldBe Status.OK
