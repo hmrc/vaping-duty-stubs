@@ -14,9 +14,14 @@ lazy val microservice = Project("vaping-duty-stubs", file("."))
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
   .settings(CodeCoverageSettings.settings: _*)
+  PlayKeys.playDefaultPort := 8142
 
 lazy val it = project
   .enablePlugins(PlayScala)
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.it)
+
+addCommandAlias("runAllChecks", ";clean;compile;coverage;test;it/test;coverageReport")
+
+addCommandAlias("runLocalChecks", ";clean;compile;coverage;test;coverageReport")

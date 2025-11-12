@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.controllers
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.Clock
+import javax.inject.{Inject, Singleton}
 
-class Module extends AppModule:
+@Singleton()
+class PingController @Inject()(
+  cc: ControllerComponents
+) extends BackendController(cc) {
 
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
-    Nil
+  val ping: Action[AnyContent] = Action:
+    implicit request => {
+      Ok("ping")
+    }
+}
