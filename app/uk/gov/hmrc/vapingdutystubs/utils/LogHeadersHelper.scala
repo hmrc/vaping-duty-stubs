@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.vapingdutystubs.config.AppConfig
+import play.api.Logging
+import play.api.mvc.Request
 
-import java.time.Clock
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemUTC)
+object LogHeadersHelper extends Logging {
+  def logHeaders(request: Request[_], requestType: String, relevantHeaders: Set[String]): Unit = {
+    val headers = request.headers.toMap.view
+      .filterKeys(key => relevantHeaders.contains(key))
+      .map { case (key, values) => s"$key=${values.mkString(",")}" }
+      .mkString(",")
+    logger.info(s"Headers for $requestType: $headers")
   }
 }

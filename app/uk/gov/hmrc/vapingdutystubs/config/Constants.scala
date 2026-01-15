@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.config
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.vapingdutystubs.config.AppConfig
+object Constants {
 
-import java.time.Clock
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemUTC)
+  object Headers {
+    val correlationIdHeader: String       = "correlationid"
+    val xOriginatingSystemHeader: String  = "X-Originating-System"
+    val xReceiptDateHeader: String        = "X-Receipt-Date"
+    val xTransmittingSystemHeader: String = "X-Transmitting-System"
+    val xZAD: String                      = "X-ZAD"
   }
+
+  val ukTimeZoneStringId = "Europe/London"
 }

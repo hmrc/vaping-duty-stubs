@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.vapingdutystubs.config.AppConfig
+import java.util.UUID
+import javax.inject.Singleton
 
-import java.time.Clock
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemUTC)
-  }
+@Singleton
+class RandomUUIDGenerator() {
+  def uuid: String              = UUID.randomUUID().toString
+  def uuidHyphenTrimmed: String = uuid.replaceAll("-", "")
 }

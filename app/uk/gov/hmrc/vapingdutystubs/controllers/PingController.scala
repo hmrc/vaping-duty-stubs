@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers
 
+import play.api.Logging
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -23,11 +24,12 @@ import javax.inject.{Inject, Singleton}
 
 @Singleton()
 class PingController @Inject()(
-  cc: ControllerComponents
-) extends BackendController(cc) {
+                                cc: ControllerComponents
+                              ) extends BackendController(cc) with Logging {
 
   val ping: Action[AnyContent] = Action:
     implicit request => {
+      logger.info("[PingController] - Request received")
       Ok("ping")
     }
 }

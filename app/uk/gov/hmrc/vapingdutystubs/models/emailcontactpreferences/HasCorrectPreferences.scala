@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs
+package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.vapingdutystubs.config.AppConfig
+case class HasCorrectPreferences(preference: PaperlessPreferenceSubmission) {
+  
+  private def checkPreference: Boolean =
+    if (preference.paperlessPreference && preference.emailVerification.isEmpty) true else false
+}
 
-import java.time.Clock
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[Clock]).toInstance(Clock.systemUTC)
+object HasCorrectPreferences {
+  def apply(preference: PaperlessPreferenceSubmission): Boolean = {
+    new HasCorrectPreferences(preference).checkPreference
   }
 }
