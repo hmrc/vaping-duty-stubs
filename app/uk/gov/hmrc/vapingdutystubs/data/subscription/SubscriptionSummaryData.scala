@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.data.subscription
 
 import uk.gov.hmrc.vapingdutystubs.models.subscription.*
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, DeRegistered, Revoked}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Rejected, Withdrawm}
 
 import java.time.Instant
 
@@ -34,11 +34,11 @@ object SubscriptionSummaryData {
     SubscriptionSummarySuccess(
       SubscriptionSummaryResponse(
         processingDate = now,
-        organizationName = organisation,
+        organisationName = organisation,
         paperlessReference = Some(emailPreferences.paperlessReference), // TODO: Remove Option when included in real API
         emailAddress = emailPreferences.emailAddress,
-        emailVerificationFlag = emailPreferences.emailVerificationFlag,
-        bouncedEmailFlag = emailPreferences.bouncedEmailFlag,
+        verifiedEmail = emailPreferences.emailVerificationFlag,
+        bouncedEmail = emailPreferences.bouncedEmailFlag,
         addressLine1 = correspondenceAddress.addressLine1,
         addressLine2 = correspondenceAddress.addressLine2,
         addressLine3 = correspondenceAddress.addressLine3,
@@ -72,7 +72,7 @@ object SubscriptionSummaryData {
   ): SubscriptionSummarySuccess =
     subscriptionSummarySuccess(
       now,
-      DeRegistered,
+      Withdrawm,
       insolvencyFlag,
       emailPreferences,
       correspondenceAddress
@@ -86,7 +86,7 @@ object SubscriptionSummaryData {
   ): SubscriptionSummarySuccess =
     subscriptionSummarySuccess(
       now,
-      Revoked,
+      Rejected,
       insolvencyFlag,
       emailPreferences,
       correspondenceAddress

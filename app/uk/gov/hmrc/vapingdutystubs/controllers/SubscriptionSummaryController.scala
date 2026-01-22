@@ -20,14 +20,13 @@ import play.api.Logging
 import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
-import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalType.*
-import uk.gov.hmrc.vapingdutystubs.models.subscription.{ApprovalType, CorrespondenceAddress, EmailPreferences}
-import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
+import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
+import uk.gov.hmrc.vapingdutystubs.models.ErrorData
 import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.HasCorrectIdentifiers
+import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
+import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
@@ -48,8 +47,8 @@ class SubscriptionSummaryController @Inject()(
   )
 
   private val approved     = "\\w+2\\d{2}$".r
-  private val deregistered = "\\w+7\\d{2}$".r
-  private val revoked      = "\\w+8\\d{2}$".r
+  private val rejected     = "\\w+7\\d{2}$".r
+  private val withdrawn    = "\\w+8\\d{2}$".r
   private val notFound     = "\\w+4\\d{2}$".r
   private val badRequest   = "\\w+6\\d{2}$".r
 
@@ -58,9 +57,7 @@ class SubscriptionSummaryController @Inject()(
   private val emailAddress = "john.doe@example.com"
 
   private def getEmailPreferences(idValue: String): EmailPreferences =
-    if (!idValue.matches("\\w+\\d{10}")) {
-      throw new RuntimeException(s"Bad appaId '$idValue' sent to stubs")
-    } else {
+
       val emailFlagDigit = idValue.takeRight(10).take(1).toInt
 
       emailFlagDigit match {
@@ -99,13 +96,11 @@ class SubscriptionSummaryController @Inject()(
             emailVerificationFlag = None,
             bouncedEmailFlag = None
           )
-      }
+
     }
 
   private def getCorrespondenceAddress(idValue: String): CorrespondenceAddress =
-    if (!idValue.matches("\\w+\\d{10}")) {
-      throw new RuntimeException(s"Bad appaId '$idValue' sent to stubs")
-    } else {
+
       val emailFlagDigit = idValue.takeRight(10).take(1).toInt
 
       emailFlagDigit match {
@@ -148,67 +143,70 @@ class SubscriptionSummaryController @Inject()(
             postcode = Some("AB1 2CD"),
             country = Some("GB")
           )
-      }
+
     }
 
   def getSubscriptionSummary(regime: String, idType: String, idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
-
-    val correlationId = request.headers
-      .get(correlationIdHeader)
-      .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
-
-    if (HasCorrectIdentifiers(idType, regime)) {
-      UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
+    if (!idValue.matches("\\w+\\d{10}")) {
+      throw new RuntimeException(s"Bad appaId '$idValue' sent to stubs")
     } else {
-      val now = Instant.now(clock)
-      
-      val emailPreferences      = getEmailPreferences(idValue)
-      val correspondenceAddress = getCorrespondenceAddress(idValue)
+      val correlationId = request.headers
+        .get(correlationIdHeader)
+        .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      idValue match {
-        case approved()            =>
-          Ok(
-            Json.toJson(
-              SubscriptionSummaryData
-                .approvedSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
-            )
-          ).withHeaders(correlationIdHeader -> correlationId)
-        case deregistered()        =>
-          Ok(
-            Json.toJson(
-              SubscriptionSummaryData
-                .deregisteredSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
-            )
-          ).withHeaders(correlationIdHeader -> correlationId)
-        case revoked()             =>
-          Ok(
-            Json.toJson(
-              SubscriptionSummaryData
-                .revokedSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
-            )
-          ).withHeaders(correlationIdHeader -> correlationId)
-        case badRequest()          =>
-          BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
-        case notFound()            => NotFound
-        case _                     =>
-          InternalServerError(Json.toJson(errorData.internalServerError))
-            .withHeaders(correlationIdHeader -> correlationId)
+      if (HasCorrectIdentifiers(idType, regime)) {
+        UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
+      } else {
+        val now = Instant.now(clock)
+
+        val emailPreferences = getEmailPreferences(idValue)
+        val correspondenceAddress = getCorrespondenceAddress(idValue)
+
+        idValue match {
+          case approved() =>
+            Ok(
+              Json.toJson(
+                SubscriptionSummaryData
+                  .approvedSubscriptionSummary(
+                    now,
+                    false,
+                    emailPreferences,
+                    correspondenceAddress
+                  )
+              )
+            ).withHeaders(correlationIdHeader -> correlationId)
+          case rejected() =>
+            Ok(
+              Json.toJson(
+                SubscriptionSummaryData
+                  .deregisteredSubscriptionSummary(
+                    now,
+                    false,
+                    emailPreferences,
+                    correspondenceAddress
+                  )
+              )
+            ).withHeaders(correlationIdHeader -> correlationId)
+          case withdrawn() =>
+            Ok(
+              Json.toJson(
+                SubscriptionSummaryData
+                  .revokedSubscriptionSummary(
+                    now,
+                    false,
+                    emailPreferences,
+                    correspondenceAddress
+                  )
+              )
+            ).withHeaders(correlationIdHeader -> correlationId)
+          case badRequest() =>
+            BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
+          case notFound() => NotFound
+          case _ =>
+            InternalServerError(Json.toJson(errorData.internalServerError))
+              .withHeaders(correlationIdHeader -> correlationId)
+        }
       }
     }
   }

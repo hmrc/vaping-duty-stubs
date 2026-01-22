@@ -74,7 +74,7 @@ class EmailVerificationController @Inject()(
 
   def clearStateData: Action[AnyContent] = Action.async { _ =>
     for {
-      _ <- emailVerificationStateRepository.collection.drop().toFuture()
+      _ <- emailVerificationStateRepository.clear
     } yield Ok("All email verification state data cleared")
   }
 }

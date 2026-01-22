@@ -59,4 +59,7 @@ class EmailVerificationStateRepository @Inject()(
       )
       .toFuture()
       .map(_ => stateData)
+  
+  def clear: Future[Option[Unit]] =
+    collection.drop().headOption()
 }

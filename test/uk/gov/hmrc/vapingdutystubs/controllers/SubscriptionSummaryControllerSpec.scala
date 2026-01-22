@@ -1,6 +1,17 @@
 /*
  * Copyright 2024 HM Revenue & Customs
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.gov.hmrc.vapingdutystubs.controllers
@@ -9,8 +20,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalType.*
-import uk.gov.hmrc.vapingdutystubs.models.subscription.{ApprovalType, EmailPreferences}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.EmailPreferences
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -31,43 +41,10 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
           .approvedSubscriptionSummary(
             now,
             false,
-            false,
-            ApprovalType.values.toSet,
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
       )
-    }
-
-    ApprovalType.values.foreach { approvalType =>
-      val offFlags = approvalType match {
-        case Beer                  => "01"
-        case CiderOrPerry          => "02"
-        case Wine                  => "04"
-        case Spirits               => "08"
-        case OtherFermentedProduct => "64"
-      }
-      s"return 200 OK with the ${approvalType.entryName} approval type switched off when the regime offFlags are $offFlags" in new SetUp {
-        val result: Future[Result] =
-          controller.getSubscriptionSummary(regime, idType, appaId("200", offFlags))(
-            fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
-          )
-
-        status(result)  mustBe OK
-        headers(result) mustBe responseHeadersWithCorrelationId
-
-        contentAsJson(result) mustBe Json.toJson(
-          SubscriptionSummaryData
-            .approvedSubscriptionSummary(
-              now,
-              false,
-              false,
-              ApprovalType.values.toSet - approvalType,
-              standardEmailPreferences,
-              ukCorrespondenceAddress
-            )
-        )
-      }
     }
 
     Seq(
@@ -91,8 +68,6 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
             .approvedSubscriptionSummary(
               now,
               false,
-              false,
-              ApprovalType.values.toSet,
               expectedEmailPreferences,
               ukCorrespondenceAddress
             )
@@ -121,34 +96,11 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
             .approvedSubscriptionSummary(
               now,
               false,
-              false,
-              ApprovalType.values.toSet,
               standardEmailPreferences,
               expectedCorrespondenceAddress
             )
         )
       }
-    }
-
-    // TODO: Remove when ECP fields are included in real API
-    "return 200 OK with approved status and no contact information when the appaId suffix is 000" in new SetUp {
-      val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, appaId("000"))(
-          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
-        )
-
-      status(result)  mustBe OK
-      headers(result) mustBe responseHeadersWithCorrelationId
-
-      contentAsJson(result) mustBe Json.toJson(
-        SubscriptionSummaryData
-          .subscriptionSummaryWithoutContactPreferences(
-            now,
-            false,
-            false,
-            ApprovalType.values.toSet
-          )
-      )
     }
 
     "return 200 OK with the approval status DeRegistered 02 when the appaId suffix is 700" in new SetUp {
@@ -165,8 +117,6 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
           .deregisteredSubscriptionSummary(
             now,
             false,
-            false,
-            ApprovalType.values.toSet,
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -187,8 +137,6 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
           .revokedSubscriptionSummary(
             now,
             false,
-            false,
-            ApprovalType.values.toSet,
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -261,8 +209,8 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
   }
 
   class SetUp {
-    val badRegime = "not AD"
-    val badIdType = "not ZAD"
+    val badRegime = "not VPD"
+    val badIdType = "not ZVPD"
 
     val now = Instant.now(clock)
 

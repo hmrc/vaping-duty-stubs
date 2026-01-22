@@ -155,4 +155,18 @@ class EmailVerificationControllerSpec extends SpecBase {
       contentAsJson(result) mustBe internalServerErrorJson
     }
   }
+
+  "clearStatData must" - {
+    "remove email verification data" in {
+//      val stateDataToCache = EmailVerificationState("TESTCREDID00009", returnAllUnverified = false)
+//      val stateDataFromCache = EmailVerificationState("TESTCREDID00009", returnAllUnverified = false)
+//      when(mockEmailVerificationStateRepo.get(eqTo("TESTCREDID00009"))).thenReturn(Future.successful(Some(stateDataFromCache)))
+//      when(mockEmailVerificationStateRepo.set(eqTo(stateDataToCache))).thenReturn(Future.successful(stateDataToCache))
+      when(mockEmailVerificationStateRepo.clear).thenReturn(Future.successful(Some(())))
+      controller.getVerifiedEmails("TESTCREDID00009")
+      val result = controller.clearStateData()(fakeRequest)
+
+      status(result) mustBe OK
+    }
+  }
 }
