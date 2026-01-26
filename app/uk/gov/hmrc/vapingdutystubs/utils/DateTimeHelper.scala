@@ -18,21 +18,11 @@ package uk.gov.hmrc.vapingdutystubs.utils
 
 import uk.gov.hmrc.vapingdutystubs.config.Constants.ukTimeZoneStringId
 
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDate, ZoneId}
 import java.util.TimeZone
 
 object DateTimeHelper {
   private val ukTimeZone: ZoneId = TimeZone.getTimeZone(ukTimeZoneStringId).toZoneId
-
-  private def fullMonthYearFormatter = DateTimeFormatter.ofPattern("LLLL YYYY")
-
+  
   def instantToLocalDate(instant: Instant): LocalDate = LocalDate.ofInstant(instant, ukTimeZone)
-
-  def formatISOInstantSeconds(now: Instant): String =
-    DateTimeFormatter.ISO_INSTANT.format(now.truncatedTo(ChronoUnit.SECONDS))
-
-  def formatFullMonthYear(date: LocalDate): String =
-    fullMonthYearFormatter.format(date)
 }

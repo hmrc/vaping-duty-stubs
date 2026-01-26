@@ -41,6 +41,8 @@ class EmailVerificationControllerSpec extends SpecBase {
 
   "getVerifiedEmails must" - {
     "return 200 OK with JSON containing a list of email verification statuses when the credId ends in '0'" in {
+
+      println(Json.toJson(emailVerificationStatuses.toList))
       val result: Future[Result] = controller.getVerifiedEmails("TESTCREDID00000")(fakeRequest)
 
       status(result)        mustBe OK

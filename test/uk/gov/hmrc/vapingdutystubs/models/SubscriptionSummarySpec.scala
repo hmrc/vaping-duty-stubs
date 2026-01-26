@@ -20,7 +20,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, DeRegistered, Revoked}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Rejected, Withdrawn}
 
 import java.time.Instant
 
@@ -39,7 +39,7 @@ class SubscriptionSummarySpec extends SpecBase {
         .toString mustBe subscriptionSummaryJson
     }
 
-    Seq((Approved, "01"), (DeRegistered, "02"), (Revoked, "03")).foreach { case (approvalStatus, code) =>
+    Seq((Approved, "01"), (Rejected, "02"), (Withdrawn, "03")).foreach { case (approvalStatus, code) =>
       s"serialise ApprovalStatus ${approvalStatus.entryName} to the code $code" in new SetUp {
         Json.toJson(approvalStatus: ApprovalStatus).toString mustBe s""""$code""""
       }
@@ -49,6 +49,6 @@ class SubscriptionSummarySpec extends SpecBase {
   class SetUp {
     val now                     = Instant.now(clock)
     val subscriptionSummaryJson =
-      """{"success":{"processingDate":"2024-06-11T15:07:47.838Z","organizationName":"testAwNwaIL Ltd","paperlessReference":"1","emailAddress":"john.doe@example.com","emailVerificationFlag":"1","addressLine1":"Flat 123","addressLine2":"1 Example Road","addressLine4":"London","postcode":"AB1 2CD","country":"GB","approvalStatus":"01","insolvencyFlag":"0"}}"""
+      """{"success":{"processingDate":"2024-06-11T15:07:47.838Z","organisationName":"testAwNwaIL Ltd","paperlessReference":"1","emailAddress":"john.doe@example.com","verifiedEmail":"1","bouncedEmail":"0","addressLine1":"Flat 123","addressLine2":"1 Example Road","addressLine4":"London","postcode":"AB1 2CD","country":"GB","approvalStatus":"01","insolvencyFlag":"0"}}"""
   }
 }

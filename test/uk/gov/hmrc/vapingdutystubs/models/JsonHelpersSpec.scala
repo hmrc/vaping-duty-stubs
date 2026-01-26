@@ -22,7 +22,7 @@ import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 class JsonHelpersSpec extends SpecBase {
   "SubscriptionSummary must" - {
     Seq((false, """"0""""), (true, """"1"""")).foreach { case (v, code) =>
-      s"deserialise the code $code to boolean $v" in {
+      s"de-serialise the code $code to boolean $v" in {
         import JsonHelpers.booleanReads
 
         Json.parse(code).as[Boolean] mustBe v

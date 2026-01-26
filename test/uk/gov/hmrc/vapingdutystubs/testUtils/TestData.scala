@@ -37,7 +37,7 @@ trait TestData extends ModelGenerators {
 
   val dummyUUID = "01234567-89ab-cdef-0123-456789abcdef"
 
-  val appaId                  = vpdIdGen.sample.get
+  val vpdId                   = vpdIdGen.sample.get
   val submissionId: String    = submissionIdGen().sample.get
   val chargeReference: String = chargeReferenceGen().sample.get
 

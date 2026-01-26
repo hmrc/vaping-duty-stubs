@@ -45,7 +45,7 @@ class PaperlessPreferenceSpec extends SpecBase {
         .toString mustBe paperlessPreferenceSubmittedSuccessJson
     }
 
-    "deserialise from json" in new SetUp {
+    "de-serialise from json" in new SetUp {
       Json
         .parse(paperlessPreferenceSubmittedSuccessJson)
         .as[PaperlessPreferenceSubmittedSuccess] mustBe PaperlessPreferenceSubmittedSuccess(

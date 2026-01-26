@@ -31,11 +31,9 @@ trait ModelGenerators {
   lazy val dummyDataGenerator = new DataGenerator(clock) {
     lazy val submissionId      = super.submissionIdGen()
     lazy val chargeReference   = super.chargeReferenceGen()
-    lazy val sapDocumentNumber = super.sapDocumentNumberGen()
 
     override def submissionIdGen(): String      = submissionId
     override def chargeReferenceGen(): String   = chargeReference
-    override def sapDocumentNumberGen(): String = sapDocumentNumber
   }
 
   def submissionIdGen(): Gen[String]    = Gen.const(dummyDataGenerator.submissionIdGen())

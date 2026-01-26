@@ -26,8 +26,4 @@ class DataGenerator @Inject()(clock: Clock) {
 
   def submissionIdGen(): String      = randomNumberString(12)
   def chargeReferenceGen(): String   = s"XA${randomNumberString(14)}"
-  def businessPartnerGen(): String   = randomNumberString(10)
-  def contractAccountGen(): String   = randomNumberString(12)
-  def contractObjectGen(): String    = randomNumberString(20)
-  def sapDocumentNumberGen(): String = randomNumberString(12)
 }

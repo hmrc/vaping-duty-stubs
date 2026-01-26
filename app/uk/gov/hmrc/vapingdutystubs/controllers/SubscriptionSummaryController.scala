@@ -180,7 +180,7 @@ class SubscriptionSummaryController @Inject()(
             Ok(
               Json.toJson(
                 SubscriptionSummaryData
-                  .withDrawnSubscriptionSummary(
+                  .rejectedSubscriptionSummary(
                     now,
                     false,
                     emailPreferences,
@@ -192,7 +192,7 @@ class SubscriptionSummaryController @Inject()(
             Ok(
               Json.toJson(
                 SubscriptionSummaryData
-                  .rejectedSubscriptionSummary(
+                  .withDrawnSubscriptionSummary(
                     now,
                     false,
                     emailPreferences,

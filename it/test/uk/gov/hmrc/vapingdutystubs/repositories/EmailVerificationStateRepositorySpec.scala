@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.repositories
 
 import org.mongodb.scala.model.Filters
+import org.scalatest.matchers.should.Matchers.shouldBe
 import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.EmailVerificationState
@@ -70,6 +71,22 @@ class EmailVerificationStateRepositorySpec
 
       savedStateData mustBe expectedSavedStateData
       getSavedRecord mustBe expectedSavedStateData
+    }
+  }
+
+  "clear must" - {
+    "clear the data in the cache" in {
+      val savedStateData = repository.set(stateDataToCache).futureValue
+      val getSavedRecord = find(Filters.equal("credId", testCredId)).futureValue.headOption.value
+
+      savedStateData mustBe stateDataToCache
+      getSavedRecord mustBe stateDataToCache
+
+      val clearedData = repository.clear.futureValue
+      val retrieveRecord = find(Filters.equal("credId", testCredId)).futureValue.headOption
+
+      clearedData.isDefined mustBe true
+      retrieveRecord.isDefined mustBe false
     }
   }
 }

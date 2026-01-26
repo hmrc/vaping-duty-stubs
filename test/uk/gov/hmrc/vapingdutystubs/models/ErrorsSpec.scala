@@ -27,7 +27,7 @@ class ErrorsSpec extends SpecBase {
       Json.toJson(downstreamErrors).toString mustBe downstreamErrorsJson
     }
 
-    "deserialise DownstreamErrors from json" in new SetUp {
+    "de-serialise DownstreamErrors from json" in new SetUp {
       Json.parse(downstreamErrorsJson).as[DownstreamErrors] mustBe downstreamErrors
     }
 
@@ -35,7 +35,7 @@ class ErrorsSpec extends SpecBase {
       Json.toJson(downstreamError).toString mustBe internalServerErrorJson
     }
 
-    "deserialise DownstreamError from json" in new SetUp {
+    "de-serialise DownstreamError from json" in new SetUp {
       Json.parse(internalServerErrorJson).as[DownstreamError] mustBe downstreamError
     }
 
@@ -43,7 +43,7 @@ class ErrorsSpec extends SpecBase {
       Json.toJson(hipFailureResponse).toString mustBe hipFailureResponseJson
     }
 
-    "deserialise HIPFailureResponse from json" in new SetUp {
+    "de-serialise HIPFailureResponse from json" in new SetUp {
       Json.parse(hipFailureResponseJson).as[HIPFailureResponse] mustBe hipFailureResponse
     }
   }

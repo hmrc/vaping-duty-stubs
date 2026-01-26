@@ -28,9 +28,9 @@ import scala.concurrent.Future
 class EmailContactPreferencesControllerSpec extends SpecBase {
   "submitPreferences must" - {
     "submit a preference for paperless communication with email details" in new SetUp {
-      val appaId                 = getAppaId('0')
+      val vpdId                  = getVpdId('0')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -48,9 +48,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "submit a preference for paper communication" in new SetUp {
-      val appaId                 = getAppaId('0')
+      val vpdId                  = getVpdId('0')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperPreference)).withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -67,9 +67,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "correctly return a 400" in new SetUp {
-      val appaId                 = getAppaId('7')
+      val vpdId                 = getVpdId('7')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -79,9 +79,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "correctly return a 404" in new SetUp {
-      val appaId                 = getAppaId('8')
+      val vpdId                  = getVpdId('8')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -91,9 +91,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "correctly return a 500" in new SetUp {
-      val appaId                 = getAppaId('9')
+      val vpdId                  = getVpdId('9')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -103,9 +103,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "return a 422 if the request payload specified paperless but email verified property is not present" in new SetUp {
-      val appaId                 = getAppaId('0')
+      val vpdId                  = getVpdId('0')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreferenceEmailNoVerification))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -116,9 +116,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "return a 422 if the regime is not VPD" in new SetUp {
-      val appaId                 = getAppaId('0')
+      val vpdId                  = getVpdId('0')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(badRegime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(badRegime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -128,9 +128,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "return a 422 if the idType is not ZVPD" in new SetUp {
-      val appaId                 = getAppaId('0')
+      val vpdId                  = getVpdId('0')
       val result: Future[Result] =
-        emailContactPreferencesController.submitPreferences(regime, badIdType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, badIdType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
@@ -140,9 +140,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "throw an error if the correlation ID header is not present" in new SetUp {
-      val appaId = getAppaId('0')
+      val vpdId = getVpdId('0')
       an[IllegalArgumentException] mustBe thrownBy(
-        emailContactPreferencesController.submitPreferences(regime, idType, appaId)(
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
         )
       )
@@ -157,8 +157,8 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
 
     val emailContactPreferencesController = new EmailContactPreferencesController(errorData, clock, cc)
 
-    def getAppaId(c: Char): String =
-      s"${appaId.take(6)}$c"
+    def getVpdId(c: Char): String =
+      s"${vpdId.take(6)}$c${vpdId.drop(7)}"
 
   }
 }

@@ -13,7 +13,7 @@ lazy val microservice = Project("vaping-duty-stubs", file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(CodeCoverageSettings.settings *)
   PlayKeys.playDefaultPort := 8142
 
 lazy val it = project
@@ -21,7 +21,3 @@ lazy val it = project
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.it)
-
-addCommandAlias("runAllChecks", ";clean;compile;coverage;test;it/test;coverageReport")
-
-addCommandAlias("runLocalChecks", ";clean;compile;coverage;test;coverageReport")
