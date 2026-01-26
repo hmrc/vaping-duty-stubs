@@ -114,7 +114,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
       contentAsJson(result) mustBe Json.toJson(
         SubscriptionSummaryData
-          .deregisteredSubscriptionSummary(
+          .withDrawnSubscriptionSummary(
             now,
             false,
             standardEmailPreferences,
@@ -134,7 +134,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
       contentAsJson(result) mustBe Json.toJson(
         SubscriptionSummaryData
-          .revokedSubscriptionSummary(
+          .rejectedSubscriptionSummary(
             now,
             false,
             standardEmailPreferences,

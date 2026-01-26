@@ -149,7 +149,7 @@ class SubscriptionSummaryController @Inject()(
   def getSubscriptionSummary(regime: String, idType: String, idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
     if (!idValue.matches("\\w+\\d{10}")) {
-      throw new RuntimeException(s"Bad appaId '$idValue' sent to stubs")
+      throw new RuntimeException(s"Bad vpdId '$idValue' sent to stubs")
     } else {
       val correlationId = request.headers
         .get(correlationIdHeader)
@@ -180,7 +180,7 @@ class SubscriptionSummaryController @Inject()(
             Ok(
               Json.toJson(
                 SubscriptionSummaryData
-                  .deregisteredSubscriptionSummary(
+                  .withDrawnSubscriptionSummary(
                     now,
                     false,
                     emailPreferences,
@@ -192,7 +192,7 @@ class SubscriptionSummaryController @Inject()(
             Ok(
               Json.toJson(
                 SubscriptionSummaryData
-                  .revokedSubscriptionSummary(
+                  .rejectedSubscriptionSummary(
                     now,
                     false,
                     emailPreferences,

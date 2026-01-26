@@ -35,12 +35,12 @@ object ApprovalStatus extends Enum[ApprovalStatus] {
 
   case object Approved extends ApprovalStatus
   case object Rejected extends ApprovalStatus
-  case object Withdrawm extends ApprovalStatus
+  case object Withdrawn extends ApprovalStatus
 
   implicit val approvalStatusWrites: Writes[ApprovalStatus] = {
     case Approved     => JsString("01")
     case Rejected     => JsString("02")
-    case Withdrawm    => JsString("03")
+    case Withdrawn    => JsString("03")
   }
 }
 
@@ -70,7 +70,7 @@ object SubscriptionSummarySuccess {
 final case class SubscriptionSummaryResponse(
   processingDate: Instant,
   organisationName: String,
-  paperlessReference: Option[Boolean], // TODO: Remove Option when included in real API
+  paperlessReference: Option[Boolean],
   emailAddress: Option[String],
   verifiedEmail: Option[Boolean],
   bouncedEmail: Option[Boolean],
