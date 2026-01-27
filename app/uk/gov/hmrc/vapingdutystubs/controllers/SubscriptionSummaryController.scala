@@ -63,35 +63,35 @@ class SubscriptionSummaryController @Inject()(
       emailFlagDigit match {
         case 0 | 5 | 6 | 7 | 8 => // email selected
           EmailPreferences(
-            paperlessReference = true,
+            paperlessPreference = true,
             emailAddress = Some(emailAddress),
             emailVerificationFlag = Some(true),
             bouncedEmailFlag = Some(false)
           )
         case 1                 => // paper selected, has email in system with no problems
           EmailPreferences(
-            paperlessReference = false,
+            paperlessPreference = false,
             emailAddress = Some(emailAddress),
             emailVerificationFlag = Some(true),
             bouncedEmailFlag = Some(false)
           )
         case 2                 => // paper selected, has unverified email in system
           EmailPreferences(
-            paperlessReference = false,
+            paperlessPreference = false,
             emailAddress = Some(emailAddress),
             emailVerificationFlag = Some(false),
             bouncedEmailFlag = Some(false)
           )
         case 3                 => // paper selected, has bounced email in system
           EmailPreferences(
-            paperlessReference = false,
+            paperlessPreference = false,
             emailAddress = Some(emailAddress),
             emailVerificationFlag = Some(true),
             bouncedEmailFlag = Some(true)
           )
         case _                 => // paper selected, no email in system
           EmailPreferences(
-            paperlessReference = false,
+            paperlessPreference = false,
             emailAddress = None,
             emailVerificationFlag = None,
             bouncedEmailFlag = None

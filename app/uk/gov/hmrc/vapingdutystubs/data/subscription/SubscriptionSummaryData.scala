@@ -35,7 +35,7 @@ object SubscriptionSummaryData {
       SubscriptionSummaryResponse(
         processingDate = now,
         organisationName = organisation,
-        paperlessReference = Some(emailPreferences.paperlessReference), // TODO: Remove Option when included in real API
+        paperlessPreference = Some(emailPreferences.paperlessPreference),
         emailAddress = emailPreferences.emailAddress,
         verifiedEmail = emailPreferences.emailVerificationFlag,
         bouncedEmail = emailPreferences.bouncedEmailFlag,

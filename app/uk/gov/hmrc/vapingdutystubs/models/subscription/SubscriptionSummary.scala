@@ -45,7 +45,7 @@ object ApprovalStatus extends Enum[ApprovalStatus] {
 }
 
 case class EmailPreferences(
-  paperlessReference: Boolean,
+  paperlessPreference: Boolean,
   emailAddress: Option[String],
   emailVerificationFlag: Option[Boolean],
   bouncedEmailFlag: Option[Boolean]
@@ -70,7 +70,7 @@ object SubscriptionSummarySuccess {
 final case class SubscriptionSummaryResponse(
   processingDate: Instant,
   organisationName: String,
-  paperlessReference: Option[Boolean],
+  paperlessPreference: Option[Boolean],
   emailAddress: Option[String],
   verifiedEmail: Option[Boolean],
   bouncedEmail: Option[Boolean],
