@@ -21,3 +21,7 @@ lazy val it = project
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
   .settings(libraryDependencies ++= AppDependencies.it)
+
+addCommandAlias("runAllChecks", ";clean;compile;coverage;test;it/test;coverageReport")
+
+addCommandAlias("runLocalChecks", ";clean;compile;coverage;test;coverageReport")
