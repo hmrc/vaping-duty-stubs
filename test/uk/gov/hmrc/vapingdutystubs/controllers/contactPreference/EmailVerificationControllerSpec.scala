@@ -21,7 +21,6 @@ import org.mockito.Mockito.{reset, times, verify, when}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailVerificationController
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationErrors.*
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationStatus
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState

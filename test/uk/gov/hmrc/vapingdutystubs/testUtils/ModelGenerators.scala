@@ -28,7 +28,7 @@ trait ModelGenerators {
 
   def vpdIdGen: Gen[String] = Gen.listOfN(10, Gen.numChar).map(id => s"XMADP${id.mkString}")
 
-  lazy val dummyDataGenerator = new DataGenerator(clock) {
+    lazy val dummyDataGenerator = new DataGenerator(clock) {
     lazy val submissionId      = super.submissionIdGen()
     lazy val chargeReference   = super.chargeReferenceGen()
 

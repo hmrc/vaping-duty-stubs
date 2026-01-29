@@ -18,7 +18,6 @@ package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.models.contactPreference.{PaperlessPreferenceSubmission, PaperlessPreferenceSubmittedResponse, PaperlessPreferenceSubmittedSuccess}
 
 import java.time.Instant
 

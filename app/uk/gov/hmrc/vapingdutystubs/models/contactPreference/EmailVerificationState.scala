@@ -18,8 +18,6 @@ package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.{Clock, Instant}
-
 case class EmailVerificationState(credId: String, returnAllUnverified: Boolean)
 
 object EmailVerificationState {

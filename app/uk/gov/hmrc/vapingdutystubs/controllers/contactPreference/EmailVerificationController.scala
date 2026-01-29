@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
-import org.mongodb.scala.SingleObservableFuture
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController

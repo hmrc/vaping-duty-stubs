@@ -17,9 +17,8 @@
 package uk.gov.hmrc.vapingdutystubs.repositories
 
 import org.mongodb.scala.model.Filters
-import org.scalatest.matchers.should.Matchers.shouldBe
-import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
+import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState
 
 import java.time.Clock
