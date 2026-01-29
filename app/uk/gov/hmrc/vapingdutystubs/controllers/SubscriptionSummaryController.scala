@@ -24,7 +24,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.HasCorrectIdentifiers
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.HasCorrectIdentifiers
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 

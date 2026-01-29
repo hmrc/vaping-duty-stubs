@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
-import play.api.libs.json.{Json, OFormat}
+case class HasCorrectPreferences(preference: PaperlessPreferenceSubmission) {
+  
+  private def checkPreference: Boolean =
+    if (preference.paperlessPreference && preference.emailVerification.isEmpty) true else false
+}
 
-import java.time.{Clock, Instant}
-
-case class EmailVerificationState(credId: String, returnAllUnverified: Boolean)
-
-object EmailVerificationState {
-  implicit val format: OFormat[EmailVerificationState] = Json.format[EmailVerificationState]
+object HasCorrectPreferences {
+  def apply(preference: PaperlessPreferenceSubmission): Boolean = {
+    new HasCorrectPreferences(preference).checkPreference
+  }
 }

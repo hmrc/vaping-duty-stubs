@@ -4,6 +4,6 @@ GET        /ping                                                                
 
 GET        /etmp/RESTAdapter/excise/subscriptionsummary/:regime/:idType/:idValue             uk.gov.hmrc.vapingdutystubs.controllers.SubscriptionSummaryController.getSubscriptionSummary(regime, idType, idValue)
 
-PUT        /etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue               uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences.EmailContactPreferencesController.submitPreferences(regime, idType, idValue)
+PUT        /etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue               uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailContactPreferencesController.submitPreferences(regime, idType, idValue)
 
-GET        /email-verification/verification-status/:credId                                   uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences.EmailVerificationController.getVerifiedEmails(credId)
+GET        /email-verification/verification-status/:credId                                   uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailVerificationController.getVerifiedEmails(credId)

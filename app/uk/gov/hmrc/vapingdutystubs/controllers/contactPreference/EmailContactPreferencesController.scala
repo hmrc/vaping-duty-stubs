@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
 import play.api.Logging
 import play.api.http.HeaderNames
@@ -23,7 +23,8 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.*
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.Submission
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import java.time.Clock

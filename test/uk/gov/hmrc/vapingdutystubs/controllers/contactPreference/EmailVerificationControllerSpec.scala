@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.controllers
+package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
-import org.mockito.Mockito.{reset, times, verify, when}
 import org.mockito.ArgumentMatchers.eq as eqTo
+import org.mockito.Mockito.{reset, times, verify, when}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences.EmailVerificationController
+import uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailVerificationController
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationErrors.*
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationStatus
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.EmailVerificationState
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState
 import uk.gov.hmrc.vapingdutystubs.repositories.EmailVerificationStateRepository
 
 import scala.concurrent.Future

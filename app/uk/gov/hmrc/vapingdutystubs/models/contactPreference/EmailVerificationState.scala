@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
-class HasCorrectIdentifiers(idType: String, regime: String) {
-  
-  private def checkRegime: Boolean = if (idType != "ZVPD" || regime != "VPD") true else false
-}
+import play.api.libs.json.{Json, OFormat}
 
-object HasCorrectIdentifiers {
-  
-  def apply(idType: String, regime: String): Boolean = {
-    new HasCorrectIdentifiers(idType, regime).checkRegime
-  }
+import java.time.{Clock, Instant}
+
+case class EmailVerificationState(credId: String, returnAllUnverified: Boolean)
+
+object EmailVerificationState {
+  implicit val format: OFormat[EmailVerificationState] = Json.format[EmailVerificationState]
 }

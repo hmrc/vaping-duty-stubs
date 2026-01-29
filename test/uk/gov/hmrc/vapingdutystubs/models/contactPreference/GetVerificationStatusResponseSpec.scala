@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.GetVerificationStatusResponse
 
 class GetVerificationStatusResponseSpec extends SpecBase {
   "GetVerificationStatusResponse must" - {

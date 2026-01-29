@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.controllers
+package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences.EmailContactPreferencesController
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.{PaperlessPreferenceSubmittedResponse, PaperlessPreferenceSubmittedSuccess}
+import uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailContactPreferencesController
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.{PaperlessPreferenceSubmittedResponse, PaperlessPreferenceSubmittedSuccess}
 
 import java.time.Instant
 import scala.concurrent.Future

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.emailverification
 
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.{GetVerificationStatusResponse, GetVerificationStatusResponseEmailAddressDetails}
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.{GetVerificationStatusResponse, GetVerificationStatusResponseEmailAddressDetails}
 
 object EmailVerificationStatus {
   val fixedScenarios: GetVerificationStatusResponse = GetVerificationStatusResponse(

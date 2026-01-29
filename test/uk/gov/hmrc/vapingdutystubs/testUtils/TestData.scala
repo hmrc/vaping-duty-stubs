@@ -18,10 +18,10 @@ package uk.gov.hmrc.vapingdutystubs.testUtils
 
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.correlationIdHeader
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.*
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.{GetVerificationStatusResponseEmailAddressDetails, PaperlessPreferenceSubmission}
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
-
 
 import java.time.{Clock, Instant, ZoneId}
 

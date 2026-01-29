@@ -17,9 +17,9 @@
 package uk.gov.hmrc.vapingdutystubs.repositories
 
 import org.mongodb.scala.model.*
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.EmailVerificationState
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState
 
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}

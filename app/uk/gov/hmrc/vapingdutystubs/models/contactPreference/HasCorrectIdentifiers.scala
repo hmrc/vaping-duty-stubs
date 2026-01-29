@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
-case class HasCorrectPreferences(preference: PaperlessPreferenceSubmission) {
+class HasCorrectIdentifiers(idType: String, regime: String) {
   
-  private def checkPreference: Boolean =
-    if (preference.paperlessPreference && preference.emailVerification.isEmpty) true else false
+  private def checkRegime: Boolean = if (idType != "ZVPD" || regime != "VPD") true else false
 }
 
-object HasCorrectPreferences {
-  def apply(preference: PaperlessPreferenceSubmission): Boolean = {
-    new HasCorrectPreferences(preference).checkPreference
+object HasCorrectIdentifiers {
+  
+  def apply(idType: String, regime: String): Boolean = {
+    new HasCorrectIdentifiers(idType, regime).checkRegime
   }
 }

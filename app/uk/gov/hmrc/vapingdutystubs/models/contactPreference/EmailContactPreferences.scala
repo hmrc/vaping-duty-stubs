@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.vapingdutystubs.models.JsonHelpers.*

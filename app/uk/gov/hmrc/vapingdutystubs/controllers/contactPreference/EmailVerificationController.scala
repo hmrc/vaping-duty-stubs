@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.controllers.emailcontactpreferences
+package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
 import org.mongodb.scala.SingleObservableFuture
 import play.api.libs.json.Json
@@ -22,7 +22,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationErrors.*
 import uk.gov.hmrc.vapingdutystubs.data.emailverification.EmailVerificationStatus
-import uk.gov.hmrc.vapingdutystubs.models.emailcontactpreferences.EmailVerificationState
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState
 import uk.gov.hmrc.vapingdutystubs.repositories.EmailVerificationStateRepository
 
 import javax.inject.Inject
