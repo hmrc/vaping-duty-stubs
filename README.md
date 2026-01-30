@@ -1,6 +1,20 @@
 
 # Vaping Duty Stubs
 
+# Returning specific stubbed information
+
+Characters in vpdId are used to return specific stubbed information: (rightmost character in the string is character 1)
+
+Character 9 - contact preferences submission
+
+Character 10 - subscription data (existing contact preferences)
+
+Characters in credId are used when calling the email-verification service APIs:
+
+Character 1 - email verification statuses (only if email-verification-stub is toggled on in vaping-duty-account)
+
+See the relevant controllers for more detail on the responses
+
 ## Running this stub
 ### Run the stub using sm2
 To run the stub using sm2, use the following command:
