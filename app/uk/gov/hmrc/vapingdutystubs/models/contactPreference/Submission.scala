@@ -69,7 +69,6 @@ case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
 
   private def getResult(idValue: String, correlationId: String) = {
     val now = Instant.now(clock)
-    println(s"STUB INDEX ${getStubIndex(idValue)}")
     Future.successful(
       getStubIndex(idValue) match {
         case 0 =>
