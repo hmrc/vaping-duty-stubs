@@ -65,6 +65,30 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
       )
     }
 
+    "correctly return forbidden" in new SetUp {
+      val vpdId = getVpdId('5')
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe FORBIDDEN
+      headers(result) mustBe responseHeadersWithCorrelationId
+    }
+    
+    "return a 415 if the content type is invalid" in new SetUp {
+      val vpdId = getVpdId('6')
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNSUPPORTED_MEDIA_TYPE
+      headers(result) mustBe responseHeadersWithCorrelationId
+    }
+
     "correctly return a 400" in new SetUp {
       val vpdId                 = getVpdId('7')
       val result: Future[Result] =

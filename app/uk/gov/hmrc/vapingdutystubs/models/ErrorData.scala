@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.models
 
-import play.api.http.Status.GATEWAY_TIMEOUT
+import play.api.http.Status.{GATEWAY_TIMEOUT, UNSUPPORTED_MEDIA_TYPE}
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.{Clock, Instant}
@@ -52,5 +52,9 @@ class ErrorData @Inject()(uuidGenerator: RandomUUIDGenerator, clock: Clock) {
 
   val gatewayTimeout: DownstreamError = DownstreamError(
     DownstreamErrorDetails(GATEWAY_TIMEOUT.toString, "Gateway Timeout", uuidGenerator.uuidHyphenTrimmed.toUpperCase())
+  )
+
+  val unsupportedMediaType = DownstreamError(
+    DownstreamErrorDetails(UNSUPPORTED_MEDIA_TYPE.toString, "Unsupported media type", uuidGenerator.uuidHyphenTrimmed.toUpperCase())
   )
 }

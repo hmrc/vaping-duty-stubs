@@ -19,7 +19,7 @@ package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Request, Result}
-import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Ok, UnprocessableEntity}
+import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Ok, UnprocessableEntity, UnsupportedMediaType, Forbidden}
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
 
@@ -77,6 +77,8 @@ case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
               PaperlessPreferenceSubmittedResponse(processingDate = now, "910000000000")
             )
           )).withHeaders(correlationIdHeader -> correlationId)
+        case 5 => Forbidden.withHeaders(correlationIdHeader -> correlationId)
+        case 6 => UnsupportedMediaType(Json.toJson(errorData.unsupportedMediaType)).withHeaders(correlationIdHeader -> correlationId)
         case 7 =>
           BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
         case 8 => NotFound
