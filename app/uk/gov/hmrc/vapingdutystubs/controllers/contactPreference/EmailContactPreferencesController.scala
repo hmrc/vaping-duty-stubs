@@ -23,7 +23,6 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.contactPreference.Submission
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 

@@ -51,9 +51,7 @@ class SubscriptionSummaryController @Inject()(
   private val withdrawn    = "\\w+8\\d{2}$".r
   private val notFound     = "\\w+4\\d{2}$".r
   private val badRequest   = "\\w+6\\d{2}$".r
-
-  private val approvedNoECPFields = "\\w+0\\d{2}$".r // TODO: Remove when ECP fields are included in real API
-
+  
   private val emailAddress = "john.doe@example.com"
 
   private def getEmailPreferences(idValue: String): EmailPreferences =
