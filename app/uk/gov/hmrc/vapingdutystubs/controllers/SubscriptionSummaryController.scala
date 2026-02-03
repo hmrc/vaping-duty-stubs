@@ -46,6 +46,7 @@ class SubscriptionSummaryController @Inject()(
     xTransmittingSystemHeader
   )
 
+  // Matches third from last digit to the first number in the below regex
   private val approved     = "\\w+2\\d{2}$".r
   private val rejected     = "\\w+7\\d{2}$".r
   private val withdrawn    = "\\w+8\\d{2}$".r
@@ -144,8 +145,9 @@ class SubscriptionSummaryController @Inject()(
 
     }
 
-  def getSubscriptionSummary(regime: String, idType: String, idValue: String): Action[AnyContent] = Action { request =>
+  def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
+    // Validates that the trailing 10 characters of a given string are digits
     if (!idValue.matches("\\w+\\d{10}")) {
       throw new RuntimeException(s"Bad vpdId '$idValue' sent to stubs")
     } else {
@@ -153,7 +155,7 @@ class SubscriptionSummaryController @Inject()(
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      if (HasCorrectIdentifiers(idType, regime)) {
+      if (HasCorrectIdentifiers(idKey, regime)) {
         UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
       } else {
         val now = Instant.now(clock)
