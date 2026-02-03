@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import uk.gov.hmrc.vapingdutystubs.config.Constants.ukTimeZoneStringId
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
+import java.time.{Instant, LocalDate, ZoneId}
+import java.util.TimeZone
 
-  val appName: String = config.get[String]("appName")
+object DateTimeHelper {
+  private val ukTimeZone: ZoneId = TimeZone.getTimeZone(ukTimeZoneStringId).toZoneId
+  
+  def instantToLocalDate(instant: Instant): LocalDate = LocalDate.ofInstant(instant, ukTimeZone)
+}

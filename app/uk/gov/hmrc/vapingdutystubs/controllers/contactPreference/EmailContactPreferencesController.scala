@@ -1,0 +1,61 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
+
+import play.api.Logging
+import play.api.http.HeaderNames
+import play.api.libs.json.JsValue
+import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
+import uk.gov.hmrc.vapingdutystubs.models.ErrorData
+import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
+import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
+
+import java.time.Clock
+import javax.inject.Inject
+
+class EmailContactPreferencesController @Inject()(
+  errorData: ErrorData,
+  clock: Clock,
+  cc: ControllerComponents
+) extends BackendController(cc)
+    with Logging {
+
+  private val submitPreferencesHeaders = Set(
+    HeaderNames.AUTHORIZATION,
+    correlationIdHeader,
+    xOriginatingSystemHeader,
+    xReceiptDateHeader,
+    xTransmittingSystemHeader
+  )
+
+  def submitPreferences(regime: String, idType: String, idValue: String): Action[JsValue] = Action.async(parse.json) {
+    implicit request =>
+      logHeaders(request, "submitPreferences", submitPreferencesHeaders)
+
+      logger.info(s"Email contact preference submission received with json: ${request.body}")
+
+      val correlationId = request.headers
+        .get(correlationIdHeader)
+        .getOrElse(
+          throw new IllegalArgumentException("Expected correlation ID header")
+        )
+
+      Submission(clock, errorData).process(idType, idValue, regime, correlationId)
+  }
+}

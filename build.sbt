@@ -13,7 +13,7 @@ lazy val microservice = Project("vaping-duty-stubs", file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(CodeCoverageSettings.settings *)
   PlayKeys.playDefaultPort := 8142
 
 lazy val it = project

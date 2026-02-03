@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.data
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import java.time.Clock
+import javax.inject.Inject
+import scala.util.Random
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
+class DataGenerator @Inject()(clock: Clock) {
+  private val random                          = new Random(clock.millis())
+  private def randomNumberString(length: Int) = Range(1, length + 1).map(_ => random.nextInt(10)).mkString
 
-  val appName: String = config.get[String]("appName")
+  def submissionIdGen(): String      = randomNumberString(12)
+  def chargeReferenceGen(): String   = s"XA${randomNumberString(14)}"
+}

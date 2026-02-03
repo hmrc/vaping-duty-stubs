@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package uk.gov.hmrc.vapingdutystubs
 
-import play.api.{Configuration, Environment}
-import play.api.inject.{Binding, Module => AppModule}
+import com.google.inject.AbstractModule
+import uk.gov.hmrc.vapingdutystubs.config.AppConfig
 
 import java.time.Clock
 
-class Module extends AppModule:
+class Module extends AbstractModule {
 
-  override def bindings(
-    environment  : Environment,
-    configuration: Configuration
-  ): Seq[Binding[_]] =
-    bind[Clock].toInstance(Clock.systemDefaultZone) :: // inject if current time needs to be controlled in unit tests
-    Nil
+  override def configure(): Unit = {
+    bind(classOf[AppConfig]).asEagerSingleton()
+    bind(classOf[Clock]).toInstance(Clock.systemUTC)
+  }
+}

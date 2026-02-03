@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@
 
 package uk.gov.hmrc.vapingdutystubs.config
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+object Constants {
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
+  object Headers {
+    val correlationIdHeader: String       = "correlationid"
+    val xOriginatingSystemHeader: String  = "X-Originating-System"
+    val xReceiptDateHeader: String        = "X-Receipt-Date"
+    val xTransmittingSystemHeader: String = "X-Transmitting-System"
+    val xZAD: String                      = "X-ZAD"
+  }
 
-  val appName: String = config.get[String]("appName")
+  val ukTimeZoneStringId = "Europe/London"
+}

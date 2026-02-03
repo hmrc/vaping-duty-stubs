@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
+class RandomUUIDGeneratorSpec extends SpecBase {
+  "RandomUUIDGenerator" - {
+    "return a random UUID" in {
+      new RandomUUIDGenerator().uuid.replaceAll("[0-9a-fA-F]", "*") mustBe "********-****-****-****-************"
+    }
 
-  val appName: String = config.get[String]("appName")
+    "return a random UUID without hyphens" in {
+      new RandomUUIDGenerator().uuidHyphenTrimmed
+        .replaceAll("[0-9a-fA-F]", "*") mustBe "********************************"
+    }
+  }
+}

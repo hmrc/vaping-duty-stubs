@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+class HasCorrectIdentifiers(idType: String, regime: String) {
+  
+  private def checkRegime: Boolean = if (idType != "ZVPD" || regime != "VPD") true else false
+}
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
-
-  val appName: String = config.get[String]("appName")
+object HasCorrectIdentifiers {
+  
+  def apply(idType: String, regime: String): Boolean = {
+    new HasCorrectIdentifiers(idType, regime).checkRegime
+  }
+}

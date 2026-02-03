@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import play.api.Logging
+import play.api.mvc.Request
 
-@Singleton
-class AppConfig @Inject()(config: Configuration):
-
-  val appName: String = config.get[String]("appName")
+object LogHeadersHelper extends Logging {
+  def logHeaders(request: Request[_], requestType: String, relevantHeaders: Set[String]): Unit = {
+    val headers = request.headers.toMap.view
+      .filterKeys(key => relevantHeaders.contains(key))
+      .map { case (key, values) => s"$key=${values.mkString(",")}" }
+      .mkString(",")
+    logger.info(s"Headers for $requestType: $headers")
+  }
+}
