@@ -5,7 +5,7 @@ GET        /ping                                                                
 ### Contact Preferences ###
 
 # 1644
-GET        /etmp/RESTAdapter/vpd/subscription/:regime/:idType/:idValue                       uk.gov.hmrc.vapingdutystubs.controllers.SubscriptionSummaryController.getSubscriptionSummary(regime, idType, idValue)
+GET        /etmp/RESTAdapter/vpd/subscription/:idValue                                        uk.gov.hmrc.vapingdutystubs.controllers.SubscriptionSummaryController.getSubscriptionSummary(regime, idType, idValue)
 
 # 1608
 PUT        /etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue               uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailContactPreferencesController.submitPreferences(regime, idType, idValue)
