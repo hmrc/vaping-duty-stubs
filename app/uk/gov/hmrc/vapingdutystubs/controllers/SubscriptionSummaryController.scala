@@ -24,7 +24,6 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.contactPreference.HasCorrectIdentifiers
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
@@ -145,7 +144,7 @@ class SubscriptionSummaryController @Inject()(
 
     }
 
-  def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
+  def getSubscriptionSummary(idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
     // Validates that the trailing 10 characters of a given string are digits
     if (!idValue.matches("\\w+\\d{10}")) {
@@ -155,9 +154,6 @@ class SubscriptionSummaryController @Inject()(
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      if (HasCorrectIdentifiers(idKey, regime)) {
-        UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
-      } else {
         val now = Instant.now(clock)
 
         val emailPreferences = getEmailPreferences(idValue)
@@ -210,4 +206,3 @@ class SubscriptionSummaryController @Inject()(
       }
     }
   }
-}
