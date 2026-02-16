@@ -49,6 +49,6 @@ class SubscriptionSummarySpec extends SpecBase {
   class SetUp {
     val now                     = Instant.now(clock)
     val subscriptionSummaryJson =
-      """{"success":{"processingDate":"2024-06-11T15:07:47.838Z","organisationName":"testAwNwaIL Ltd","paperlessPreference":"1","emailAddress":"john.doe@example.com","verifiedEmail":"1","bouncedEmail":"0","addressLine1":"Flat 123","addressLine2":"1 Example Road","addressLine4":"London","postcode":"AB1 2CD","country":"GB","approvalStatus":"01","insolvencyFlag":"0"}}"""
+      """{"success":{"processingDate":"2024-06-11T15:07:47.838Z","organisationName":"testAwNwaIL Ltd","paperlessPreference":"1","emailAddress":"john.doe@example.com","verifiedEmail":"1","bouncedEmail":"0","addressLine1":"Flat 123","addressLine2":"1 Example Road","postcode":"AB1 2CD","approvalStatus":"01","insolvencyFlag":"0"}}"""
   }
 }
