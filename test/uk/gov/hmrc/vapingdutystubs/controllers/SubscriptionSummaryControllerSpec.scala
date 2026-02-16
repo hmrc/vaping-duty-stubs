@@ -163,6 +163,17 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       headers(result) mustBe Map()
     }
 
+    "return 422 UNPROCESSABLE_ENTITY if the suffix is 500" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("500"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      headers(result) mustBe responseHeadersWithCorrelationId
+    }
+
+
     "return 500 INTERNAL_SERVER_ERROR if the suffix is 900" in new SetUp {
       val result: Future[Result] =
         controller.getSubscriptionSummary(vpdId("900"))(
