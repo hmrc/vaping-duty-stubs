@@ -56,51 +56,50 @@ class SubscriptionSummaryController @Inject()(
   private val emailAddress = "john.doe@example.com"
 
   private def getEmailPreferences(idValue: String): EmailPreferences =
+    // Regex extracts first digit in String
+    val emailFlagDigit = "[0-9]".r.findFirstIn(idValue).get.toInt
 
-      val emailFlagDigit = idValue.takeRight(10).take(1).toInt
-
-      emailFlagDigit match {
-        case 0 | 5 | 6 | 7 | 8 => // email selected
-          EmailPreferences(
-            paperlessPreference = true,
-            emailAddress = Some(emailAddress),
-            emailVerificationFlag = Some(true),
-            bouncedEmailFlag = Some(false)
-          )
-        case 1                 => // paper selected, has email in system with no problems
-          EmailPreferences(
-            paperlessPreference = false,
-            emailAddress = Some(emailAddress),
-            emailVerificationFlag = Some(true),
-            bouncedEmailFlag = Some(false)
-          )
-        case 2                 => // paper selected, has unverified email in system
-          EmailPreferences(
-            paperlessPreference = false,
-            emailAddress = Some(emailAddress),
-            emailVerificationFlag = Some(false),
-            bouncedEmailFlag = Some(false)
-          )
-        case 3                 => // paper selected, has bounced email in system
-          EmailPreferences(
-            paperlessPreference = false,
-            emailAddress = Some(emailAddress),
-            emailVerificationFlag = Some(true),
-            bouncedEmailFlag = Some(true)
-          )
-        case _                 => // paper selected, no email in system
-          EmailPreferences(
-            paperlessPreference = false,
-            emailAddress = None,
-            emailVerificationFlag = None,
-            bouncedEmailFlag = None
-          )
+    emailFlagDigit match {
+      case 0 | 5 | 6 | 7 | 8 => // email selected
+        EmailPreferences(
+          paperlessPreference = true,
+          emailAddress = Some(emailAddress),
+          emailVerificationFlag = Some(true),
+          bouncedEmailFlag = Some(false)
+        )
+      case 1                 => // paper selected, has email in system with no problems
+        EmailPreferences(
+          paperlessPreference = false,
+          emailAddress = Some(emailAddress),
+          emailVerificationFlag = Some(true),
+          bouncedEmailFlag = Some(false)
+        )
+      case 2                 => // paper selected, has unverified email in system
+        EmailPreferences(
+          paperlessPreference = false,
+          emailAddress = Some(emailAddress),
+          emailVerificationFlag = Some(false),
+          bouncedEmailFlag = Some(false)
+        )
+      case 3                 => // paper selected, has bounced email in system
+        EmailPreferences(
+          paperlessPreference = false,
+          emailAddress = Some(emailAddress),
+          emailVerificationFlag = Some(true),
+          bouncedEmailFlag = Some(true)
+        )
+      case _                 => // paper selected, no email in system
+        EmailPreferences(
+          paperlessPreference = false,
+          emailAddress = None,
+          emailVerificationFlag = None,
+          bouncedEmailFlag = None
+        )
 
     }
 
   private def getCorrespondenceAddress(idValue: String): CorrespondenceAddress =
-
-      val emailFlagDigit = idValue.takeRight(10).take(1).toInt
+    val emailFlagDigit = "[0-9]".r.findFirstIn(idValue).get.toInt
 
       emailFlagDigit match {
         case 5 => // overseas address 1
@@ -142,13 +141,12 @@ class SubscriptionSummaryController @Inject()(
             postcode = Some("AB1 2CD"),
             country = Some("GB")
           )
-
     }
 
   def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
-    // Validates that the trailing 10 characters of a given string are digits
-    if (!idValue.matches("\\w+\\d{10}")) {
+    // Checks that this is a valid VpdId
+    if (!idValue.matches("(?:GB|XI)WK[0-9]{7}WK")) {
       throw new RuntimeException(s"Bad vpdId '$idValue' sent to stubs")
     } else {
       val correlationId = request.headers
@@ -159,11 +157,10 @@ class SubscriptionSummaryController @Inject()(
         UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
       } else {
         val now = Instant.now(clock)
-
         val emailPreferences = getEmailPreferences(idValue)
         val correspondenceAddress = getCorrespondenceAddress(idValue)
 
-        idValue match {
+        idValue.replaceAll("[a-zA-Z]+", "") match {
           case approved() =>
             Ok(
               Json.toJson(
