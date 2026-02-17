@@ -42,9 +42,7 @@ object SubscriptionSummaryData {
         addressLine1 = correspondenceAddress.addressLine1,
         addressLine2 = correspondenceAddress.addressLine2,
         addressLine3 = correspondenceAddress.addressLine3,
-        addressLine4 = correspondenceAddress.addressLine4,
         postcode = correspondenceAddress.postcode,
-        country = correspondenceAddress.country,
         approvalStatus = approvalStatus,
         insolvencyFlag = insolvencyFlag
       )

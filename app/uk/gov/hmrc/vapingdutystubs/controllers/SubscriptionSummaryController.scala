@@ -24,7 +24,6 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.contactPreference.HasCorrectIdentifiers
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
@@ -47,11 +46,12 @@ class SubscriptionSummaryController @Inject()(
   )
 
   // Matches third from last digit to the first number in the below regex
-  private val approved     = "\\w+2\\d{2}$".r
-  private val rejected     = "\\w+7\\d{2}$".r
-  private val withdrawn    = "\\w+8\\d{2}$".r
-  private val notFound     = "\\w+4\\d{2}$".r
-  private val badRequest   = "\\w+6\\d{2}$".r
+  private val approved            = "\\w+2\\d{2}$".r
+  private val rejected            = "\\w+7\\d{2}$".r
+  private val withdrawn           = "\\w+8\\d{2}$".r
+  private val notFound            = "\\w+4\\d{2}$".r
+  private val badRequest          = "\\w+6\\d{2}$".r
+  private val unprocessableEntity = "\\w+5\\d{2}$".r
   
   private val emailAddress = "john.doe@example.com"
 
@@ -145,7 +145,7 @@ class SubscriptionSummaryController @Inject()(
 
     }
 
-  def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
+  def getSubscriptionSummary(idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
     // Validates that the trailing 10 characters of a given string are digits
     if (!idValue.matches("\\w+\\d{10}")) {
@@ -155,9 +155,6 @@ class SubscriptionSummaryController @Inject()(
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      if (HasCorrectIdentifiers(idKey, regime)) {
-        UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
-      } else {
         val now = Instant.now(clock)
 
         val emailPreferences = getEmailPreferences(idValue)
@@ -203,6 +200,9 @@ class SubscriptionSummaryController @Inject()(
           case badRequest() =>
             BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
           case notFound() => NotFound
+          case unprocessableEntity() =>
+            UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
+              .withHeaders(correlationIdHeader -> correlationId)
           case _ =>
             InternalServerError(Json.toJson(errorData.internalServerError))
               .withHeaders(correlationIdHeader -> correlationId)
@@ -210,4 +210,3 @@ class SubscriptionSummaryController @Inject()(
       }
     }
   }
-}

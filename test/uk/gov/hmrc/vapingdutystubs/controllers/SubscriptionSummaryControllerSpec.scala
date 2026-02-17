@@ -29,7 +29,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
   "getSubscriptionSummary must" - {
     "return 200 OK with the approval status Approved 01 when the vpdId suffix is 200" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("200"))(
+        controller.getSubscriptionSummary(vpdId("200"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -56,7 +56,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     ).foreach { case (emailFlag, expectedEmailPreferences) =>
       s"return 200 OK with the correct email preferences when the emailFlag is $emailFlag" in new SetUp {
         val result: Future[Result] =
-          controller.getSubscriptionSummary(regime, idType, vpdId("200", emailFlag = emailFlag))(
+          controller.getSubscriptionSummary(vpdId("200", emailFlag = emailFlag))(
             fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
           )
 
@@ -84,7 +84,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     ).foreach { case (emailFlag, expectedCorrespondenceAddress) =>
       s"return 200 OK with the correct correspondence address when the emailFlag is $emailFlag" in new SetUp {
         val result: Future[Result] =
-          controller.getSubscriptionSummary(regime, idType, vpdId("200", emailFlag = emailFlag))(
+          controller.getSubscriptionSummary(vpdId("200", emailFlag = emailFlag))(
             fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
           )
 
@@ -105,7 +105,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
     "return 200 OK with the approval status DeRegistered 02 when the vpdId suffix is 700" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("700"))(
+        controller.getSubscriptionSummary(vpdId("700"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -125,7 +125,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
     "return 200 OK with the approval status Revoked 03 when the vpdId suffix is 800" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("800"))(
+        controller.getSubscriptionSummary(vpdId("800"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -145,7 +145,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
     "return 400 BAD_REQUEST if the suffix is 600" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("600"))(
+        controller.getSubscriptionSummary(vpdId("600"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -155,7 +155,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
     "return 404 NOT_FOUND if the suffix is 400" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("400"))(
+        controller.getSubscriptionSummary(vpdId("400"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -163,9 +163,20 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       headers(result) mustBe Map()
     }
 
+    "return 422 UNPROCESSABLE_ENTITY if the suffix is 500" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("500"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      headers(result) mustBe responseHeadersWithCorrelationId
+    }
+
+
     "return 500 INTERNAL_SERVER_ERROR if the suffix is 900" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, idType, vpdId("900"))(
+        controller.getSubscriptionSummary(vpdId("900"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -173,29 +184,9 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       headers(result) mustBe responseHeadersWithCorrelationId
     }
 
-    "return 422 UNPROCESSABLE_ENTITY if the regime is not AD" in new SetUp {
-      val result: Future[Result] =
-        controller.getSubscriptionSummary(badRegime, idType, vpdId("200"))(
-          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
-        )
-
-      status(result)  mustBe UNPROCESSABLE_ENTITY
-      headers(result) mustBe responseHeadersWithCorrelationId
-    }
-
-    "return 422 UNPROCESSABLE_ENTITY if the idType is not ZAD" in new SetUp {
-      val result: Future[Result] =
-        controller.getSubscriptionSummary(regime, badIdType, vpdId("200"))(
-          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
-        )
-
-      status(result)  mustBe UNPROCESSABLE_ENTITY
-      headers(result) mustBe responseHeadersWithCorrelationId
-    }
-
     "throw an exception if the vpdId suffix can't be parsed" in new SetUp {
       a[RuntimeException] mustBe thrownBy(
-        controller.getSubscriptionSummary(regime, idType, "")(
+        controller.getSubscriptionSummary("")(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
       )
@@ -203,7 +194,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
     "throw an exception if the correlation ID header is not present" in new SetUp {
       an[IllegalArgumentException] mustBe thrownBy(
-        controller.getSubscriptionSummary(regime, idType, vpdId("200"))(fakeRequest)
+        controller.getSubscriptionSummary(vpdId("200"))(fakeRequest)
       )
     }
   }
