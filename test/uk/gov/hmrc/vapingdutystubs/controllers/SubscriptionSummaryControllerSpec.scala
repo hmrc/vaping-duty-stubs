@@ -209,6 +209,10 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
   }
 
   class SetUp {
+    object VpdId {
+
+    }
+
     val badRegime = "not VPD"
     val badIdType = "not ZVPD"
 
@@ -220,7 +224,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       cc
     )
 
-    def vpdId(suffix: String, offFlags: String = "00", emailFlag: String = "0"): String =
-      s"XMADP${emailFlag}0000$offFlags$suffix"
+    def vpdId(suffix: String, offFlags: String = "000", emailFlag: String = "0"): String =
+      s"GBWK${emailFlag}$offFlags${suffix}WK"
   }
 }
