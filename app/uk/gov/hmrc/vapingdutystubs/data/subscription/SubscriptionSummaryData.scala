@@ -25,35 +25,34 @@ object SubscriptionSummaryData {
   private val organisation = "testAwNwaIL Ltd"
 
   private def subscriptionSummarySuccess(
-    now: Instant,
-    approvalStatus: ApprovalStatus,
-    insolvencyFlag: Boolean,
-    emailPreferences: EmailPreferences,
-    correspondenceAddress: CorrespondenceAddress
-  ): SubscriptionSummarySuccess =
-    SubscriptionSummarySuccess(
-      SubscriptionSummaryResponse(
-        processingDate = now,
-        organisationName = organisation,
-        paperlessPreference = Some(emailPreferences.paperlessPreference),
-        emailAddress = emailPreferences.emailAddress,
-        verifiedEmail = emailPreferences.emailVerificationFlag,
-        bouncedEmail = emailPreferences.bouncedEmailFlag,
-        addressLine1 = correspondenceAddress.addressLine1,
-        addressLine2 = correspondenceAddress.addressLine2,
-        addressLine3 = correspondenceAddress.addressLine3,
-        postcode = correspondenceAddress.postcode,
-        approvalStatus = approvalStatus,
-        insolvencyFlag = insolvencyFlag
-      )
+                                          now: Instant,
+                                          approvalStatus: ApprovalStatus,
+                                          insolvencyFlag: Boolean,
+                                          emailPreferences: EmailPreferences,
+                                          correspondenceAddress: CorrespondenceAddress
+                                        ): SubscriptionSummaryResponse =
+    SubscriptionSummaryResponse(
+      processingDate = now,
+      organisationName = organisation,
+      paperlessPreference = Some(emailPreferences.paperlessPreference),
+      emailAddress = emailPreferences.emailAddress,
+      verifiedEmail = emailPreferences.emailVerificationFlag,
+      bouncedEmail = emailPreferences.bouncedEmailFlag,
+      addressLine1 = correspondenceAddress.addressLine1,
+      addressLine2 = correspondenceAddress.addressLine2,
+      addressLine3 = correspondenceAddress.addressLine3,
+      postcode = correspondenceAddress.postcode,
+      approvalStatus = approvalStatus,
+      insolvencyFlag = insolvencyFlag
     )
+
 
   def approvedSubscriptionSummary(
     now: Instant,
     insolvencyFlag: Boolean,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
-  ): SubscriptionSummarySuccess =
+  ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Approved,
@@ -67,7 +66,7 @@ object SubscriptionSummaryData {
     insolvencyFlag: Boolean,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
-  ): SubscriptionSummarySuccess =
+  ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Withdrawn,
@@ -81,7 +80,7 @@ object SubscriptionSummaryData {
     insolvencyFlag: Boolean,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
-  ): SubscriptionSummarySuccess =
+  ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Rejected,
