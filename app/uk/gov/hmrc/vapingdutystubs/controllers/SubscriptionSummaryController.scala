@@ -47,11 +47,12 @@ class SubscriptionSummaryController @Inject()(
     xTransmittingSystemHeader
   )
 
-  private val approved     = config.Patterns.approved
-  private val rejected     = config.Patterns.rejected
-  private val withdrawn    = config.Patterns.withdrawn
-  private val notFound     = config.Patterns.notFound
-  private val badRequest   = config.Patterns.badRequest
+  private val approved            = config.Patterns.approved
+  private val rejected            = config.Patterns.rejected
+  private val withdrawn           = config.Patterns.withdrawn
+  private val notFound            = config.Patterns.notFound
+  private val badRequest          = config.Patterns.badRequest
+  private val unprocessableEntity = config.Patterns.unprocessableEntity
   
   private val emailAddress = "john.doe@example.com"
 

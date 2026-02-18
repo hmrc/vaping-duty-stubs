@@ -30,11 +30,12 @@ class AppConfig @Inject()(config: Configuration) {
     /**
      * Matches third from last digit to the first number in the below regex
      */
-    val approved: Regex    = "\\w+2\\d{2}$".r
-    val rejected: Regex    = "\\w+7\\d{2}$".r
-    val withdrawn: Regex   = "\\w+8\\d{2}$".r
-    val notFound: Regex    = "\\w+4\\d{2}$".r
-    val badRequest: Regex  = "\\w+6\\d{2}$".r
+    val approved: Regex            = "\\w+2\\d{2}$".r
+    val rejected: Regex            = "\\w+7\\d{2}$".r
+    val withdrawn: Regex           = "\\w+8\\d{2}$".r
+    val notFound: Regex            = "\\w+4\\d{2}$".r
+    val badRequest: Regex          = "\\w+6\\d{2}$".r
+    val unprocessableEntity: Regex = "\\w+5\\d{2}$".r
     
     val allChars: String   = "[a-zA-Z]+"
 
