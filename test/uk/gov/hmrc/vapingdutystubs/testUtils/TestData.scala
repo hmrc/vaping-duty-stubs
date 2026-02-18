@@ -55,20 +55,20 @@ trait TestData extends ModelGenerators {
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
     addressLine4 = Some("London"),
-    postcode = Some("AB1 2CD"),
+    postCode = Some("AB1 2CD"),
     country = Some("GB")
   )
   val overseasAddress1           = CorrespondenceAddress(
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
     addressLine3 = Some("Toronto"),
-    postcode = Some("P55555"),
+    postCode = Some("P55555"),
     country = Some("CA")
   )
   val overseasAddress2           = CorrespondenceAddress(
     addressLine1 = Some("1 Example Road"),
     addressLine2 = Some("Barcelona"),
-    postcode = Some("P66666"),
+    postCode = Some("P66666"),
     country = Some("ES")
   )
   val unrecognisedCountryAddress = CorrespondenceAddress(
@@ -76,13 +76,13 @@ trait TestData extends ModelGenerators {
     addressLine2 = Some("1 Example Road"),
     addressLine3 = Some("District A"),
     addressLine4 = Some("Hong Kong"),
-    postcode = None,
+    postCode = None,
     country = Some("HK")
   )
   val noCountryAddress           = CorrespondenceAddress(
     addressLine1 = Some("Building 1"),
     addressLine4 = Some("Example City"),
-    postcode = Some("P88888"),
+    postCode = Some("P88888"),
     country = None
   )
 
