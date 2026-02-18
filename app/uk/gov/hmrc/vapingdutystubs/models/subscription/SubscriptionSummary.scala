@@ -60,13 +60,6 @@ case class CorrespondenceAddress(
   country: Option[String]
 )
 
-final case class SubscriptionSummarySuccess(success: SubscriptionSummaryResponse)
-
-object SubscriptionSummarySuccess {
-  implicit val subscriptionSummarySuccessWrites: Writes[SubscriptionSummarySuccess] =
-    Json.writes[SubscriptionSummarySuccess]
-}
-
 final case class SubscriptionSummaryResponse(
   processingDate: Instant,
   organisationName: String,
@@ -77,9 +70,7 @@ final case class SubscriptionSummaryResponse(
   addressLine1: Option[String],
   addressLine2: Option[String],
   addressLine3: Option[String],
-  addressLine4: Option[String],
   postcode: Option[String],
-  country: Option[String],
   approvalStatus: ApprovalStatus,
   insolvencyFlag: Boolean
 )

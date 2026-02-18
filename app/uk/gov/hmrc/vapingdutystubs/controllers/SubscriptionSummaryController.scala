@@ -25,7 +25,6 @@ import uk.gov.hmrc.vapingdutystubs.config.AppConfig
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.contactPreference.HasCorrectIdentifiers
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
@@ -144,7 +143,7 @@ class SubscriptionSummaryController @Inject()(
           )
     }
 
-  def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
+  def getSubscriptionSummary(idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
     if (!idValue.matches(config.Patterns.validVpdId)) {
       throw new RuntimeException(s"Bad vpdId '$idValue' sent to stubs")
@@ -153,9 +152,6 @@ class SubscriptionSummaryController @Inject()(
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      if (HasCorrectIdentifiers(idKey, regime)) {
-        UnprocessableEntity(Json.toJson(errorData.unprocessableEntity)).withHeaders(correlationIdHeader -> correlationId)
-      } else {
         val now = Instant.now(clock)
         val emailPreferences = getEmailPreferences(idValue)
         val correspondenceAddress = getCorrespondenceAddress(idValue)
@@ -200,6 +196,9 @@ class SubscriptionSummaryController @Inject()(
           case badRequest() =>
             BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
           case notFound() => NotFound
+          case unprocessableEntity() =>
+            UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
+              .withHeaders(correlationIdHeader -> correlationId)
           case _ =>
             InternalServerError(Json.toJson(errorData.internalServerError))
               .withHeaders(correlationIdHeader -> correlationId)
@@ -207,4 +206,3 @@ class SubscriptionSummaryController @Inject()(
       }
     }
   }
-}
