@@ -34,48 +34,49 @@ object ApprovalStatus extends Enum[ApprovalStatus] {
   val values = findValues
 
   case object Approved extends ApprovalStatus
+
   case object Rejected extends ApprovalStatus
+
   case object Withdrawn extends ApprovalStatus
 
   implicit val approvalStatusWrites: Writes[ApprovalStatus] = {
-    case Approved     => JsString("01")
-    case Rejected     => JsString("02")
-    case Withdrawn    => JsString("03")
+    case Approved => JsString("01")
+    case Rejected => JsString("02")
+    case Withdrawn => JsString("03")
   }
 }
 
 case class EmailPreferences(
-  paperlessPreference: Boolean,
-  emailAddress: Option[String],
-  emailVerificationFlag: Option[Boolean],
-  bouncedEmailFlag: Option[Boolean]
-)
+                             paperlessPreference: Boolean,
+                             emailAddress: Option[String],
+                             emailVerificationFlag: Option[Boolean],
+                             bouncedEmailFlag: Option[Boolean]
+                           )
 
 case class CorrespondenceAddress(
-  addressLine1: Option[String],
-  addressLine2: Option[String] = None,
-  addressLine3: Option[String] = None,
-  addressLine4: Option[String] = None,
-  postcode: Option[String],
-  country: Option[String]
-)
+                                  addressLine1: Option[String],
+                                  addressLine2: Option[String] = None,
+                                  addressLine3: Option[String] = None,
+                                  postCode: Option[String]
+                                )
 
 final case class SubscriptionSummaryResponse(
-  processingDate: Instant,
-  organisationName: String,
-  paperlessPreference: Option[Boolean],
-  emailAddress: Option[String],
-  verifiedEmail: Option[Boolean],
-  bouncedEmail: Option[Boolean],
-  addressLine1: Option[String],
-  addressLine2: Option[String],
-  addressLine3: Option[String],
-  postcode: Option[String],
-  approvalStatus: ApprovalStatus,
-  insolvencyFlag: Boolean
-)
+                                              processingDate: Instant,
+                                              organisationName: String,
+                                              paperlessPreference: Option[Boolean],
+                                              emailAddress: Option[String],
+                                              verifiedEmail: Option[Boolean],
+                                              bouncedEmail: Option[Boolean],
+                                              addressLine1: Option[String],
+                                              addressLine2: Option[String],
+                                              addressLine3: Option[String],
+                                              postCode: Option[String],
+                                              approvalStatus: ApprovalStatus,
+                                              insolvencyFlag: Boolean
+                                            )
 
 object SubscriptionSummaryResponse {
+
   import JsonHelpers.booleanWrites
 
   implicit val subscriptionSummaryResponseWrites: Writes[SubscriptionSummaryResponse] =
