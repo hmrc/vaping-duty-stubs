@@ -215,6 +215,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     val now: Instant = Instant.now(clock)
 
     val controller = new SubscriptionSummaryController(
+      appConfig,
       errorData,
       clock,
       cc
