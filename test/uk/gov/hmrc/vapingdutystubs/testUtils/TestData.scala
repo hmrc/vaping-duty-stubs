@@ -54,36 +54,28 @@ trait TestData extends ModelGenerators {
   val ukCorrespondenceAddress    = CorrespondenceAddress(
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
-    addressLine4 = Some("London"),
-    postCode = Some("AB1 2CD"),
-    country = Some("GB")
+    postCode = Some("AB1 2CD")
   )
   val overseasAddress1           = CorrespondenceAddress(
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
     addressLine3 = Some("Toronto"),
-    postCode = Some("P55555"),
-    country = Some("CA")
+    postCode = Some("P55555")
   )
   val overseasAddress2           = CorrespondenceAddress(
     addressLine1 = Some("1 Example Road"),
     addressLine2 = Some("Barcelona"),
-    postCode = Some("P66666"),
-    country = Some("ES")
+    postCode = Some("P66666")
   )
   val unrecognisedCountryAddress = CorrespondenceAddress(
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
     addressLine3 = Some("District A"),
-    addressLine4 = Some("Hong Kong"),
-    postCode = None,
-    country = Some("HK")
+    postCode = None
   )
   val noCountryAddress           = CorrespondenceAddress(
     addressLine1 = Some("Building 1"),
-    addressLine4 = Some("Example City"),
-    postCode = Some("P88888"),
-    country = None
+    postCode = Some("P88888")
   )
 
   val paperlessPreference                    = PaperlessPreferenceSubmission(true, Some(standardEmailAddress), Some(true), Some(false))

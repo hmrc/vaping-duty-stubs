@@ -57,9 +57,7 @@ case class CorrespondenceAddress(
                                   addressLine1: Option[String],
                                   addressLine2: Option[String] = None,
                                   addressLine3: Option[String] = None,
-                                  addressLine4: Option[String] = None,
-                                  postCode: Option[String],
-                                  country: Option[String]
+                                  postCode: Option[String]
                                 )
 
 final case class SubscriptionSummaryResponse(

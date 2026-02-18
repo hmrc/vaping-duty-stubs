@@ -108,39 +108,31 @@ class SubscriptionSummaryController @Inject()(
             addressLine1 = Some("Flat 123"),
             addressLine2 = Some("1 Example Road"),
             addressLine3 = Some("Toronto"),
-            postCode = Some("P55555"),
-            country = Some("CA")
+            postCode = Some("P55555")
           )
         case 6 => // overseas address 2
           CorrespondenceAddress(
             addressLine1 = Some("1 Example Road"),
             addressLine2 = Some("Barcelona"),
-            postCode = Some("P66666"),
-            country = Some("ES")
+            postCode = Some("P66666")
           )
         case 7 => // country code not in mapping
           CorrespondenceAddress(
             addressLine1 = Some("Flat 123"),
             addressLine2 = Some("1 Example Road"),
             addressLine3 = Some("District A"),
-            addressLine4 = Some("Hong Kong"),
-            postCode = None,
-            country = Some("HK")
+            postCode = None
           )
         case 8 => // no country code
           CorrespondenceAddress(
             addressLine1 = Some("Building 1"),
-            addressLine4 = Some("Example City"),
-            postCode = Some("P88888"),
-            country = None
+            postCode = Some("P88888")
           )
         case _ => // UK address
           CorrespondenceAddress(
             addressLine1 = Some("Flat 123"),
             addressLine2 = Some("1 Example Road"),
-            addressLine4 = Some("London"),
-            postCode = Some("AB1 2CD"),
-            country = Some("GB")
+            postCode = Some("AB1 2CD")
           )
 
     }
