@@ -209,14 +209,10 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
   }
 
   class SetUp {
-    object VpdId {
-
-    }
-
     val badRegime = "not VPD"
     val badIdType = "not ZVPD"
 
-    val now = Instant.now(clock)
+    val now: Instant = Instant.now(clock)
 
     val controller = new SubscriptionSummaryController(
       errorData,
