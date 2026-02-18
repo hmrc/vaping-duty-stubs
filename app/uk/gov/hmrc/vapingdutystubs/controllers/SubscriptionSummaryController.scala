@@ -21,6 +21,7 @@ import play.api.http.HeaderNames
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.vapingdutystubs.config.AppConfig
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
@@ -32,9 +33,10 @@ import java.time.{Clock, Instant}
 import javax.inject.Inject
 
 class SubscriptionSummaryController @Inject()(
-  errorData: ErrorData,
-  clock: Clock,
-  cc: ControllerComponents
+                                            config: AppConfig,
+                                            errorData: ErrorData,
+                                            clock: Clock,
+                                            cc: ControllerComponents
 ) extends BackendController(cc)
     with Logging {
 
@@ -46,18 +48,17 @@ class SubscriptionSummaryController @Inject()(
     xTransmittingSystemHeader
   )
 
-  // Matches third from last digit to the first number in the below regex
-  private val approved     = "\\w+2\\d{2}$".r
-  private val rejected     = "\\w+7\\d{2}$".r
-  private val withdrawn    = "\\w+8\\d{2}$".r
-  private val notFound     = "\\w+4\\d{2}$".r
-  private val badRequest   = "\\w+6\\d{2}$".r
+  private val approved     = config.Patterns.approved
+  private val rejected     = config.Patterns.rejected
+  private val withdrawn    = config.Patterns.withdrawn
+  private val notFound     = config.Patterns.notFound
+  private val badRequest   = config.Patterns.badRequest
   
   private val emailAddress = "john.doe@example.com"
 
   private def getEmailPreferences(idValue: String): EmailPreferences =
     // Regex extracts first digit in String
-    val emailFlagDigit = "[0-9]".r.findFirstIn(idValue).get.toInt
+    val emailFlagDigit = config.Patterns.getEmailFlagDigit(idValue)
 
     emailFlagDigit match {
       case 0 | 5 | 6 | 7 | 8 => // email selected
@@ -99,7 +100,7 @@ class SubscriptionSummaryController @Inject()(
     }
 
   private def getCorrespondenceAddress(idValue: String): CorrespondenceAddress =
-    val emailFlagDigit = "[0-9]".r.findFirstIn(idValue).get.toInt
+    val emailFlagDigit = config.Patterns.getEmailFlagDigit(idValue)
 
       emailFlagDigit match {
         case 5 => // overseas address 1
@@ -145,8 +146,7 @@ class SubscriptionSummaryController @Inject()(
 
   def getSubscriptionSummary(regime: String, idKey: String, idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
-    // Checks that this is a valid VpdId
-    if (!idValue.matches("(?:GB|XI)WK[0-9]{7}WK")) {
+    if (!idValue.matches(config.Patterns.validVpdId)) {
       throw new RuntimeException(s"Bad vpdId '$idValue' sent to stubs")
     } else {
       val correlationId = request.headers
@@ -160,7 +160,7 @@ class SubscriptionSummaryController @Inject()(
         val emailPreferences = getEmailPreferences(idValue)
         val correspondenceAddress = getCorrespondenceAddress(idValue)
 
-        idValue.replaceAll("[a-zA-Z]+", "") match {
+        idValue.replaceAll(config.Patterns.allChars, "") match {
           case approved() =>
             Ok(
               Json.toJson(
