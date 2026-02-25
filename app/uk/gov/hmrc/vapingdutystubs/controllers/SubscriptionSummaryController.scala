@@ -31,13 +31,20 @@ import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 import java.time.{Clock, Instant}
 import javax.inject.Inject
 
-class SubscriptionSummaryController @Inject()(
-                                            config: AppConfig,
-                                            errorData: ErrorData,
-                                            clock: Clock,
-                                            cc: ControllerComponents
+class SubscriptionSummaryController @Inject() (
+    config: AppConfig,
+    errorData: ErrorData,
+    clock: Clock,
+    cc: ControllerComponents
 ) extends BackendController(cc)
     with Logging {
+
+  /** Extracts the email flag digit from a given vpdId
+    *
+    * @return
+    *   extracted email flag digit (first number in given string)
+    */
+  private def getEmailFlagDigit(vpdId: String): Int = "[0-9]".r.findFirstIn(vpdId).get.toInt
 
   private val allReturnsHeaders = Set(
     HeaderNames.AUTHORIZATION,
@@ -47,20 +54,22 @@ class SubscriptionSummaryController @Inject()(
     xTransmittingSystemHeader
   )
 
-  private val approved            = config.Patterns.approved
-  private val rejected            = config.Patterns.rejected
-  private val withdrawn           = config.Patterns.withdrawn
-  private val notFound            = config.Patterns.notFound
-  private val badRequest          = config.Patterns.badRequest
-  private val unprocessableEntity = config.Patterns.unprocessableEntity
-  
+  /** Matches third from last digit to the first number in the below regex
+    */
+  private val approved            = "\\w+2\\d{2}$".r
+  private val rejected            = "\\w+7\\d{2}$".r
+  private val withdrawn           = "\\w+8\\d{2}$".r
+  private val notFound            = "\\w+4\\d{2}$".r
+  private val badRequest          = "\\w+6\\d{2}$".r
+  private val unprocessableEntity = "\\w+5\\d{2}$".r
+
+  private val allChars            = "[a-zA-Z]+"
+
   private val emailAddress = "john.doe@example.com"
 
-  private def getEmailPreferences(idValue: String): EmailPreferences =
-    // Regex extracts first digit in String
-    val emailFlagDigit = config.Patterns.getEmailFlagDigit(idValue)
+  private def getEmailPreferences(idValue: String): EmailPreferences = {
 
-    emailFlagDigit match {
+    getEmailFlagDigit(idValue) match {
       case 0 | 5 | 6 | 7 | 8 => // email selected
         EmailPreferences(
           paperlessPreference = true,
@@ -98,43 +107,44 @@ class SubscriptionSummaryController @Inject()(
         )
 
     }
+  }
 
-  private def getCorrespondenceAddress(idValue: String): CorrespondenceAddress =
-    val emailFlagDigit = config.Patterns.getEmailFlagDigit(idValue)
+  private def getCorrespondenceAddress(idValue: String): CorrespondenceAddress = {
 
-      emailFlagDigit match {
-        case 5 => // overseas address 1
-          CorrespondenceAddress(
-            addressLine1 = Some("Flat 123"),
-            addressLine2 = Some("1 Example Road"),
-            addressLine3 = Some("Toronto"),
-            postCode = Some("P55555")
-          )
-        case 6 => // overseas address 2
-          CorrespondenceAddress(
-            addressLine1 = Some("1 Example Road"),
-            addressLine2 = Some("Barcelona"),
-            postCode = Some("P66666")
-          )
-        case 7 => // country code not in mapping
-          CorrespondenceAddress(
-            addressLine1 = Some("Flat 123"),
-            addressLine2 = Some("1 Example Road"),
-            addressLine3 = Some("District A"),
-            postCode = None
-          )
-        case 8 => // no country code
-          CorrespondenceAddress(
-            addressLine1 = Some("Building 1"),
-            postCode = Some("P88888")
-          )
-        case _ => // UK address
-          CorrespondenceAddress(
-            addressLine1 = Some("Flat 123"),
-            addressLine2 = Some("1 Example Road"),
-            postCode = Some("AB1 2CD")
-          )
+    getEmailFlagDigit(idValue) match {
+      case 5 => // overseas address 1
+        CorrespondenceAddress(
+          addressLine1 = Some("Flat 123"),
+          addressLine2 = Some("1 Example Road"),
+          addressLine3 = Some("Toronto"),
+          postCode = Some("P55555")
+        )
+      case 6 => // overseas address 2
+        CorrespondenceAddress(
+          addressLine1 = Some("1 Example Road"),
+          addressLine2 = Some("Barcelona"),
+          postCode = Some("P66666")
+        )
+      case 7 => // country code not in mapping
+        CorrespondenceAddress(
+          addressLine1 = Some("Flat 123"),
+          addressLine2 = Some("1 Example Road"),
+          addressLine3 = Some("District A"),
+          postCode = None
+        )
+      case 8 => // no country code
+        CorrespondenceAddress(
+          addressLine1 = Some("Building 1"),
+          postCode = Some("P88888")
+        )
+      case _ => // UK address
+        CorrespondenceAddress(
+          addressLine1 = Some("Flat 123"),
+          addressLine2 = Some("1 Example Road"),
+          postCode = Some("AB1 2CD")
+        )
     }
+  }
 
   def getSubscriptionSummary(idValue: String): Action[AnyContent] = Action { request =>
     logHeaders(request, "getSubscriptionSummary", allReturnsHeaders)
@@ -145,57 +155,57 @@ class SubscriptionSummaryController @Inject()(
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-        val now = Instant.now(clock)
-        val emailPreferences = getEmailPreferences(idValue)
-        val correspondenceAddress = getCorrespondenceAddress(idValue)
+      val now                   = Instant.now(clock)
+      val emailPreferences      = getEmailPreferences(idValue)
+      val correspondenceAddress = getCorrespondenceAddress(idValue)
 
-        idValue.replaceAll(config.Patterns.allChars, "") match {
-          case approved() =>
-            Ok(
-              Json.toJson(
-                SubscriptionSummaryData
-                  .approvedSubscriptionSummary(
-                    now,
-                    false,
-                    emailPreferences,
-                    correspondenceAddress
-                  )
-              )
-            ).withHeaders(correlationIdHeader -> correlationId)
-          case rejected() =>
-            Ok(
-              Json.toJson(
-                SubscriptionSummaryData
-                  .rejectedSubscriptionSummary(
-                    now,
-                    false,
-                    emailPreferences,
-                    correspondenceAddress
-                  )
-              )
-            ).withHeaders(correlationIdHeader -> correlationId)
-          case withdrawn() =>
-            Ok(
-              Json.toJson(
-                SubscriptionSummaryData
-                  .withDrawnSubscriptionSummary(
-                    now,
-                    false,
-                    emailPreferences,
-                    correspondenceAddress
-                  )
-              )
-            ).withHeaders(correlationIdHeader -> correlationId)
-          case badRequest() =>
-            BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
-          case notFound() => NotFound
-          case unprocessableEntity() =>
-            UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
-              .withHeaders(correlationIdHeader -> correlationId)
-          case _ =>
-            InternalServerError(Json.toJson(errorData.internalServerError))
-              .withHeaders(correlationIdHeader -> correlationId)
-        }
+      idValue.replaceAll(allChars, "") match {
+        case approved()            =>
+          Ok(
+            Json.toJson(
+              SubscriptionSummaryData
+                .approvedSubscriptionSummary(
+                  now,
+                  false,
+                  emailPreferences,
+                  correspondenceAddress
+                )
+            )
+          ).withHeaders(correlationIdHeader -> correlationId)
+        case rejected()            =>
+          Ok(
+            Json.toJson(
+              SubscriptionSummaryData
+                .rejectedSubscriptionSummary(
+                  now,
+                  false,
+                  emailPreferences,
+                  correspondenceAddress
+                )
+            )
+          ).withHeaders(correlationIdHeader -> correlationId)
+        case withdrawn()           =>
+          Ok(
+            Json.toJson(
+              SubscriptionSummaryData
+                .withDrawnSubscriptionSummary(
+                  now,
+                  false,
+                  emailPreferences,
+                  correspondenceAddress
+                )
+            )
+          ).withHeaders(correlationIdHeader -> correlationId)
+        case badRequest()          =>
+          BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
+        case notFound()            => NotFound
+        case unprocessableEntity() =>
+          UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
+            .withHeaders(correlationIdHeader -> correlationId)
+        case _                     =>
+          InternalServerError(Json.toJson(errorData.internalServerError))
+            .withHeaders(correlationIdHeader -> correlationId)
       }
     }
   }
+}

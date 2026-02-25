@@ -19,33 +19,14 @@ package uk.gov.hmrc.vapingdutystubs.config
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 
-import scala.util.matching.Regex
-
 @Singleton
 class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
 
   object Patterns {
-    /**
-     * Matches third from last digit to the first number in the below regex
-     */
-    val approved: Regex            = "\\w+2\\d{2}$".r
-    val rejected: Regex            = "\\w+7\\d{2}$".r
-    val withdrawn: Regex           = "\\w+8\\d{2}$".r
-    val notFound: Regex            = "\\w+4\\d{2}$".r
-    val badRequest: Regex          = "\\w+6\\d{2}$".r
-    val unprocessableEntity: Regex = "\\w+5\\d{2}$".r
-    
-    val allChars: String   = "[a-zA-Z]+"
 
     /** Determines if a given vpdId is in the correct format */
     val validVpdId: String = "(?:GB|XI)WK[0-9]{7}WK"
-
-    /**
-     * Extracts the email flag digit from a given vpdId
-     * @return extracted email flag digit (first number in given string)
-     */
-    def getEmailFlagDigit(vpdId: String): Int = "[0-9]".r.findFirstIn(vpdId).get.toInt
   }
 }
