@@ -203,15 +203,16 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     val badRegime = "not VPD"
     val badIdType = "not ZVPD"
 
-    val now = Instant.now(clock)
+    val now: Instant = Instant.now(clock)
 
     val controller = new SubscriptionSummaryController(
+      appConfig,
       errorData,
       clock,
       cc
     )
 
-    def vpdId(suffix: String, offFlags: String = "00", emailFlag: String = "0"): String =
-      s"XMADP${emailFlag}0000$offFlags$suffix"
+    def vpdId(suffix: String, offFlags: String = "000", emailFlag: String = "0"): String =
+      s"GBWK${emailFlag}$offFlags${suffix}WK"
   }
 }

@@ -20,6 +20,13 @@ import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 
 @Singleton
-class AppConfig @Inject()(config: Configuration):
+class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
+
+  object Patterns {
+
+    /** Determines if a given vpdId is in the correct format */
+    val validVpdId: String = "(?:GB|XI)WK[0-9]{7}WK"
+  }
+}

@@ -34,7 +34,8 @@ case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
     checkIdRegime(idType, regime, idValue, correlationId)
   }
 
-  private def getStubIndex(vpdId: String): Int = vpdId.takeRight(9).take(1).toInt
+  /** Extracts second int from vpdId */
+  private def getStubIndex(vpdId: String): Int = vpdId.replaceAll("[a-zA-Z]+", "").charAt(1).toString.toInt
   
   private def checkIdRegime(idType: String, regime: String, idValue: String, correlationId: String)
                            (implicit request: Request[JsValue]) = {
