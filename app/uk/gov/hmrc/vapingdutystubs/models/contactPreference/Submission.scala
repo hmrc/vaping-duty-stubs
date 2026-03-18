@@ -16,17 +16,24 @@
 
 package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 
+import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Request, Result}
-import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, Ok, UnprocessableEntity, UnsupportedMediaType, Forbidden}
+import play.api.mvc.Results.{BadRequest, Forbidden, InternalServerError, NotFound, Ok, UnprocessableEntity, UnsupportedMediaType}
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
+import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
+import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences, SubscriptionSummaryResponse}
+import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
+import uk.gov.hmrc.vapingdutystubs.utils.AsyncHelper
 
 import java.time.{Clock, Instant}
-import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{Await, ExecutionContext, Future}
 
-case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
+case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptionSummaryRepository: SubscriptionSummaryRepository)
+                                (implicit ec: ExecutionContext) extends Logging {
 
   def process(idType: String, idValue: String, regime: String, correlationId: String)
              (implicit request: Request[JsValue]): Future[Result] = {
@@ -63,12 +70,12 @@ case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
             .withHeaders(correlationIdHeader -> correlationId)
         )
       } else {
-        getResult(idValue, correlationId)
+        getResult(idValue, correlationId, preference)
       }
 
   }
 
-  private def getResult(idValue: String, correlationId: String) = {
+  private def getResult(idValue: String, correlationId: String, submission: PaperlessPreferenceSubmission) = {
     val now = Instant.now(clock)
     Future.successful(
       getStubIndex(idValue) match {
@@ -83,6 +90,27 @@ case class Submission(clock: Clock, errorData: ErrorData) extends Logging {
         case 7 =>
           BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
         case 8 => NotFound
+        case 9 =>
+          AsyncHelper().await(
+            subscriptionSummaryRepository.set(
+              SubscriptionSummaryData.approvedSubscriptionSummary(
+                Instant.now(),
+                false,
+                EmailPreferences(submission.paperlessPreference, submission.emailAddress, submission.emailVerification, submission.bouncedEmail),
+                CorrespondenceAddress(
+                  addressLine1 = Some("Flat 123"),
+                  addressLine2 = Some("1 Example Road"),
+                  postCode = Some("AB1 2CD")
+                )
+              ), idValue
+          ).map { _ =>
+              Ok(Json.toJson(
+                PaperlessPreferenceSubmittedSuccess(
+                  PaperlessPreferenceSubmittedResponse(processingDate = now, "910000000000")
+                )
+              )).withHeaders(correlationIdHeader -> correlationId)
+            }
+          )
         case _ =>
           InternalServerError(Json.toJson(errorData.internalServerError))
             .withHeaders(correlationIdHeader -> correlationId)
