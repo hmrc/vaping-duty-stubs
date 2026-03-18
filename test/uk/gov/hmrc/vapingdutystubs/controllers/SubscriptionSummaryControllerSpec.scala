@@ -16,16 +16,21 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers
 
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
-import uk.gov.hmrc.vapingdutystubs.models.subscription.EmailPreferences
+import uk.gov.hmrc.vapingdutystubs.models.subscription.{EmailPreferences, SubscriptionSummaryResponse}
+import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
 
 import java.time.Instant
 import scala.concurrent.Future
 
 class SubscriptionSummaryControllerSpec extends SpecBase {
+  val mockRepository: SubscriptionSummaryRepository = mock[SubscriptionSummaryRepository]
+
   "getSubscriptionSummary must" - {
     "return 200 OK with the approval status Approved 01 when the vpdId suffix is 200" in new SetUp {
       val result: Future[Result] =
@@ -103,6 +108,30 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       }
     }
 
+    "return 200 OK with the approval status Approved 01 when the vpdId suffix is 900" in new SetUp {
+      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, false, standardEmailPreferences, ukCorrespondenceAddress)
+
+      when(mockRepository.get(any())).thenReturn(Future.successful(Some(summary)))
+
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("900"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe OK
+      headers(result) mustBe responseHeadersWithCorrelationId
+
+      contentAsJson(result) mustBe Json.toJson(
+        SubscriptionSummaryData
+          .approvedSubscriptionSummary(
+            now,
+            false,
+            standardEmailPreferences,
+            ukCorrespondenceAddress
+          )
+      )
+    }
+
     "return 200 OK with the approval status DeRegistered 02 when the vpdId suffix is 700" in new SetUp {
       val result: Future[Result] =
         controller.getSubscriptionSummary(vpdId("700"))(
@@ -174,9 +203,9 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     }
 
 
-    "return 500 INTERNAL_SERVER_ERROR if the suffix is 900" in new SetUp {
+    "return 500 INTERNAL_SERVER_ERROR if the suffix is 100" in new SetUp {
       val result: Future[Result] =
-        controller.getSubscriptionSummary(vpdId("900"))(
+        controller.getSubscriptionSummary(vpdId("100"))(
           fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
         )
 
@@ -209,7 +238,8 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
       appConfig,
       errorData,
       clock,
-      cc
+      cc,
+      mockRepository
     )
 
     def vpdId(suffix: String, offFlags: String = "000", emailFlag: String = "0"): String =

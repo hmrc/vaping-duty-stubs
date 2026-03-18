@@ -16,15 +16,25 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers.contactPreference
 
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import play.api.{Application, inject}
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.{PaperlessPreferenceSubmittedResponse, PaperlessPreferenceSubmittedSuccess}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.SubscriptionSummaryResponse
+import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
 
 import java.time.Instant
 import scala.concurrent.Future
 
 class EmailContactPreferencesControllerSpec extends SpecBase {
+  val mockRepository: SubscriptionSummaryRepository = mock[SubscriptionSummaryRepository]
+
   "submitPreferences must" - {
     "submit a preference for paperless communication with email details" in new SetUp {
       val vpdId                  = getVpdId('0')
@@ -36,6 +46,30 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
 
       status(result)        mustBe OK
       headers(result)       mustBe responseHeadersWithCorrelationId
+      contentAsJson(result) mustBe Json.toJson(
+        PaperlessPreferenceSubmittedSuccess(
+          PaperlessPreferenceSubmittedResponse(
+            Instant.now(clock),
+            "910000000000"
+          )
+        )
+      )
+    }
+
+    "submit a preference for paperless communication with email details dynamic user" in new SetUp {
+      val vpdId: String = getVpdId('9')
+      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, false, standardEmailPreferences, ukCorrespondenceAddress)
+
+      when(mockRepository.set(any(), any())).thenReturn(Future.successful(summary))
+
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe OK
+      headers(result) mustBe responseHeadersWithCorrelationId
       contentAsJson(result) mustBe Json.toJson(
         PaperlessPreferenceSubmittedSuccess(
           PaperlessPreferenceSubmittedResponse(
@@ -114,7 +148,7 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     }
 
     "correctly return a 500" in new SetUp {
-      val vpdId                  = getVpdId('9')
+      val vpdId                  = getVpdId('1')
       val result: Future[Result] =
         emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
           fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
@@ -178,7 +212,7 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
 
     val now = Instant.now(clock)
 
-    val emailContactPreferencesController = new EmailContactPreferencesController(errorData, clock, cc)
+    val emailContactPreferencesController = new EmailContactPreferencesController(errorData, clock, cc, mockRepository)
 
     def getVpdId(c: Char): String =
       s"${vpdId.take(6)}$c${vpdId.drop(7)}"
