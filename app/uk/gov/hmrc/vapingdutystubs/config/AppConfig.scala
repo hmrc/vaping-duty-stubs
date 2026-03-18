@@ -24,6 +24,8 @@ class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
 
+  val subscriptionSummaryUserTTL: Long = config.get[Long]("mongodb.timeToLive")
+
   object Patterns {
 
     /** Determines if a given vpdId is in the correct format */
