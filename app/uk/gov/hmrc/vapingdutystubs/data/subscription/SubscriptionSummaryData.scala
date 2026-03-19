@@ -44,7 +44,7 @@ object SubscriptionSummaryData {
       postCode = correspondenceAddress.postCode,
       approvalStatus = approvalStatus,
       insolvencyFlag = insolvencyFlag,
-      None
+      vpdId = None
     )
 
 
