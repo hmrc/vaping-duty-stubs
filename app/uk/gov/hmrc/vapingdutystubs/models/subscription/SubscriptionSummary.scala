@@ -88,10 +88,6 @@ object SubscriptionSummaryResponse {
 
   import JsonHelpers.*
 
-//  implicit val format: OFormat[SubscriptionSummaryResponse] =
-//    Json.format[SubscriptionSummaryResponse]
-
-
   implicit def format: OFormat[SubscriptionSummaryResponse] =
     (
       (__ \ "processingDate").format(MongoJavatimeFormats.instantFormat) and
