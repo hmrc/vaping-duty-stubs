@@ -19,18 +19,17 @@ package uk.gov.hmrc.vapingdutystubs.models.contactPreference
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Request, Result}
 import play.api.mvc.Results.{BadRequest, Forbidden, InternalServerError, NotFound, Ok, UnprocessableEntity, UnsupportedMediaType}
+import play.api.mvc.{Request, Result}
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
-import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences, SubscriptionSummaryResponse}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
 import uk.gov.hmrc.vapingdutystubs.utils.AsyncHelper
 
 import java.time.{Clock, Instant}
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptionSummaryRepository: SubscriptionSummaryRepository)
                                 (implicit ec: ExecutionContext) extends Logging {
