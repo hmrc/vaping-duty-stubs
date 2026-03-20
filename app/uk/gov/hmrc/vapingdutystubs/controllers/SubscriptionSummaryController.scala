@@ -26,24 +26,27 @@ import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
+import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
+import uk.gov.hmrc.vapingdutystubs.utils.AsyncHelper
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import java.time.{Clock, Instant}
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
-class SubscriptionSummaryController @Inject() (
-    config: AppConfig,
-    errorData: ErrorData,
-    clock: Clock,
-    cc: ControllerComponents
-) extends BackendController(cc)
-    with Logging {
+class SubscriptionSummaryController @Inject()(
+                                               config: AppConfig,
+                                               errorData: ErrorData,
+                                               clock: Clock,
+                                               cc: ControllerComponents,
+                                               subscriptionSummaryRepository: SubscriptionSummaryRepository
+                                             )(implicit ec: ExecutionContext) extends BackendController(cc) with Logging {
 
   /** Extracts the email flag digit from a given vpdId
-    *
-    * @return
-    *   extracted email flag digit (first number in given string)
-    */
+   *
+   * @return
+   * extracted email flag digit (first number in given string)
+   */
   private def getEmailFlagDigit(vpdId: String): Int = "[0-9]".r.findFirstIn(vpdId).get.toInt
 
   private val allReturnsHeaders = Set(
@@ -55,15 +58,17 @@ class SubscriptionSummaryController @Inject() (
   )
 
   /** Matches third from last digit to the first number in the below regex
-    */
+   */
   private val approved            = "\\w+2\\d{2}$".r
   private val rejected            = "\\w+7\\d{2}$".r
   private val withdrawn           = "\\w+8\\d{2}$".r
   private val notFound            = "\\w+4\\d{2}$".r
   private val badRequest          = "\\w+6\\d{2}$".r
   private val unprocessableEntity = "\\w+5\\d{2}$".r
+  private val dynamic             = "\\w+9\\d{2}$".r
 
-  private val allChars            = "[a-zA-Z]+"
+
+  private val allChars = "[a-zA-Z]+"
 
   private val emailAddress = "john.doe@example.com"
 
@@ -77,28 +82,28 @@ class SubscriptionSummaryController @Inject() (
           emailVerificationFlag = Some(true),
           bouncedEmailFlag = Some(false)
         )
-      case 1                 => // paper selected, has email in system with no problems
+      case 1 => // paper selected, has email in system with no problems
         EmailPreferences(
           paperlessPreference = false,
           emailAddress = Some(emailAddress),
           emailVerificationFlag = Some(true),
           bouncedEmailFlag = Some(false)
         )
-      case 2                 => // paper selected, has unverified email in system
+      case 2 => // paper selected, has unverified email in system
         EmailPreferences(
           paperlessPreference = false,
           emailAddress = Some(emailAddress),
           emailVerificationFlag = Some(false),
           bouncedEmailFlag = Some(false)
         )
-      case 3                 => // paper selected, has bounced email in system
+      case 3 => // paper selected, has bounced email in system
         EmailPreferences(
           paperlessPreference = false,
           emailAddress = Some(emailAddress),
           emailVerificationFlag = Some(true),
           bouncedEmailFlag = Some(true)
         )
-      case _                 => // paper selected, no email in system
+      case _ => // paper selected, no email in system
         EmailPreferences(
           paperlessPreference = false,
           emailAddress = None,
@@ -155,12 +160,12 @@ class SubscriptionSummaryController @Inject() (
         .get(correlationIdHeader)
         .getOrElse(throw new IllegalArgumentException("Expected correlation ID header"))
 
-      val now                   = Instant.now(clock)
-      val emailPreferences      = getEmailPreferences(idValue)
+      val now = Instant.now(clock)
+      val emailPreferences = getEmailPreferences(idValue)
       val correspondenceAddress = getCorrespondenceAddress(idValue)
 
       idValue.replaceAll(allChars, "") match {
-        case approved()            =>
+        case approved() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
@@ -172,7 +177,7 @@ class SubscriptionSummaryController @Inject() (
                 )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
-        case rejected()            =>
+        case rejected() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
@@ -184,7 +189,7 @@ class SubscriptionSummaryController @Inject() (
                 )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
-        case withdrawn()           =>
+        case withdrawn() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
@@ -196,13 +201,25 @@ class SubscriptionSummaryController @Inject() (
                 )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
-        case badRequest()          =>
+        case dynamic() =>
+          AsyncHelper().await(
+            subscriptionSummaryRepository.get(idValue).flatMap {
+              case Some(value) => Future.successful(Ok(Json.toJson(value)))
+              case None =>
+                subscriptionSummaryRepository.set(SubscriptionSummaryData
+                    .approvedSubscriptionSummary(now, false, emailPreferences, correspondenceAddress), idValue)
+                  .flatMap { data =>
+                    Future.successful(Ok(Json.toJson(data)))
+                  }
+            }
+          ).withHeaders(correlationIdHeader -> correlationId)
+        case badRequest() =>
           BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
-        case notFound()            => NotFound
+        case notFound() => NotFound
         case unprocessableEntity() =>
           UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
             .withHeaders(correlationIdHeader -> correlationId)
-        case _                     =>
+        case _ =>
           InternalServerError(Json.toJson(errorData.internalServerError))
             .withHeaders(correlationIdHeader -> correlationId)
       }

@@ -17,7 +17,9 @@
 package uk.gov.hmrc.vapingdutystubs.models.subscription
 
 import enumeratum.{Enum, EnumEntry}
-import play.api.libs.json._
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.vapingdutystubs.models.JsonHelpers
 
 import java.time.Instant
@@ -43,6 +45,12 @@ object ApprovalStatus extends Enum[ApprovalStatus] {
     case Approved => JsString("01")
     case Rejected => JsString("02")
     case Withdrawn => JsString("03")
+  }
+
+  implicit val approvalStatusReads: Reads[ApprovalStatus] = {
+    case JsString("01") => JsSuccess(Approved)
+    case JsString("02") => JsSuccess(Rejected)
+    case JsString("03") => JsSuccess(Withdrawn)
   }
 }
 
@@ -72,13 +80,28 @@ final case class SubscriptionSummaryResponse(
                                               addressLine3: Option[String],
                                               postCode: Option[String],
                                               approvalStatus: ApprovalStatus,
-                                              insolvencyFlag: Boolean
+                                              insolvencyFlag: Boolean,
+                                              vpdId: Option[String]
                                             )
 
 object SubscriptionSummaryResponse {
 
-  import JsonHelpers.booleanWrites
+  import JsonHelpers.*
 
-  implicit val subscriptionSummaryResponseWrites: Writes[SubscriptionSummaryResponse] =
-    Json.writes[SubscriptionSummaryResponse]
+  implicit def format: OFormat[SubscriptionSummaryResponse] =
+    (
+      (__ \ "processingDate").format(MongoJavatimeFormats.instantFormat) and
+        (__ \ "organisationName").format[String] and
+        (__ \ "paperlessPreference").formatNullable[Boolean] and
+        (__ \ "emailAddress").formatNullable[String] and
+        (__ \ "verifiedEmail").formatNullable[Boolean] and
+        (__ \ "bouncedEmail").formatNullable[Boolean] and
+        (__ \ "addressLine1").formatNullable[String] and
+        (__ \ "addressLine2").formatNullable[String] and
+        (__ \ "addressLine3").formatNullable[String] and
+        (__ \ "postCode").formatNullable[String] and
+        (__ \ "approvalStatus").format[ApprovalStatus] and
+        (__ \ "insolvencyFlag").format[Boolean] and
+        (__ \ "vpdId").formatNullable[String]
+      )(SubscriptionSummaryResponse.apply, o => Tuple.fromProductTyped(o))
 }

@@ -24,16 +24,19 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
+import uk.gov.hmrc.vapingdutystubs.repositories.SubscriptionSummaryRepository
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import java.time.Clock
 import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class EmailContactPreferencesController @Inject()(
   errorData: ErrorData,
   clock: Clock,
-  cc: ControllerComponents
-) extends BackendController(cc)
+  cc: ControllerComponents,
+  subscriptionSummaryRepository: SubscriptionSummaryRepository
+)(implicit ec: ExecutionContext) extends BackendController(cc)
     with Logging {
 
   private val submitPreferencesHeaders = Set(
@@ -56,6 +59,6 @@ class EmailContactPreferencesController @Inject()(
           throw new IllegalArgumentException("Expected correlation ID header")
         )
 
-      Submission(clock, errorData).process(idType, idValue, regime, correlationId)
+      Submission(clock, errorData, subscriptionSummaryRepository).process(idType, idValue, regime, correlationId)
   }
 }

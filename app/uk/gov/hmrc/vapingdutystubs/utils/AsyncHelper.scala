@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.Configuration
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{Await, Awaitable}
 
-@Singleton
-class AppConfig @Inject()(config: Configuration) {
-
-  val appName: String = config.get[String]("appName")
-
-  val subscriptionSummaryUserTTL: Long = config.get[Long]("mongodb.timeToLive")
-
-  object Patterns {
-
-    /** Determines if a given vpdId is in the correct format */
-    val validVpdId: String = "(?:GB|XI)WK[0-9]{7}WK"
+case class AsyncHelper() {
+  def await[T](awaitable: Awaitable[T]): T = {
+    Await.result(awaitable, FiniteDuration(10.toLong, "seconds"))
   }
 }
