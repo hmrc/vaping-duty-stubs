@@ -42,10 +42,13 @@ class SubmitReturnController @Inject()(
 
   private val submitPreferencesHeaders = Set(
     HeaderNames.AUTHORIZATION,
+    xMessageType,
+    xRegimeType,
     correlationIdHeader,
     xOriginatingSystemHeader,
     xReceiptDateHeader,
-    xTransmittingSystemHeader
+    xTransmittingSystemHeader,
+    xZVPD
   )
 
   def submitReturn(): Action[JsValue] = Action.async(parse.json) {

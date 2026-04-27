@@ -23,7 +23,9 @@ object Constants {
     val xOriginatingSystemHeader: String  = "X-Originating-System"
     val xReceiptDateHeader: String        = "X-Receipt-Date"
     val xTransmittingSystemHeader: String = "X-Transmitting-System"
-    val xZAD: String                      = "X-ZAD"
+    val xZVPD: String                     = "X-ZVPD"
+    val xMessageType                      = "X-Message-Type"
+    val xRegimeType                       = "X-Regime-Type"
   }
 
   val ukTimeZoneStringId = "Europe/London"
