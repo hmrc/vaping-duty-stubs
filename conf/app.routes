@@ -13,4 +13,5 @@ PUT        /etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue  
 # Email verification
 GET        /email-verification/verification-status/:credId                                   uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailVerificationController.getVerifiedEmails(credId)
 
-###
+### Returns ###
+POST       /etmp/RESTAdapter/vpd/return                                                     uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
