@@ -33,14 +33,11 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubmitReturnController @Inject()(
-  errorData: ErrorData,
-  clock: Clock,
-  cc: ControllerComponents,
-  subscriptionSummaryRepository: SubscriptionSummaryRepository
-)(using ExecutionContext) extends BackendController(cc)
-    with Logging {
+                                        cc: ControllerComponents,
+                                      )(using ExecutionContext) extends BackendController(cc)
+  with Logging {
 
-  private val submitPreferencesHeaders = Set(
+  private val submitReturnHeaders = Set(
     HeaderNames.AUTHORIZATION,
     xMessageType,
     xRegimeType,
@@ -53,26 +50,27 @@ class SubmitReturnController @Inject()(
 
   def submitReturn(): Action[JsValue] = Action.async(parse.json) {
     implicit request =>
-      logHeaders(request, "submitReturn", submitPreferencesHeaders)
+      logHeaders(request, "submitReturn", submitReturnHeaders)
 
-      logger.info(s"Email contact preference submission received with json: ${request.body}")
+      logger.info(s"Return submission received with json: ${request.body}")
 
       val correlationId = request.headers
         .get(correlationIdHeader)
         .getOrElse(
           throw new IllegalArgumentException("Expected correlation ID header")
         )
-    Future.successful(
-      Created(Json.toJson(ReturnCreateResponse(
-        ReturnSubmittedResponse(
-          processingDate = Instant.now(),
-          vpdReferenceNumber = "vpdReferenceNumber",
-          submissionID = Option("submissionID"),
-          chargeReference = Option("chargeReference"),
-          amount = BigDecimal(0),
-          paymentDueDate = Option(LocalDate.now())
-        )
-      )))
-)
+
+      Future.successful(
+        Created(Json.toJson(ReturnCreateResponse(
+          ReturnSubmittedResponse(
+            processingDate = Instant.now(),
+            vpdReferenceNumber = "vpdReferenceNumber",
+            submissionID = Option("submissionID"),
+            chargeReference = Option("chargeReference"),
+            amount = BigDecimal(0),
+            paymentDueDate = Option(LocalDate.now())
+          )
+        )))
+      )
   }
 }
