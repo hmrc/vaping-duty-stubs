@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,22 @@
 
 package uk.gov.hmrc.vapingdutystubs.models.returns
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.Json
+import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 
-case class RegularReturn(
-  taxType: String,
-  dutyRate: BigDecimal,
-  amountProducedLiquid: BigDecimal,
-  dutyDue: BigDecimal
-)
+class NilReturnSpec extends SpecBase {
+  val nilReturn: NilReturn =
+    NilReturn("nil")
 
-object RegularReturn {
-  given OFormat[RegularReturn] = Json.format[RegularReturn]
+  "NilReturn" - {
+    val json = """{"vapingProductsProduced":"nil"}"""
+
+    "must serialise to json" in {
+      Json.toJson(nilReturn).toString() mustBe json
+    }
+
+    "must deserialise from json" in {
+      Json.parse(json).as[NilReturn] mustBe nilReturn
+    }
+  }
 }
