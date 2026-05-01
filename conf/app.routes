@@ -5,7 +5,7 @@ GET        /ping                                                                
 ### Contact Preferences ###
 
 # 1644
-GET        /etmp/RESTAdapter/vpd/subscription/:idValue                                        uk.gov.hmrc.vapingdutystubs.controllers.SubscriptionSummaryController.getSubscriptionSummary(idValue)
+GET        /etmp/RESTAdapter/vpd/subscription/:idValue                                       uk.gov.hmrc.vapingdutystubs.controllers.SubscriptionSummaryController.getSubscriptionSummary(idValue)
 
 # 1608
 PUT        /etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue               uk.gov.hmrc.vapingdutystubs.controllers.contactPreference.EmailContactPreferencesController.submitPreferences(regime, idType, idValue)
@@ -15,7 +15,7 @@ GET        /email-verification/verification-status/:credId                      
 
 ### Obligations ###
 
-GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations                                  uk.gov.hmrc.vapingdutystubs.controllers.ObligationsController.get()
+GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations                               uk.gov.hmrc.vapingdutystubs.controllers.ObligationsController.get()
 
 ### Returns ###
-POST       /etmp/RESTAdapter/vpd/return                                                     uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
+POST       /etmp/RESTAdapter/vpd/return                                                      uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
