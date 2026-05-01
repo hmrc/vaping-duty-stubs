@@ -14,19 +14,24 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.config
+package uk.gov.hmrc.vapingdutystubs.models.returns
 
-object Constants {
+import play.api.libs.json.Json
+import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 
-  object Headers {
-    val correlationIdHeader: String       = "correlationid"
-    val xOriginatingSystemHeader: String  = "X-Originating-System"
-    val xReceiptDateHeader: String        = "X-Receipt-Date"
-    val xTransmittingSystemHeader: String = "X-Transmitting-System"
-    val xZVPD: String                     = "X-ZVPD"
-    val xMessageType                      = "X-Message-Type"
-    val xRegimeType                       = "X-Regime-Type"
+class NilReturnSpec extends SpecBase {
+  val nilReturn: NilReturn =
+    NilReturn("nil")
+
+  "NilReturn" - {
+    val json = """{"vapingProductsProduced":"nil"}"""
+
+    "must serialise to json" in {
+      Json.toJson(nilReturn).toString() mustBe json
+    }
+
+    "must deserialise from json" in {
+      Json.parse(json).as[NilReturn] mustBe nilReturn
+    }
   }
-
-  val ukTimeZoneStringId = "Europe/London"
 }
