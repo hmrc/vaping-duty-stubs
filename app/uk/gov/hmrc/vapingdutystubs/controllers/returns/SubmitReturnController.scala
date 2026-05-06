@@ -22,7 +22,7 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
-import uk.gov.hmrc.vapingdutystubs.models.returns.{ReturnCreateResponse, ReturnSubmittedResponse}
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateResponse, ReturnSubmittedResponse}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import java.time.{Instant, LocalDate}

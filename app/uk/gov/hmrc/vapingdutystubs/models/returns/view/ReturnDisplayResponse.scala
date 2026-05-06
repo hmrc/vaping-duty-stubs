@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.returns
+package uk.gov.hmrc.vapingdutystubs.models.returns.view
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.vapingdutystubs.models.returns.view.ReturnDisplaySuccess
 
-case class ReturnCreateRequest(
-  periodKey: String,
-  vapingProductsProduced: VapingProductsProduced,
-  totalDutyDue: TotalDutyDue
+final case class ReturnDisplayResponse(
+  success: ReturnDisplaySuccess
 )
 
-object ReturnCreateRequest {
-  given OFormat[ReturnCreateRequest] = Json.format[ReturnCreateRequest]
+object ReturnDisplayResponse {
+  given OFormat[ReturnDisplayResponse] = Json.format[ReturnDisplayResponse]
 }
