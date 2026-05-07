@@ -15,7 +15,7 @@ GET        /email-verification/verification-status/:credId                      
 
 ### Obligations ###
 
-GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations/:vpdId                        uk.gov.hmrc.vapingdutystubs.controllers.ObligationsController.get(vpdId: String)
+GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations                               uk.gov.hmrc.vapingdutystubs.controllers.ObligationsController.get()
 
 ### Returns ###
 POST       /etmp/RESTAdapter/vpd/return                                                      uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()

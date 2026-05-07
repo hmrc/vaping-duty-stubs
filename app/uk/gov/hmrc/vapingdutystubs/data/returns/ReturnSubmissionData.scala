@@ -77,9 +77,9 @@ object ReturnSubmissionData {
   }
 
   val sampleVpdIds: Seq[String] = Seq(
-    "GBWK0000000001WK",
-    "GBWK0000000002WK",
-    "GBWK0000000003WK"
+    "GBWK0000001WK",
+    "GBWK0000002WK",
+    "GBWK0000003WK"
   )
 
   def allSampleReturnSubmissions: Seq[ReturnSubmission] =

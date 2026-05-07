@@ -88,7 +88,7 @@ class ViewReturnControllerSpec extends SpecBase {
       
       val response = contentAsJson(result).as[ReturnDisplayResponse]
       response.success.idDetails.value.vpdReference mustBe vpdId
-      response.success.idDetails.value.submissionID.value mustBe testSubmissionId
+      response.success.idDetails.value.submissionId.value mustBe testSubmissionId
       response.success.chargeDetails.value.chargeReference.value mustBe testChargeReference
       response.success.chargeDetails.value.periodKey mustBe testPeriodKey
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.returns
+package uk.gov.hmrc.vapingdutystubs.models.obligations
 
-import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
-
-import java.time.Instant
-
-case class ReturnSubmission(
-  vpdId: String,
-  periodKey: String,
-  chargeReference: String,
-  submittedReturn: ReturnCreateRequest,
-  submittedAt: Instant,
-  submissionId: String
-)
-
-object ReturnSubmission {
-  given format: OFormat[ReturnSubmission] = Json.format[ReturnSubmission]
-}
+enum ObligationStatus: 
+  case O, F, A

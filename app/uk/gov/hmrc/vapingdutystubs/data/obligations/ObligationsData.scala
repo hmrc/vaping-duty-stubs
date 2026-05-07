@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.obligations
 
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 
 import java.time.LocalDate
 
@@ -77,10 +77,55 @@ object ObligationsData {
     )
   }
 
+  def createMockObligationsResponse(): ObligationsResponse = {
+    val currentDate = LocalDate.now()
+
+    ObligationsResponse(
+      obligation = Seq(
+        // Outstanding return - Due
+        ObligationItem(
+          identification = None,
+          obligationDetails = ObligationDetails(
+            openOrFulfilledStatus = "O",
+            iCFromDate = LocalDate.of(2027, 12, 1),
+            iCToDate = LocalDate.of(2027, 12, 31),
+            iCDateReceived = None,
+            iCDueDate = currentDate.plusDays(10),
+            periodKey = "27AL"
+          )
+        ),
+        // Outstanding return - Overdue
+        ObligationItem(
+          identification = None,
+          obligationDetails = ObligationDetails(
+            openOrFulfilledStatus = "O",
+            iCFromDate = LocalDate.of(2027, 11, 1),
+            iCToDate = LocalDate.of(2027, 11, 30),
+            iCDateReceived = None,
+            iCDueDate = currentDate.minusDays(5),
+            periodKey = "27AK"
+          )
+        ),
+        // Completed return
+        ObligationItem(
+          identification = None,
+          obligationDetails = ObligationDetails(
+            openOrFulfilledStatus = "F",
+            iCFromDate = LocalDate.of(2027, 10, 1),
+            iCToDate = LocalDate.of(2027, 10, 31),
+            iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
+            iCDueDate = LocalDate.of(2027, 11, 30),
+            periodKey = "27AJ"
+          )
+        )
+      )
+    )
+  }
+
   val sampleVpdIds: Seq[String] = Seq(
-    "GBWK0000000001WK",
-    "GBWK0000000002WK",
-    "GBWK0000000003WK"
+    "GBWK0000001WK",
+    "GBWK0000002WK",
+    "GBWK0000003WK"
   )
 
   def allSampleObligations: Seq[ObligationState] =

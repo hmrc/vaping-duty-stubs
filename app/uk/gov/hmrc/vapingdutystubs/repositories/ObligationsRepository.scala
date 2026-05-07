@@ -22,7 +22,7 @@ import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.vapingdutystubs.config.AppConfig
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationState}
 
-import java.time.Instant
+import java.time.{Instant, LocalDate, ZoneId}
 import java.util.concurrent.TimeUnit
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,8 +41,13 @@ class ObligationsRepository @Inject()(
           Indexes.ascending("_id"),
           IndexOptions()
             .name("vpdIdIdx")
+        ),
+        IndexModel(
+          Indexes.ascending("lastUpdated"),
+          IndexOptions()
+            .name("lastUpdatedIdx")
             .expireAfter(config.obligationsTTL, TimeUnit.SECONDS)
-        )
+        ),
       ),
       extraCodecs = Seq.empty,
       replaceIndexes = true
@@ -72,8 +77,8 @@ class ObligationsRepository @Inject()(
           if (item.obligationDetails.periodKey == periodKey) {
             item.copy(
               obligationDetails = item.obligationDetails.copy(
-                status = "F",
-                received = Some(receivedDate)
+                openOrFulfilledStatus = "F",
+                iCDateReceived = Some(LocalDate.ofInstant(receivedDate, ZoneId.systemDefault()))
               )
             )
           } else {

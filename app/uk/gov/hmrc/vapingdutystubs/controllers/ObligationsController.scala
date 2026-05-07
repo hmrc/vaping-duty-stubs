@@ -18,12 +18,12 @@ package uk.gov.hmrc.vapingdutystubs.controllers
 
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationsResponse}
+import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationState, ObligationStatus, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
-import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
@@ -33,59 +33,34 @@ class ObligationsController @Inject()(
   obligationsRepository: ObligationsRepository
 )(using ExecutionContext) extends BackendController(cc) with Logging {
 
-  def get(vpdId: String): Action[AnyContent] = Action.async {
-    obligationsRepository.get(vpdId).map {
+  def get(): Action[AnyContent] = Action.async { request =>
+
+    val params = extractParameters(request)
+    
+    obligationsRepository.get(params._2).map {
       case Some(obligationState) =>
-        logger.info(s"Found obligations for vpdId=$vpdId")
+        logger.info(s"Found obligations for vpdId=${params._2}")
         Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations)))
       case None =>
-        logger.info(s"No obligations found for vpdId=$vpdId - returning generated data")
-        Ok(Json.toJson(createMockObligationsResponse()))
+        logger.info(s"No obligations found for vpdId=${params._2} - returning generated data")
+        Ok(Json.toJson(ObligationsData.createMockObligationsResponse()))
     }
   }
 
-  private def createMockObligationsResponse(): ObligationsResponse = {
-    val currentDate = LocalDate.now()
+  private def extractParameters(request: Request[_]) = {
+    val params = request.queryString.view.mapValues(_.mkString(","))
 
-    ObligationsResponse(
-      obligation = Seq(
-        // Outstanding return - Due
-        ObligationItem(
-          identification = None,
-          obligationDetails = ObligationDetails(
-            openOrFulfilledStatus = "O",
-            iCFromDate = LocalDate.of(2027, 12, 1),
-            iCToDate = LocalDate.of(2027, 12, 31),
-            iCDateReceived = None,
-            iCDueDate = currentDate.plusDays(10),
-            periodKey = "27AL"
-          )
-        ),
-        // Outstanding return - Overdue
-        ObligationItem(
-          identification = None,
-          obligationDetails = ObligationDetails(
-            openOrFulfilledStatus = "O",
-            iCFromDate = LocalDate.of(2027, 11, 1),
-            iCToDate = LocalDate.of(2027, 11, 30),
-            iCDateReceived = None,
-            iCDueDate = currentDate.minusDays(5),
-            periodKey = "27AK"
-          )
-        ),
-        // Completed return
-        ObligationItem(
-          identification = None,
-          obligationDetails = ObligationDetails(
-            openOrFulfilledStatus = "F",
-            iCFromDate = LocalDate.of(2027, 10, 1),
-            iCToDate = LocalDate.of(2027, 10, 31),
-            iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-            iCDueDate = LocalDate.of(2027, 11, 30),
-            periodKey = "27AJ"
-          )
-        )
-      )
-    )
+    logger.info(s"Received the following parameters: ${params.mkString(",")}")
+
+    val status = params.getOrElse("displayRequest", throw new IllegalArgumentException("Expected displayRequest in parameters")) match {
+      case "O" => ObligationStatus.O
+      case "F" => ObligationStatus.F
+      case "A" => ObligationStatus.A
+      case _ => throw new IllegalArgumentException("Invalid status parameter")
+    }
+
+    val vpdId = params.getOrElse("referenceNumber", throw new IllegalArgumentException("Expected referenceNumber in parameters"))
+
+    (status, vpdId)
   }
 }

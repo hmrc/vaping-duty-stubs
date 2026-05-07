@@ -44,11 +44,7 @@ class ViewReturnController @Inject()(
           Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
         case None =>
           logger.info(s"No return submission found for vpdId=$vpdReference, periodKey=$periodKey - returning generated data")
-          Ok(Json.toJson(ReturnsData(
-            vpdReference,
-            periodKey,
-            submissionId = "submissionId"
-          )))
+          Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId")))
       }
   }
 }

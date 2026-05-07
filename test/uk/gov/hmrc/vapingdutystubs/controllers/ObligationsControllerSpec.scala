@@ -77,7 +77,12 @@ class ObligationsControllerSpec extends SpecBase {
       when(mockObligationsRepository.get(eqTo(vpdId)))
         .thenReturn(Future.successful(Some(testObligationState)))
 
-      val result: Future[Result] = controller.get(vpdId)(fakeRequest)
+      val result: Future[Result] = controller.get()(fakeRequestWithParameters(
+        Map[String, String](
+          "displayRequest" -> "A",
+          "referenceNumber" -> vpdId
+        )
+      ))
 
       status(result) mustBe OK
       
@@ -92,7 +97,12 @@ class ObligationsControllerSpec extends SpecBase {
       when(mockObligationsRepository.get(eqTo(vpdId)))
         .thenReturn(Future.successful(None))
 
-      val result: Future[Result] = controller.get(vpdId)(fakeRequest)
+      val result: Future[Result] = controller.get()(fakeRequestWithParameters(
+        Map[String, String](
+          "displayRequest" -> "A",
+          "referenceNumber" -> vpdId
+        )
+      ))
 
       status(result) mustBe OK
       
