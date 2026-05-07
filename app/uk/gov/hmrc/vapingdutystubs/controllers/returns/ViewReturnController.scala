@@ -23,6 +23,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateResponse, ReturnSubmittedResponse}
+import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import javax.inject.Inject
@@ -30,18 +31,24 @@ import scala.concurrent.ExecutionContext
 import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnsData
 
 class ViewReturnController @Inject()(
-                                        cc: ControllerComponents,
-                                      )(using ExecutionContext) extends BackendController(cc)
+  cc: ControllerComponents,
+  returnSubmissionRepository: ReturnSubmissionRepository
+)(using ExecutionContext) extends BackendController(cc)
   with Logging {
 
-  def viewReturn(vpdReference: String, periodKey: String): Action[AnyContent] = Action {
+  def viewReturn(vpdReference: String, periodKey: String): Action[AnyContent] = Action.async {
     implicit request =>
-      Ok(
-        Json.toJson(ReturnsData(
-          vpdReference,
-          periodKey,
-          submissionId = "submissionId"
-        ))
-      )
+      returnSubmissionRepository.get(vpdReference, periodKey).map {
+        case Some(submission) =>
+          logger.info(s"Found return submission for vpdId=$vpdReference, periodKey=$periodKey")
+          Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
+        case None =>
+          logger.info(s"No return submission found for vpdId=$vpdReference, periodKey=$periodKey - returning generated data")
+          Ok(Json.toJson(ReturnsData(
+            vpdReference,
+            periodKey,
+            submissionId = "submissionId"
+          )))
+      }
   }
 }

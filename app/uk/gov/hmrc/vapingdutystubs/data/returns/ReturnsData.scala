@@ -16,13 +16,12 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.returns
 
-import uk.gov.hmrc.vapingdutystubs.models.returns.{TotalDutyDue, VapingProductsProduced}
+import uk.gov.hmrc.vapingdutystubs.models.returns.{ReturnSubmission, TotalDutyDue, VapingProductsProduced}
 import uk.gov.hmrc.vapingdutystubs.models.returns.view.*
 
-import java.time.Instant
+import java.time.{Instant, LocalDate, ZoneId}
 import uk.gov.hmrc.vapingdutystubs.models.returns.NilReturn
 import uk.gov.hmrc.vapingdutystubs.models.returns.RegularReturn
-import java.time.LocalDate
 
 object ReturnsData {
   private val now = Instant.now()
@@ -65,6 +64,32 @@ object ReturnsData {
       underDeclaration = None,
       spoiltProduct = None,
       totalDutyDue = Some(totalDutyDue),
+      totalDutyDueByTaxType = None,
+      otherOptions = None
+    )
+
+    ReturnDisplayResponse(success = successResponse)
+  }
+
+  def fromSubmission(submission: ReturnSubmission): ReturnDisplayResponse = {
+    val submittedReturn = submission.submittedReturn
+    val receiptDate = submission.submittedAt.atZone(ZoneId.systemDefault()).toLocalDate
+
+    val successResponse = ReturnDisplaySuccess(
+      processingDate = submission.submittedAt,
+      idDetails = Some(IdDetails(submission.vpdId, Some(submission.submissionId))),
+      chargeDetails = Some(ChargeDetails(
+        periodKey = submission.periodKey,
+        chargeReference = Some(submission.chargeReference),
+        periodFrom = receiptDate.withDayOfMonth(1),
+        periodTo = receiptDate.withDayOfMonth(receiptDate.lengthOfMonth()),
+        receiptDate = submission.submittedAt
+      )),
+      vapingProductsProduced = Some(submittedReturn.vapingProductsProduced),
+      overDeclaration = None,
+      underDeclaration = None,
+      spoiltProduct = None,
+      totalDutyDue = Some(submittedReturn.totalDutyDue),
       totalDutyDueByTaxType = None,
       otherOptions = None
     )

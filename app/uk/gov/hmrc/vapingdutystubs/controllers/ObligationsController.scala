@@ -21,17 +21,27 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationsResponse}
+import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
 import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.ExecutionContext
 
 @Singleton()
 class ObligationsController @Inject()(
-                                       cc: ControllerComponents
-                                     ) extends BackendController(cc) with Logging {
+  cc: ControllerComponents,
+  obligationsRepository: ObligationsRepository
+)(using ExecutionContext) extends BackendController(cc) with Logging {
 
-  def get(): Action[AnyContent] = Action {
-      Ok(Json.toJson(createMockObligationsResponse()))
+  def get(vpdId: String): Action[AnyContent] = Action.async {
+    obligationsRepository.get(vpdId).map {
+      case Some(obligationState) =>
+        logger.info(s"Found obligations for vpdId=$vpdId")
+        Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations)))
+      case None =>
+        logger.info(s"No obligations found for vpdId=$vpdId - returning generated data")
+        Ok(Json.toJson(createMockObligationsResponse()))
+    }
   }
 
   private def createMockObligationsResponse(): ObligationsResponse = {

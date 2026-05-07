@@ -17,7 +17,8 @@
 package uk.gov.hmrc.vapingdutystubs
 
 import com.google.inject.AbstractModule
-import uk.gov.hmrc.vapingdutystubs.config.AppConfig
+import uk.gov.hmrc.vapingdutystubs.config.{AppConfig, StartupSeeder}
+import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
 
 import java.time.Clock
 
@@ -26,5 +27,8 @@ class Module extends AbstractModule {
   override def configure(): Unit = {
     bind(classOf[AppConfig]).asEagerSingleton()
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
+    bind(classOf[ReturnSubmissionRepository]).asEagerSingleton()
+    bind(classOf[ObligationsRepository]).asEagerSingleton()
+    bind(classOf[StartupSeeder]).asEagerSingleton()
   }
 }
