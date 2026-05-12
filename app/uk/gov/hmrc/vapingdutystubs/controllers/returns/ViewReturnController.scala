@@ -17,18 +17,14 @@
 package uk.gov.hmrc.vapingdutystubs.controllers.returns
 
 import play.api.Logging
-import play.api.http.HeaderNames
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
-import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateResponse, ReturnSubmittedResponse}
+import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnsData
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
-import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
-import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnsData
 
 class ViewReturnController @Inject()(
   cc: ControllerComponents,

@@ -25,7 +25,7 @@ import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationState, Obligati
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ObligationsController @Inject()(
@@ -34,18 +34,21 @@ class ObligationsController @Inject()(
 )(using ExecutionContext) extends BackendController(cc) with Logging {
 
   def get(): Action[AnyContent] = Action.async { request =>
-
     val params = extractParameters(request)
-    
-    obligationsRepository.get(params._2).map {
+
+    obligationsRepository.get(params._2).flatMap {
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
-        Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations)))
+        Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))
       case None =>
         logger.info(s"No obligations found for vpdId=${params._2} - returning generated data")
-        Ok(Json.toJson(ObligationsData.createMockObligationsResponse()))
+        val sampleState = ObligationsData.sampleObligations(params._2)
+        obligationsRepository.set(sampleState).map { _ =>
+          Ok(Json.toJson(ObligationsResponse(obligation = sampleState.obligations)))
+        }
     }
   }
+
 
   private def extractParameters(request: Request[_]) = {
     val params = request.queryString.view.mapValues(_.mkString(","))

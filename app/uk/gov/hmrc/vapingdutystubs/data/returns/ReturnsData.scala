@@ -29,7 +29,7 @@ object ReturnsData {
   private val regularReturn_ = RegularReturn(
     taxType = "301",
     dutyRate = BigDecimal("0.05"),
-    amountProducedLiquid = BigDecimal("99.9999"),
+    amountProducedLiquid = BigDecimal("9999999.9"),
     dutyDue = BigDecimal("999999999.99")
   )
 
