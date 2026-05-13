@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers
 
-import org.mockito.ArgumentMatchers.{eq as eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
@@ -96,6 +96,9 @@ class ObligationsControllerSpec extends SpecBase {
     "return 200 OK with generated obligations when none are stored" in {
       when(mockObligationsRepository.get(eqTo(vpdId)))
         .thenReturn(Future.successful(None))
+
+      when(mockObligationsRepository.set(any()))
+        .thenReturn(Future.successful(testObligationState))
 
       val result: Future[Result] = controller.get()(fakeRequestWithParameters(
         Map[String, String](
