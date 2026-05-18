@@ -22,16 +22,23 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
-import uk.gov.hmrc.vapingdutystubs.models.returns.{ReturnCreateResponse, ReturnSubmittedResponse}
+import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse, ReturnSubmittedResponse}
+import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.utils.{LogHeadersHelper, RandomUUIDGenerator}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 
-import java.time.{Instant, LocalDate}
+import java.time.{Clock, Instant, LocalDate, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubmitReturnController @Inject()(
-                                        cc: ControllerComponents,
-                                      )(using ExecutionContext) extends BackendController(cc)
+  cc: ControllerComponents,
+  returnSubmissionRepository: ReturnSubmissionRepository,
+  obligationsRepository: ObligationsRepository,
+  uuidGenerator: RandomUUIDGenerator,
+  clock: Clock
+)(using ExecutionContext) extends BackendController(cc)
   with Logging {
 
   private val submitReturnHeaders = Set(
@@ -57,17 +64,49 @@ class SubmitReturnController @Inject()(
           throw new IllegalArgumentException("Expected correlation ID header")
         )
 
-      Future.successful(
-        Created(Json.toJson(ReturnCreateResponse(
-          ReturnSubmittedResponse(
-            processingDate = Instant.now(),
-            vpdReferenceNumber = "vpdReferenceNumber",
-            submissionID = Option("submissionID"),
-            chargeReference = Option("chargeReference"),
-            amount = BigDecimal(0),
-            paymentDueDate = Option(LocalDate.now())
+      val vpdId = request.headers
+        .get(xZVPD)
+        .getOrElse(
+          throw new IllegalArgumentException("Expected x-zvpd header")
+        )
+
+      request.body.validate[ReturnCreateRequest].fold(
+        errors => {
+          logger.error(s"Invalid return submission request: $errors")
+          Future.successful(BadRequest(Json.obj("error" -> "Invalid request body")))
+        },
+        returnRequest => {
+          val now = Instant.now(clock)
+          val submissionId = uuidGenerator.uuid
+          val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}"
+
+          val submission = ReturnSubmission(
+            vpdId = vpdId,
+            periodKey = returnRequest.periodKey,
+            chargeReference = chargeReference,
+            submittedReturn = returnRequest,
+            submittedAt = now,
+            submissionId = submissionId
           )
-        )))
+
+          for {
+            _ <- returnSubmissionRepository.set(submission)
+            _ <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
+          } yield {
+            val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
+
+            Created(Json.toJson(ReturnCreateResponse(
+              ReturnSubmittedResponse(
+                processingDate = now,
+                vpdReferenceNumber = vpdId,
+                submissionID = Some(submissionId),
+                chargeReference = Some(chargeReference),
+                amount = returnRequest.totalDutyDue.totalDutyDue,
+                paymentDueDate = Some(paymentDueDate)
+              )
+            )))
+          }
+        }
       )
   }
 }

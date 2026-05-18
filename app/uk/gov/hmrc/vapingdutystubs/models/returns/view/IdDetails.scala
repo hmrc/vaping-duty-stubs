@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.models.returns
+package uk.gov.hmrc.vapingdutystubs.models.returns.view
 
 import play.api.libs.json.{Json, OFormat}
 
-case class ReturnCreateResponse(
-  success: ReturnSubmittedResponse
+final case class IdDetails(
+  vpdReference: String,
+  submissionId: Option[String]
 )
 
-object ReturnCreateResponse {
-  given OFormat[ReturnCreateResponse] = Json.format[ReturnCreateResponse]
+object IdDetails {
+  given OFormat[IdDetails] = Json.format[IdDetails]
 }

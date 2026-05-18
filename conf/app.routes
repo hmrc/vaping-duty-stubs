@@ -19,3 +19,4 @@ GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations                  
 
 ### Returns ###
 POST       /etmp/RESTAdapter/vpd/return                                                      uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
+GET        /etmp/RESTAdapter/vpd/return/:vpdReference/:periodKey                             uk.gov.hmrc.vapingdutystubs.controllers.returns.ViewReturnController.viewReturn(vpdReference: String, periodKey: String)

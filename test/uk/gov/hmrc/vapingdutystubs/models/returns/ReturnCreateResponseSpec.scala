@@ -18,6 +18,7 @@ package uk.gov.hmrc.vapingdutystubs.models.returns
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateResponse, ReturnSubmittedResponse}
 
 import java.time.Instant
 

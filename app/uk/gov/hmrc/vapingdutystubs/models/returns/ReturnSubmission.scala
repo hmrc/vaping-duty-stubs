@@ -17,18 +17,19 @@
 package uk.gov.hmrc.vapingdutystubs.models.returns
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
-import java.time.{Instant, LocalDate}
+import java.time.Instant
 
-case class ReturnSubmittedResponse(
-  processingDate: Instant,
-  vpdReferenceNumber: String,
-  submissionID: Option[String],
-  chargeReference: Option[String],
-  amount: BigDecimal,
-  paymentDueDate: Option[LocalDate]
+case class ReturnSubmission(
+  vpdId: String,
+  periodKey: String,
+  chargeReference: String,
+  submittedReturn: ReturnCreateRequest,
+  submittedAt: Instant,
+  submissionId: String
 )
 
-object ReturnSubmittedResponse {
-  given OFormat[ReturnSubmittedResponse] = Json.format[ReturnSubmittedResponse]
+object ReturnSubmission {
+  given format: OFormat[ReturnSubmission] = Json.format[ReturnSubmission]
 }
