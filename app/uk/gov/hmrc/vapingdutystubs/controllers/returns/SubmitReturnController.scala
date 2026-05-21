@@ -78,7 +78,7 @@ class SubmitReturnController @Inject()(
         returnRequest => {
           val now = Instant.now(clock)
           val submissionId = uuidGenerator.uuid
-          val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}"
+          val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
 
           val submission = ReturnSubmission(
             vpdId = vpdId,
