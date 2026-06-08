@@ -17,7 +17,6 @@
 package uk.gov.hmrc.vapingdutystubs.models.returns.view
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.vapingdutystubs.models.returns.view.ReturnDisplaySuccess
 
 final case class ReturnDisplayResponse(
   success: ReturnDisplaySuccess
