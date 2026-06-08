@@ -128,4 +128,81 @@ object ObligationsData {
 
   def allSampleObligations: Seq[ObligationState] =
     sampleVpdIds.map(sampleObligations)
+
+  def onlyOpenReturns(vpdId: String): ObligationState = {
+    val currentDate = LocalDate.now()
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(
+        // Open return - Due in 10 days
+        createObligation(
+          status = "O",
+          fromDate = LocalDate.of(2027, 12, 1),
+          toDate = LocalDate.of(2027, 12, 31),
+          dueDate = currentDate.plusDays(10),
+          periodKey = "27AL"
+        ),
+        // Open return - Overdue by 5 days
+        createObligation(
+          status = "O",
+          fromDate = LocalDate.of(2027, 11, 1),
+          toDate = LocalDate.of(2027, 11, 30),
+          dueDate = currentDate.minusDays(5),
+          periodKey = "27AK"
+        ),
+        // Open return - Due in 30 days
+        createObligation(
+          status = "O",
+          fromDate = LocalDate.of(2028, 1, 1),
+          toDate = LocalDate.of(2028, 1, 31),
+          dueDate = currentDate.plusDays(30),
+          periodKey = "28AA"
+        )
+      )
+    )
+  }
+
+  def onlyCompletedReturns(vpdId: String): ObligationState = {
+    val currentDate = LocalDate.now()
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(
+        // Completed return 1
+        createObligation(
+          status = "F",
+          fromDate = LocalDate.of(2027, 10, 1),
+          toDate = LocalDate.of(2027, 10, 31),
+          dueDate = LocalDate.of(2027, 11, 30),
+          periodKey = "27AJ",
+          receivedDate = Some(LocalDate.of(2027, 11, 15))
+        ),
+        // Completed return 2
+        createObligation(
+          status = "F",
+          fromDate = LocalDate.of(2027, 9, 1),
+          toDate = LocalDate.of(2027, 9, 30),
+          dueDate = LocalDate.of(2027, 10, 31),
+          periodKey = "27AI",
+          receivedDate = Some(LocalDate.of(2027, 10, 20))
+        ),
+        // Completed return 3
+        createObligation(
+          status = "F",
+          fromDate = LocalDate.of(2027, 8, 1),
+          toDate = LocalDate.of(2027, 8, 31),
+          dueDate = LocalDate.of(2027, 9, 30),
+          periodKey = "27AH",
+          receivedDate = Some(LocalDate.of(2027, 9, 25))
+        )
+      )
+    )
+  }
+
+  def noObligations(vpdId: String): ObligationState =
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq.empty
+    )
 }
