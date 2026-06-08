@@ -96,6 +96,139 @@ To run the stub locally without using sm2, first:
 sbt run
 ```
 
-#### License
+## Test Support Endpoints
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
+The service provides test support endpoints for managing obligations data. These endpoints are available when running the stub service.
+
+### Available Endpoints
+
+#### Set Predefined Scenario
+
+Set a predefined obligations scenario for any VPD ID:
+
+```bash
+POST /test-support/obligations/{vpdId}/scenario/{scenarioName}
+```
+
+**Available Scenarios:**
+- `only-open` - Multiple open returns with no completed returns (ideal for testing dynamic UI)
+- `only-completed` - All returns completed
+- `mixed` - Mix of open and completed returns (default behavior)
+- `none` - Empty obligations list
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-support/obligations/GBWK0000001WK/scenario/only-open
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully set scenario 'only-open' for VPD ID GBWK0000001WK",
+  "vpdId": "GBWK0000001WK",
+  "scenario": "only-open",
+  "obligationCount": 3
+}
+```
+
+#### Clear Obligations for Specific VPD ID
+
+Remove all obligations for a specific VPD ID:
+
+```bash
+DELETE /test-support/obligations/{vpdId}
+```
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8142/test-support/obligations/GBWK0000001WK
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully cleared obligations for VPD ID GBWK0000001WK",
+  "vpdId": "GBWK0000001WK"
+}
+```
+
+#### Clear All Obligations
+
+Remove all obligations data from the database:
+
+```bash
+DELETE /test-support/obligations
+```
+
+**Example:**
+```bash
+curl -X DELETE http://localhost:8142/test-support/obligations
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully cleared all obligations data"
+}
+```
+
+#### Set Custom Obligations
+
+Post custom obligations JSON for advanced testing scenarios:
+
+```bash
+POST /test-support/obligations/{vpdId}/custom
+Content-Type: application/json
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-support/obligations/GBWK0000001WK/custom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vpdId": "GBWK0000001WK",
+    "obligations": [
+      {
+        "identification": null,
+        "obligationDetails": {
+          "openOrFulfilledStatus": "O",
+          "iCFromDate": "2027-12-01",
+          "iCToDate": "2027-12-31",
+          "iCDateReceived": null,
+          "iCDueDate": "2028-01-31",
+          "periodKey": "27AL"
+        }
+      }
+    ]
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully set custom obligations for VPD ID GBWK0000001WK",
+  "vpdId": "GBWK0000001WK",
+  "obligationCount": 1
+}
+```
+
+### Scenario Details
+
+#### only-open Scenario
+Creates 3 open returns with no completed returns:
+- One return due in 10 days (period 27AL)
+- One return overdue by 5 days (period 27AK)
+- One return due in 30 days (period 28AA)
+
+#### only-completed Scenario
+Creates 3 completed returns with no open returns:
+- Three fulfilled returns from previous periods (27AJ, 27AI, 27AH)
+
+#### mixed Scenario
+Creates a mix of open and completed returns (default):
+- Two open returns (one due soon, one overdue)
+- One completed return
+
+#### none Scenario
+Creates an empty obligations list for testing edge cases.
+
