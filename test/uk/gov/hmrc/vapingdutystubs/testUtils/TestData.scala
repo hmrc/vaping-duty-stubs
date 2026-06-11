@@ -19,6 +19,7 @@ package uk.gov.hmrc.vapingdutystubs.testUtils
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.correlationIdHeader
 import uk.gov.hmrc.vapingdutystubs.models.ErrorData
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.*
+import uk.gov.hmrc.vapingdutystubs.models.returns.DeclarationDetails
 import uk.gov.hmrc.vapingdutystubs.models.subscription.{CorrespondenceAddress, EmailPreferences}
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
@@ -28,6 +29,12 @@ trait TestData extends ModelGenerators {
   val clock = Clock.fixed(Instant.ofEpochMilli(1718118467838L), ZoneId.of("UTC"))
 
   val zeroAmount = BigDecimal(0)
+
+  val sampleDeclarationDetails: DeclarationDetails = DeclarationDetails(
+    fullName = "John Smith",
+    capacityInWhichSigned = "Director",
+    signeesEmailAddress = "john.smith@example.com"
+  )
 
   val regime = "VPD"
   val idType = "ZVPD"

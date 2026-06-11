@@ -61,7 +61,8 @@ class SubmitReturnControllerSpec extends SpecBase {
       totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       adjustmentAmount = BigDecimal("0.00")
-    )
+    ),
+    declaration = sampleDeclarationDetails
   )
 
   override def beforeEach(): Unit = {

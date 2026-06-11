@@ -102,7 +102,8 @@ class SubmitReturnController @Inject()(
                 submissionID = Some(submissionId),
                 chargeReference = Some(chargeReference),
                 amount = returnRequest.totalDutyDue.totalDutyDue,
-                paymentDueDate = Some(paymentDueDate)
+                paymentDueDate = Some(paymentDueDate),
+                declaration = returnRequest.declaration
               )
             )))
           }
