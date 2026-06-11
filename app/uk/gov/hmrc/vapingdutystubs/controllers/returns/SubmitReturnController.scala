@@ -25,10 +25,10 @@ import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse, ReturnSubmittedResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
-import uk.gov.hmrc.vapingdutystubs.utils.{LogHeadersHelper, RandomUUIDGenerator}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
+import uk.gov.hmrc.vapingdutystubs.utils.{LogHeadersHelper, RandomUUIDGenerator}
 
-import java.time.{Clock, Instant, LocalDate, ZoneId}
+import java.time.{Clock, Instant, ZoneId}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -57,12 +57,6 @@ class SubmitReturnController @Inject()(
       logHeaders(request, "submitReturn", submitReturnHeaders)
 
       logger.info(s"Return submission received with json: ${request.body}")
-
-      val correlationId = request.headers
-        .get(correlationIdHeader)
-        .getOrElse(
-          throw new IllegalArgumentException("Expected correlation ID header")
-        )
 
       val vpdId = request.headers
         .get(xZVPD)

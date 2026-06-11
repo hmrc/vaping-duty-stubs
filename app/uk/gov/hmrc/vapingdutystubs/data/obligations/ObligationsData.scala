@@ -43,7 +43,6 @@ object ObligationsData {
     )
 
   def sampleObligations(vpdId: String): ObligationState = {
-    val currentDate = LocalDate.now()
 
     ObligationState(
       vpdId = vpdId,
@@ -53,7 +52,7 @@ object ObligationsData {
           status = "O",
           fromDate = LocalDate.of(2027, 12, 1),
           toDate = LocalDate.of(2027, 12, 31),
-          dueDate = currentDate.plusDays(10),
+          dueDate = LocalDate.of(2028, 1, 7),
           periodKey = "27AL"
         ),
         // Outstanding return - Overdue
@@ -61,7 +60,7 @@ object ObligationsData {
           status = "O",
           fromDate = LocalDate.of(2027, 11, 1),
           toDate = LocalDate.of(2027, 11, 30),
-          dueDate = currentDate.minusDays(5),
+          dueDate = LocalDate.of(2027, 12, 7),
           periodKey = "27AK"
         ),
         // Fulfilled return
@@ -69,7 +68,7 @@ object ObligationsData {
           status = "F",
           fromDate = LocalDate.of(2027, 10, 1),
           toDate = LocalDate.of(2027, 10, 31),
-          dueDate = LocalDate.of(2027, 11, 30),
+          dueDate = LocalDate.of(2027, 11, 7),
           periodKey = "27AJ",
           receivedDate = Some(LocalDate.of(2027, 11, 15))
         )
@@ -78,7 +77,6 @@ object ObligationsData {
   }
 
   def createMockObligationsResponse(): ObligationsResponse = {
-    val currentDate = LocalDate.now()
 
     ObligationsResponse(
       obligation = Seq(
@@ -90,7 +88,7 @@ object ObligationsData {
             iCFromDate = LocalDate.of(2027, 12, 1),
             iCToDate = LocalDate.of(2027, 12, 31),
             iCDateReceived = None,
-            iCDueDate = currentDate.plusDays(10),
+            iCDueDate = LocalDate.of(2028, 1, 7),
             periodKey = "27AL"
           )
         ),
@@ -102,7 +100,7 @@ object ObligationsData {
             iCFromDate = LocalDate.of(2027, 11, 1),
             iCToDate = LocalDate.of(2027, 11, 30),
             iCDateReceived = None,
-            iCDueDate = currentDate.minusDays(5),
+            iCDueDate = LocalDate.of(2027, 12, 7),
             periodKey = "27AK"
           )
         ),
@@ -114,7 +112,7 @@ object ObligationsData {
             iCFromDate = LocalDate.of(2027, 10, 1),
             iCToDate = LocalDate.of(2027, 10, 31),
             iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-            iCDueDate = LocalDate.of(2027, 11, 30),
+            iCDueDate = LocalDate.of(2027, 11, 7),
             periodKey = "27AJ"
           )
         )
