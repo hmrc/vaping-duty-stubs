@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.returns
 
-import uk.gov.hmrc.vapingdutystubs.models.returns.{NilReturn, RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
+import uk.gov.hmrc.vapingdutystubs.models.returns.{DeclarationDetails, NilReturn, RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
 import java.time.Instant
@@ -39,6 +39,12 @@ object ReturnSubmissionData {
     adjustmentAmount = BigDecimal("0.00")
   )
 
+  private val sampleDeclarationDetails = DeclarationDetails(
+    fullName = "John Smith",
+    capacityInWhichSigned = "Director",
+    signeesEmailAddress = "john.smith@example.com"
+  )
+
   private def createReturnSubmission(
     vpdId: String,
     periodKey: String,
@@ -52,7 +58,8 @@ object ReturnSubmissionData {
         nilReturn = Seq.empty,
         regularReturn = Seq(sampleRegularReturn)
       ),
-      totalDutyDue = sampleTotalDutyDue
+      totalDutyDue = sampleTotalDutyDue,
+      declaration = sampleDeclarationDetails
     )
 
     ReturnSubmission(

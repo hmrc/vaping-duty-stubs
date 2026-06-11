@@ -45,6 +45,12 @@ object ReturnsData {
     adjustmentAmount = totalDutyDue_bigDecimal
   )
 
+  private val sampleDeclarationDetails = DeclarationDetails(
+    fullName = "John Smith",
+    capacityInWhichSigned = "Director",
+    signeesEmailAddress = "john.smith@example.com"
+  )
+
   private def chargeDetails(periodKey: String) = ChargeDetails(
     periodKey,
     chargeReference = Some("XMVPDP0000123"),
@@ -64,7 +70,8 @@ object ReturnsData {
       spoiltProduct = None,
       totalDutyDue = Some(totalDutyDue),
       totalDutyDueByTaxType = None,
-      otherOptions = None
+      otherOptions = None,
+      declaration = sampleDeclarationDetails
     )
 
     ReturnDisplayResponse(success = successResponse)
@@ -90,7 +97,8 @@ object ReturnsData {
       spoiltProduct = None,
       totalDutyDue = Some(submittedReturn.totalDutyDue),
       totalDutyDueByTaxType = None,
-      otherOptions = None
+      otherOptions = None,
+      declaration = submittedReturn.declaration
     )
 
     ReturnDisplayResponse(success = successResponse)

@@ -24,10 +24,11 @@ class ReturnCreateRequestSpec extends SpecBase {
   val returnCreateRequest: ReturnCreateRequest =
     ReturnCreateRequest(periodKey = "x641",
       vapingProductsProduced = VapingProductsProduced(Seq(), Seq()),
-      totalDutyDue = TotalDutyDue(1, 1, 1, 1, 1, 1))
+      totalDutyDue = TotalDutyDue(1, 1, 1, 1, 1, 1),
+      declaration = sampleDeclarationDetails)
 
   "ReturnCreateRequest" - {
-    val json = """{"periodKey":"x641","vapingProductsProduced":{"nilReturn":[],"regularReturn":[]},"totalDutyDue":{"totalDutyDueVapingProducts":1,"totalDutyOverDeclaration":1,"totalDutyUnderDeclaration":1,"totalDutySpoiltProduct":1,"adjustmentAmount":1,"totalDutyDue":1}}"""
+    val json = """{"periodKey":"x641","vapingProductsProduced":{"nilReturn":[],"regularReturn":[]},"totalDutyDue":{"totalDutyDueVapingProducts":1,"totalDutyOverDeclaration":1,"totalDutyUnderDeclaration":1,"totalDutySpoiltProduct":1,"adjustmentAmount":1,"totalDutyDue":1},"declaration":{"fullName":"John Smith","capacityInWhichSigned":"Director","signeesEmailAddress":"john.smith@example.com"}}"""
 
     "must serialise to json" in {
       Json.toJson(returnCreateRequest).toString() mustBe json
