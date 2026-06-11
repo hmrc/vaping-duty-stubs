@@ -18,7 +18,6 @@ package uk.gov.hmrc.vapingdutystubs.models.returns.submit
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.vapingdutystubs.models.returns.DeclarationDetails
-import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnSubmittedResponse
 
 import java.time.{Instant, LocalDate}
 

@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.returns
 
-import uk.gov.hmrc.vapingdutystubs.models.returns.{DeclarationDetails, NilReturn, RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
+import uk.gov.hmrc.vapingdutystubs.models.returns.*
 
 import java.time.Instant
 

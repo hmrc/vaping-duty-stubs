@@ -19,7 +19,7 @@ package uk.gov.hmrc.vapingdutystubs.repositories
 import org.mongodb.scala.model.Filters
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
-import uk.gov.hmrc.vapingdutystubs.models.returns.{RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
+import uk.gov.hmrc.vapingdutystubs.models.returns.{DeclarationDetails, RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
 import java.time.Instant
@@ -57,6 +57,11 @@ class ReturnSubmissionRepositorySpec
       totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       adjustmentAmount = BigDecimal("0.00")
+    ),
+    declaration = DeclarationDetails(
+      fullName = "Test Name",
+      capacityInWhichSigned = "Capacity",
+      signeesEmailAddress = "test@test.com"
     )
   )
 
