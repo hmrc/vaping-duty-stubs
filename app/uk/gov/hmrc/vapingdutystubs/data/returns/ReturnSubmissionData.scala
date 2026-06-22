@@ -20,13 +20,22 @@ import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
-import java.time.{LocalDate, ZoneOffset}
+import java.time.{Instant, YearMonth, ZoneId}
 import scala.util.Random
+import java.time.{Instant, LocalDate, ZoneOffset}
 
 object ReturnSubmissionData {
 
   private val random = new Random()
+  private val FULFILLED_OBLIGATIONS_COUNT = 33
   private val DUE_DATE_DAY = 7
+
+  private val sampleRegularReturn = RegularReturn(
+    taxType = "301",
+    dutyRate = BigDecimal("0.05"),
+    amountProducedLiquid = BigDecimal("1000.50"),
+    dutyDue = BigDecimal("50.03")
+  )
 
   private def generateVapingReturn(): VapingReturn = {
     VapingReturn(
@@ -52,6 +61,7 @@ object ReturnSubmissionData {
         totalDutyOverDeclaration = BigDecimal("0.00"),
         totalDutyUnderDeclaration = BigDecimal("0.00"),
         totalDutySpoiltProduct = BigDecimal("0.00"),
+        adjustmentAmount = BigDecimal("0.00"),
         totalDue = BigDecimal("0.00")
       )
     } else {
@@ -61,6 +71,7 @@ object ReturnSubmissionData {
         totalDutyOverDeclaration = BigDecimal("0.00"),
         totalDutyUnderDeclaration = BigDecimal("0.00"),
         totalDutySpoiltProduct = BigDecimal("0.00"),
+        adjustmentAmount = BigDecimal("0.00"),
         totalDue = vapingProductsDuty
       )
     }
@@ -99,60 +110,39 @@ object ReturnSubmissionData {
     )
   }
 
-  /**
-   * Generates 36 return submissions matching all 36 fulfilled obligations
-   * Approximately 20% of returns will be nil returns for variety
-   */
-  def generate36ReturnSubmissions(vpdId: String): Seq[ReturnSubmission] = {
-    val today = LocalDate.now()
-    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+  def generate33ReturnSubmissions(vpdId: String): Seq[ReturnSubmission] = {
+    val currentYear = Instant.now().atZone(ZoneId.systemDefault()).getYear
+    val startYear = currentYear - 2
 
-    // Generate submissions for all 36 months (0-35)
-    (0 until 36).map { monthsBack =>
-      // Calculate the year and month for this submission
-      val targetDate = currentMonthStart.minusMonths(monthsBack)
-      val year = targetDate.getYear
-      val month = targetDate.getMonthValue
+    (0 until 33).map { index =>
+      val year = startYear + (index / 12)
+      val month = (index % 12) + 1
+      val yearMonth = YearMonth.of(year, month)
+      val periodKey = ReturnPeriod(yearMonth).toPeriodKey
 
-      // Create proper period dates
-      val periodStart = LocalDate.of(year, month, 1)
-      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
-
-      // Generate period key from the period start date
-      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
-      val periodKey = returnPeriod.toPeriodKey
-
-      // Submission date is 5 days before due date (matching the receivedDate in obligations)
-      val submissionDate = dueDate.minusDays(5)
-      val submittedAt = submissionDate.atTime(10, 30).toInstant(ZoneOffset.UTC)
-
-      // Generate unique charge reference and submission ID
-      val chargeReference = f"XMVPD${year}${month}%02d${vpdId.takeRight(4)}"
-      val submissionId = f"submission-${36 - monthsBack}%03d"
-
-      // Make approximately 20% of returns nil returns (every 5th return)
-      val isNilReturn = monthsBack % 5 == 0
-      val submittedReturn = if (isNilReturn) {
+      val isNil = random.nextBoolean()
+      val returnRequest = if (isNil) {
         generateNilReturnRequest(periodKey)
       } else {
         generateRegularReturnRequest(periodKey)
       }
 
-      ReturnSubmission(
-        vpdId = vpdId,
-        periodKey = periodKey,
-        chargeReference = chargeReference,
-        submittedReturn = submittedReturn,
-        submissionId = submissionId,
-        submittedAt = submittedAt
-      )
-    }
+      val submissionId = f"${100000000000L + random.nextInt(900000000)}%012d"
+      val chargeReference = s"XMVPD${submissionId.take(12)}"
+
+    ReturnSubmission(
+      vpdId = vpdId,
+      periodKey = periodKey,
+      chargeReference = chargeReference,
+      submittedReturn = returnCreateRequest,
+      submittedAt = submittedAt,
+      submissionId = submissionId
+    )
   }
 
   /**
    * Generates 33 return submissions matching the 33 fulfilled obligations
    * from 35 months ago to 3 months ago (skipping current month, previous month, and 2 months ago which are Open/Due/Overdue)
-   * Approximately 20% of returns will be nil returns for variety
    */
   def generate33ReturnSubmissions(vpdId: String): Seq[ReturnSubmission] = {
     val today = LocalDate.now()
@@ -181,21 +171,32 @@ object ReturnSubmissionData {
       val chargeReference = f"XMVPD${year}${month}%02d${vpdId.takeRight(4)}"
       val submissionId = f"submission-${36 - monthsBack}%03d"
 
-      // Make approximately 20% of returns nil returns (every 5th return)
-      val isNilReturn = monthsBack % 5 == 0
-      val submittedReturn = if (isNilReturn) {
-        generateNilReturnRequest(periodKey)
-      } else {
-        generateRegularReturnRequest(periodKey)
-      }
+      createReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = chargeReference,
+        submissionId = submissionId,
+        submittedAt = submittedAt
+      )
+    }
+  }
 
+  def sampleReturnSubmission(vpdId: String): ReturnSubmission = {
+    // This matches the fulfilled obligation in ObligationsData (period 27AJ)
+    createReturnSubmission(
+      vpdId = vpdId,
+      periodKey = "27AJ",
+      chargeReference = "XMVPD0123456789ab",
+      submissionId = "submission-001",
+      submittedAt = Instant.parse("2027-11-15T10:30:00Z")
+    )
       ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
         chargeReference = chargeReference,
-        submittedReturn = submittedReturn,
-        submissionId = submissionId,
-        submittedAt = submittedAt
+        submittedReturn = returnRequest,
+        submittedAt = Instant.now().minusSeconds(random.nextInt(86400 * 30)),
+        submissionId = submissionId
       )
     }
   }
@@ -205,9 +206,6 @@ object ReturnSubmissionData {
     "GBWK0000002WK",
     "GBWK0000003WK"
   )
-
-  def all36ReturnSubmissions: Seq[ReturnSubmission] =
-    sampleVpdIds.flatMap(generate36ReturnSubmissions)
 
   def allSampleReturnSubmissions: Seq[ReturnSubmission] =
     sampleVpdIds.flatMap(generate33ReturnSubmissions)

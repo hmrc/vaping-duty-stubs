@@ -80,6 +80,49 @@ class ViewReturnController @Inject()(
   def viewReturn(vpdReference: String, periodKey: String): Action[AnyContent] = Action.async {
     implicit request =>
       logger.info(s"[ViewReturn] Received request to view return for vpdId: $vpdReference, periodKey: $periodKey")
+      logger.debug(s"[ViewReturn] Querying repository for vpdId: $vpdReference, periodKey: $periodKey")
+
+      returnSubmissionRepository.get(vpdReference, periodKey).map {
+      returnSubmissionRepository.get(vpdReference, periodKey).flatMap {
+        case Some(submission) =>
+          logger.info(s"[ViewReturn] Found return submission for vpdId: $vpdReference, periodKey: $periodKey")
+          logger.debug(s"[ViewReturn] Submission details - chargeRef: ${submission.chargeReference}, submissionId: ${submission.submissionId}, submittedAt: ${submission.submittedAt}")
+
+          val returnData = ReturnsData.fromSubmission(submission)
+          logger.debug(s"[ViewReturn] Transformed submission to display format for vpdId: $vpdReference, periodKey: $periodKey")
+          logger.debug(s"[ViewReturn] Response: ${Json.toJson(returnData)}")
+
+          Ok(Json.toJson(returnData))
+
+        case None =>
+          logger.warn(s"[ViewReturn] No return submission found in repository for vpdId: $vpdReference, periodKey: $periodKey")
+          logger.info(s"[ViewReturn] Returning generated/stub data for vpdId: $vpdReference, periodKey: $periodKey")
+
+          val generatedData = ReturnsData(vpdReference, periodKey, submissionId = "submissionId")
+          logger.debug(s"[ViewReturn] Generated data response: ${Json.toJson(generatedData)}")
+
+          Ok(Json.toJson(generatedData))
+          logger.info(s"Found return submission for vpdId=$vpdReference, periodKey=$periodKey")
+          Future.successful(Ok(Json.toJson(ReturnsData.fromSubmission(submission))))
+        case None =>
+          logger.info(s"No return submission found for vpdId=$vpdReference, periodKey=$periodKey - generating submissions")
+          // Generate all 33 return submissions for this VPD ID
+          val submissions = ReturnSubmissionData.generate33ReturnSubmissions(vpdReference)
+
+          // Save all submissions
+          Future.sequence(submissions.map(returnSubmissionRepository.set)).flatMap { _ =>
+            // Try to retrieve the requested period again
+            returnSubmissionRepository.get(vpdReference, periodKey).map {
+              case Some(submission) =>
+                logger.info(s"Generated and found return submission for vpdId=$vpdReference, periodKey=$periodKey")
+                Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
+              case None =>
+                logger.info(s"Period $periodKey not in fulfilled obligations for vpdId=$vpdReference - returning generated data")
+                Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId")))
+            }
+          }
+      }
+      logger.info(s"[ViewReturn] Received request to view return for vpdId: $vpdReference, periodKey: $periodKey")
 
       // Check for test error responses based on last digit of VPD ID
       checkForTestErrorResponse(vpdReference) match {
