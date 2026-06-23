@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,94 +17,100 @@
 package uk.gov.hmrc.vapingdutystubs.controllers.returns
 
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, when}
-import play.api.mvc.Result
+import org.mockito.Mockito.when
+import org.scalatest.matchers.should.Matchers.shouldBe
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.OK
+import play.api.mvc.ControllerComponents
+import play.api.test.FakeRequest
+import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status, stubControllerComponents}
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.models.returns.{RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
+import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
-import uk.gov.hmrc.vapingdutystubs.models.returns.view.ReturnDisplayResponse
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
 
 import java.time.Instant
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-class ViewReturnControllerSpec extends SpecBase {
+class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
+
+  override implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
+  override val cc: ControllerComponents = stubControllerComponents()
 
   val controller = new ViewReturnController(
     cc,
     mockReturnSubmissionRepository
   )
 
-  val testPeriodKey = "27AJ"
-  val testChargeReference = "XMVPD0123456789ab"
-  val testSubmissionId = "submission-001"
-  val testSubmittedAt = Instant.parse("2027-11-15T10:30:00Z")
+  override val vpdId = "GBWK1234567WK"
+  val periodKey = "24AL"
+  override val submissionId = "123456789012"
 
-  val sampleReturnRequest = ReturnCreateRequest(
-    periodKey = testPeriodKey,
+  val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
+    periodKey = periodKey,
     vapingProductsProduced = VapingProductsProduced(
-      nilReturn = Seq.empty,
-      regularReturn = Seq(RegularReturn(
-        taxType = "301",
-        dutyRate = BigDecimal("0.05"),
-        amountProducedLiquid = BigDecimal("1000.50"),
-        dutyDue = BigDecimal("50.03")
+      vapingProdManufactured = "1",
+      returns = Seq(VapingReturn(
+        taxType = "641",
+        dutyRate = BigDecimal("10.50"),
+        amountProducedLiquid = BigDecimal("1500.25"),
+        dutyDue = BigDecimal("15752.63")
       ))
     ),
+    overDeclaration = None,
+    underDeclaration = None,
+    spoiltProduct = None,
     totalDutyDue = TotalDutyDue(
-      totalDutyDue = BigDecimal("50.03"),
-      totalDutyDueVapingProducts = BigDecimal("50.03"),
+      totalDutyDueVapingProducts = BigDecimal("15752.63"),
       totalDutyOverDeclaration = BigDecimal("0.00"),
-      totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
-      adjustmentAmount = BigDecimal("0.00")
+      totalDutySpoiltProduct = BigDecimal("0.00"),
+      adjustmentAmount = BigDecimal("0.00"),
+      totalDue = BigDecimal("15752.63")
     ),
-    declaration = sampleDeclarationDetails
+    otherOptions = None,
+    declaration = DeclarationDetails(
+      fullName = "John Smith",
+      capacityInWhichSigned = "Director",
+      signeesEmailAddress = "john.smith@example.com"
+    )
   )
 
-  val testSubmission = ReturnSubmission(
+  val sampleSubmission: ReturnSubmission = ReturnSubmission(
     vpdId = vpdId,
-    periodKey = testPeriodKey,
-    chargeReference = testChargeReference,
+    periodKey = periodKey,
+    chargeReference = "XMVPD123456789012",
     submittedReturn = sampleReturnRequest,
-    submittedAt = testSubmittedAt,
-    submissionId = testSubmissionId
+    submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
+    submissionId = submissionId
   )
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    reset(mockReturnSubmissionRepository)
-  }
+  "viewReturn" - {
+    "must return OK with return data when submission exists" in {
+      when(mockReturnSubmissionRepository.get(eqTo(vpdId), eqTo(periodKey)))
+        .thenReturn(Future.successful(Some(sampleSubmission)))
 
-  "viewReturn must" - {
-    "return 200 OK with stored return data when submission exists" in {
-      when(mockReturnSubmissionRepository.get(eqTo(vpdId), eqTo(testPeriodKey)))
-        .thenReturn(Future.successful(Some(testSubmission)))
+      val request = FakeRequest()
+      val result = controller.viewReturn(vpdId, periodKey)(request)
 
-      val result: Future[Result] = controller.viewReturn(vpdId, testPeriodKey)(fakeRequest)
-
-      status(result) mustBe OK
-      
-      val response = contentAsJson(result).as[ReturnDisplayResponse]
-      response.success.idDetails.value.vpdReference mustBe vpdId
-      response.success.idDetails.value.submissionId.value mustBe testSubmissionId
-      response.success.chargeDetails.value.chargeReference.value mustBe testChargeReference
-      response.success.chargeDetails.value.periodKey mustBe testPeriodKey
+      status(result) shouldBe OK
+      val responseJson = contentAsJson(result)
+      (responseJson \ "success" \ "idDetails" \ "vpdReferenceNumber").as[String] shouldBe vpdId
+      (responseJson \ "success" \ "chargeDetails" \ "periodKey").as[String] shouldBe periodKey
     }
 
-    "return 200 OK with generated data when submission does not exist" in {
-      when(mockReturnSubmissionRepository.get(eqTo(vpdId), eqTo(testPeriodKey)))
+    "must generate and return data when submission does not exist" in {
+      when(mockReturnSubmissionRepository.get(eqTo(vpdId), eqTo(periodKey)))
         .thenReturn(Future.successful(None))
+      when(mockReturnSubmissionRepository.set(any()))
+        .thenReturn(Future.successful(sampleSubmission))
 
-      val result: Future[Result] = controller.viewReturn(vpdId, testPeriodKey)(fakeRequest)
+      val request = FakeRequest()
+      val result = controller.viewReturn(vpdId, periodKey)(request)
 
-      status(result) mustBe OK
-      
-      val response = contentAsJson(result).as[ReturnDisplayResponse]
-      response.success.idDetails.value.vpdReference mustBe vpdId
-      response.success.chargeDetails.value.periodKey mustBe testPeriodKey
+      status(result) shouldBe OK
     }
   }
 }

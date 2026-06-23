@@ -23,14 +23,13 @@ import java.time.Instant
 
 final case class ReturnDisplaySuccess(
   processingDate: Instant,
-  idDetails: Option[IdDetails],
-  chargeDetails: Option[ChargeDetails],
-  vapingProductsProduced: Option[VapingProductsProduced],
+  idDetails: IdDetails,
+  chargeDetails: ChargeDetails,
+  vapingProductsProduced: VapingProductsProduced,
   overDeclaration: Option[OverDeclaration],
   underDeclaration: Option[UnderDeclaration],
   spoiltProduct: Option[SpoiltProduct],
-  totalDutyDue: Option[TotalDutyDue],
-  totalDutyDueByTaxType: Option[TotalDutyDue],
+  totalDutyDue: TotalDutyDue,
   otherOptions: Option[OtherOptions],
   declaration: DeclarationDetails
 )

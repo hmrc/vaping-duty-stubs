@@ -70,36 +70,44 @@ class SubmitReturnController @Inject()(
           Future.successful(BadRequest(Json.obj("error" -> "Invalid request body")))
         },
         returnRequest => {
-          val now = Instant.now(clock)
-          val submissionId = uuidGenerator.uuid
-          val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
+          // Validate the request
+          returnRequest.validate match {
+            case Left(validationError) =>
+              logger.warn(s"Return validation failed: $validationError")
+              Future.successful(BadRequest(Json.obj("error" -> validationError)))
+            
+            case Right(_) =>
+              val now = Instant.now(clock)
+              val submissionId = uuidGenerator.uuid
+              val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
 
-          val submission = ReturnSubmission(
-            vpdId = vpdId,
-            periodKey = returnRequest.periodKey,
-            chargeReference = chargeReference,
-            submittedReturn = returnRequest,
-            submittedAt = now,
-            submissionId = submissionId
-          )
-
-          for {
-            _ <- returnSubmissionRepository.set(submission)
-            _ <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
-          } yield {
-            val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
-
-            Created(Json.toJson(ReturnCreateResponse(
-              ReturnSubmittedResponse(
-                processingDate = now,
-                vpdReferenceNumber = vpdId,
-                submissionID = Some(submissionId),
-                chargeReference = Some(chargeReference),
-                amount = returnRequest.totalDutyDue.totalDutyDue,
-                paymentDueDate = Some(paymentDueDate),
-                declaration = returnRequest.declaration
+              val submission = ReturnSubmission(
+                vpdId = vpdId,
+                periodKey = returnRequest.periodKey,
+                chargeReference = chargeReference,
+                submittedReturn = returnRequest,
+                submittedAt = now,
+                submissionId = submissionId
               )
-            )))
+
+              for {
+                _ <- returnSubmissionRepository.set(submission)
+                _ <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
+              } yield {
+                val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
+
+                Created(Json.toJson(ReturnCreateResponse(
+                  ReturnSubmittedResponse(
+                    processingDate = now,
+                    vpdReferenceNumber = vpdId,
+                    submissionID = Some(submissionId),
+                    chargeReference = Some(chargeReference),
+                    amount = returnRequest.totalDutyDue.totalDue,
+                    paymentDueDate = Some(paymentDueDate),
+                    declaration = returnRequest.declaration
+                  )
+                )))
+              }
           }
         }
       )
