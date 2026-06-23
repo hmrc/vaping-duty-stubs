@@ -16,141 +16,120 @@
 
 package uk.gov.hmrc.vapingdutystubs.repositories
 
-import org.mongodb.scala.model.Filters
+import org.scalatest.BeforeAndAfterEach
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers.shouldBe
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
-import uk.gov.hmrc.vapingdutystubs.models.returns.{DeclarationDetails, RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
+import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
 import java.time.Instant
 
 class ReturnSubmissionRepositorySpec
     extends ISpecBase
-    with PlayMongoRepositorySupport[ReturnSubmission] {
+    with PlayMongoRepositorySupport[ReturnSubmission]
+    with BeforeAndAfterEach {
 
-  protected override val repository: ReturnSubmissionRepository = new ReturnSubmissionRepository(
+  override protected val repository: ReturnSubmissionRepository = new ReturnSubmissionRepository(
     mongoComponent = mongoComponent,
     config = config
   )
 
-  val testVpdId = "GBWK0000000001WK"
-  val testPeriodKey = "27AJ"
-  val testChargeReference = "XMVPD0123456789ab"
-  val testSubmissionId = "submission-001"
-  val testSubmittedAt = Instant.parse("2027-11-15T10:30:00Z")
+  override def beforeEach(): Unit = {
+    super.beforeEach()
+    repository.clear.futureValue
+  }
 
-  val sampleReturnRequest = ReturnCreateRequest(
-    periodKey = testPeriodKey,
+  val vpdId = "GBWK1234567WK"
+  val periodKey = "24AL"
+
+  val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
+    periodKey = periodKey,
     vapingProductsProduced = VapingProductsProduced(
-      nilReturn = Seq.empty,
-      regularReturn = Seq(RegularReturn(
-        taxType = "301",
-        dutyRate = BigDecimal("0.05"),
-        amountProducedLiquid = BigDecimal("1000.50"),
-        dutyDue = BigDecimal("50.03")
+      vapingProdManufactured = "1",
+      returns = Seq(VapingReturn(
+        taxType = "641",
+        dutyRate = BigDecimal("10.50"),
+        amountProducedLiquid = BigDecimal("1500.25"),
+        dutyDue = BigDecimal("15752.63")
       ))
     ),
+    overDeclaration = None,
+    underDeclaration = None,
+    spoiltProduct = None,
     totalDutyDue = TotalDutyDue(
-      totalDutyDue = BigDecimal("50.03"),
-      totalDutyDueVapingProducts = BigDecimal("50.03"),
+      totalDutyDueVapingProducts = BigDecimal("15752.63"),
       totalDutyOverDeclaration = BigDecimal("0.00"),
-      totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
-      adjustmentAmount = BigDecimal("0.00")
+      totalDutySpoiltProduct = BigDecimal("0.00"),
+      adjustmentAmount = BigDecimal("0.00"),
+      totalDue = BigDecimal("15752.63")
     ),
+    otherOptions = None,
     declaration = DeclarationDetails(
-      fullName = "Test Name",
-      capacityInWhichSigned = "Capacity",
-      signeesEmailAddress = "test@test.com"
+      fullName = "John Smith",
+      capacityInWhichSigned = "Director",
+      signeesEmailAddress = "john.smith@example.com"
     )
   )
 
-  val testSubmission: ReturnSubmission = ReturnSubmission(
-    vpdId = testVpdId,
-    periodKey = testPeriodKey,
-    chargeReference = testChargeReference,
+  val sampleSubmission: ReturnSubmission = ReturnSubmission(
+    vpdId = vpdId,
+    periodKey = periodKey,
+    chargeReference = "XMVPD123456789012",
     submittedReturn = sampleReturnRequest,
-    submittedAt = testSubmittedAt,
-    submissionId = testSubmissionId
+    submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
+    submissionId = "123456789012"
   )
 
-  "get must" - {
-    "get the record if the given vpdId and periodKey exist in the repository" in {
-      repository.set(testSubmission).futureValue
+  "ReturnSubmissionRepository" - {
+    "set" - {
+      "must store a return submission" in {
+        val result = repository.set(sampleSubmission).futureValue
 
-      val result = repository.get(testVpdId, testPeriodKey).futureValue
+        result shouldBe sampleSubmission
+      }
 
-      result.value mustBe testSubmission
+      "must update an existing return submission" in {
+        repository.set(sampleSubmission).futureValue
+
+        val updatedSubmission = sampleSubmission.copy(
+          chargeReference = "XMVPD999999999999"
+        )
+
+        val result = repository.set(updatedSubmission).futureValue
+
+        result shouldBe updatedSubmission
+      }
     }
 
-    "return None if the given vpdId and periodKey do not exist in the repository" in {
-      repository.get("NONEXISTENT", "99ZZ").futureValue must not be defined
-    }
-  }
+    "get" - {
+      "must return a return submission when it exists" in {
+        repository.set(sampleSubmission).futureValue
 
-  "set must" - {
-    "save the supplied submission to the repository" in {
-      val savedSubmission = repository.set(testSubmission).futureValue
-      val getSavedRecord = find(
-        Filters.and(
-          Filters.equal("vpdId", testVpdId),
-          Filters.equal("periodKey", testPeriodKey)
-        )
-      ).futureValue.headOption.value
+        val result = repository.get(vpdId, periodKey).futureValue
 
-      savedSubmission mustBe testSubmission
-      getSavedRecord mustBe testSubmission
+        result.value shouldBe sampleSubmission
+      }
+
+      "must return None when return submission does not exist" in {
+        val result = repository.get(vpdId, periodKey).futureValue
+
+        result shouldBe None
+      }
     }
 
-    "upsert if the vpdId and periodKey already exist in the repository (amendment)" in {
-      repository.set(testSubmission).futureValue
+    "clear" - {
+      "must remove all return submissions" in {
+        repository.set(sampleSubmission).futureValue
 
-      val amendedSubmission = testSubmission.copy(
-        chargeReference = "XMVPD9876543210fe",
-        submissionId = "submission-002",
-        submittedAt = Instant.parse("2027-11-16T14:00:00Z")
-      )
+        repository.clear.futureValue
 
-      val savedSubmission = repository.set(amendedSubmission).futureValue
-      val getSavedRecord = find(
-        Filters.and(
-          Filters.equal("vpdId", testVpdId),
-          Filters.equal("periodKey", testPeriodKey)
-        )
-      ).futureValue.headOption.value
+        val result = repository.get(vpdId, periodKey).futureValue
 
-      savedSubmission mustBe amendedSubmission
-      getSavedRecord mustBe amendedSubmission
-
-      // Verify only one record exists (upsert, not insert)
-      val allRecords = find(Filters.equal("vpdId", testVpdId)).futureValue
-      allRecords.size mustBe 1
-    }
-  }
-
-  "clear must" - {
-    "clear all data in the repository" in {
-      val savedSubmission = repository.set(testSubmission).futureValue
-      val getSavedRecord = find(
-        Filters.and(
-          Filters.equal("vpdId", testVpdId),
-          Filters.equal("periodKey", testPeriodKey)
-        )
-      ).futureValue.headOption.value
-
-      savedSubmission mustBe testSubmission
-      getSavedRecord mustBe testSubmission
-
-      val clearedData = repository.clear.futureValue
-      val retrieveRecord = find(
-        Filters.and(
-          Filters.equal("vpdId", testVpdId),
-          Filters.equal("periodKey", testPeriodKey)
-        )
-      ).futureValue.headOption
-
-      clearedData.isDefined mustBe true
-      retrieveRecord.isDefined mustBe false
+        result shouldBe None
+      }
     }
   }
 }

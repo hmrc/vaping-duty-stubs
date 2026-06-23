@@ -21,15 +21,15 @@ import uk.gov.hmrc.vapingdutystubs.models.returns.DeclarationDetails
 
 import java.time.{Instant, LocalDate}
 
-case class ReturnSubmittedResponse(
-  processingDate: Instant,
-  vpdReferenceNumber: String,
-  submissionID: Option[String],
-  chargeReference: Option[String],
-  amount: BigDecimal,
-  paymentDueDate: Option[LocalDate],
-  declaration: DeclarationDetails
-)
+final case class ReturnSubmittedResponse(
+                                          processingDate: Instant,
+                                          vpdReferenceNumber: String,
+                                          submissionID: Option[String],
+                                          chargeReference: Option[String],
+                                          amount: BigDecimal,
+                                          paymentDueDate: Option[LocalDate],
+                                          declaration: DeclarationDetails
+                                        )
 
 object ReturnSubmittedResponse {
   given OFormat[ReturnSubmittedResponse] = Json.format[ReturnSubmittedResponse]

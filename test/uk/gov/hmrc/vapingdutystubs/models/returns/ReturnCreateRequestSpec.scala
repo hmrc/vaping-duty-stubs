@@ -22,13 +22,19 @@ import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
 class ReturnCreateRequestSpec extends SpecBase {
   val returnCreateRequest: ReturnCreateRequest =
-    ReturnCreateRequest(periodKey = "x641",
-      vapingProductsProduced = VapingProductsProduced(Seq(), Seq()),
+    ReturnCreateRequest(
+      periodKey = "24AL",
+      vapingProductsProduced = VapingProductsProduced("0", Seq()),
+      overDeclaration = None,
+      underDeclaration = None,
+      spoiltProduct = None,
       totalDutyDue = TotalDutyDue(1, 1, 1, 1, 1, 1),
-      declaration = sampleDeclarationDetails)
+      otherOptions = None,
+      declaration = sampleDeclarationDetails
+    )
 
   "ReturnCreateRequest" - {
-    val json = """{"periodKey":"x641","vapingProductsProduced":{"nilReturn":[],"regularReturn":[]},"totalDutyDue":{"totalDutyDueVapingProducts":1,"totalDutyOverDeclaration":1,"totalDutyUnderDeclaration":1,"totalDutySpoiltProduct":1,"adjustmentAmount":1,"totalDutyDue":1},"declaration":{"fullName":"John Smith","capacityInWhichSigned":"Director","signeesEmailAddress":"john.smith@example.com"}}"""
+    val json = """{"periodKey":"24AL","vapingProductsProduced":{"vapingProdManufactured":"0","returns":[]},"totalDutyDue":{"totalDutyDueVapingProducts":1,"totalDutyOverDeclaration":1,"totalDutyUnderDeclaration":1,"totalDutySpoiltProduct":1,"adjustmentAmount":1,"totalDue":1},"declaration":{"fullName":"John Smith","capacityInWhichSigned":"Director","signeesEmailAddress":"john.smith@example.com"}}"""
 
     "must serialise to json" in {
       Json.toJson(returnCreateRequest).toString() mustBe json

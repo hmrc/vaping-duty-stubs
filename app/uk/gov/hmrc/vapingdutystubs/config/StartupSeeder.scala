@@ -17,53 +17,25 @@
 package uk.gov.hmrc.vapingdutystubs.config
 
 import play.api.Logging
-import play.api.inject.ApplicationLifecycle
-import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
-import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnSubmissionData
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository, SubscriptionSummaryRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartupSeeder @Inject()(
-  returnSubmissionRepository: ReturnSubmissionRepository,
+  subscriptionSummaryRepository: SubscriptionSummaryRepository,
   obligationsRepository: ObligationsRepository,
-  lifecycle: ApplicationLifecycle
+  returnSubmissionRepository: ReturnSubmissionRepository
 )(implicit ec: ExecutionContext) extends Logging {
 
-  // Seed data on startup
-  seedData()
-
-  private def seedData(): Unit = {
-    logger.info("Seeding sample data into repositories...")
-
-    val seedFuture = for {
-      // Seed return submissions
-      _ <- Future.sequence(
-        ReturnSubmissionData.allSampleReturnSubmissions.map { submission =>
-          returnSubmissionRepository.set(submission)
-        }
-      )
-      // Seed obligations
-      _ <- Future.sequence(
-        ObligationsData.allSampleObligations.map { obligations =>
-          obligationsRepository.set(obligations)
-        }
-      )
-    } yield ()
-
-    seedFuture.onComplete {
-      case scala.util.Success(_) =>
-        logger.info("Successfully seeded sample data")
-      case scala.util.Failure(ex) =>
-        logger.error("Failed to seed sample data", ex)
-    }
+  // Clear return submissions on startup to prevent deserialization issues with old data structure
+  logger.info("Clearing return submissions repository on startup...")
+  returnSubmissionRepository.clear.map { _ =>
+    logger.info("Return submissions repository cleared successfully")
+  }.recover { case e =>
+    logger.error(s"Failed to clear return submissions repository: ${e.getMessage}", e)
   }
 
-  // Clean up on shutdown
-  lifecycle.addStopHook { () =>
-    logger.info("Application shutting down")
-    Future.successful(())
-  }
+  logger.info("StartupSeeder initialized")
 }

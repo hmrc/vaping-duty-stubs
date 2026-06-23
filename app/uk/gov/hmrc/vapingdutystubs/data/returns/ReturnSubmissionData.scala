@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,79 +16,118 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.returns
 
-import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
+import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
-import java.time.Instant
+import java.time.{Instant, YearMonth, ZoneId}
+import scala.util.Random
 
 object ReturnSubmissionData {
 
-  private val sampleRegularReturn = RegularReturn(
-    taxType = "301",
-    dutyRate = BigDecimal("0.05"),
-    amountProducedLiquid = BigDecimal("1000.50"),
-    dutyDue = BigDecimal("50.03")
-  )
+  private val random = new Random()
 
-  private val sampleTotalDutyDue = TotalDutyDue(
-    totalDutyDue = BigDecimal("50.03"),
-    totalDutyDueVapingProducts = BigDecimal("50.03"),
-    totalDutyOverDeclaration = BigDecimal("0.00"),
-    totalDutySpoiltProduct = BigDecimal("0.00"),
-    totalDutyUnderDeclaration = BigDecimal("0.00"),
-    adjustmentAmount = BigDecimal("0.00")
-  )
+  private def generateVapingReturn(): VapingReturn = {
+    VapingReturn(
+      taxType = "641",
+      dutyRate = BigDecimal("10.50"),
+      amountProducedLiquid = BigDecimal(1000 + random.nextInt(5000)) + BigDecimal(random.nextInt(100)) / 100,
+      dutyDue = BigDecimal(10000 + random.nextInt(50000)) + BigDecimal(random.nextInt(100)) / 100
+    )
+  }
 
-  private val sampleDeclarationDetails = DeclarationDetails(
-    fullName = "John Smith",
-    capacityInWhichSigned = "Director",
-    signeesEmailAddress = "john.smith@example.com"
-  )
+  private def generateDeclaration(): DeclarationDetails = {
+    DeclarationDetails(
+      fullName = "John Smith",
+      capacityInWhichSigned = "Director",
+      signeesEmailAddress = "john.smith@example.com"
+    )
+  }
 
-  private def createReturnSubmission(
-    vpdId: String,
-    periodKey: String,
-    chargeReference: String,
-    submissionId: String,
-    submittedAt: Instant
-  ): ReturnSubmission = {
-    val returnCreateRequest = ReturnCreateRequest(
+  private def generateTotalDutyDue(isNil: Boolean): TotalDutyDue = {
+    if (isNil) {
+      TotalDutyDue(
+        totalDutyDueVapingProducts = BigDecimal("0.00"),
+        totalDutyOverDeclaration = BigDecimal("0.00"),
+        totalDutyUnderDeclaration = BigDecimal("0.00"),
+        totalDutySpoiltProduct = BigDecimal("0.00"),
+        adjustmentAmount = BigDecimal("0.00"),
+        totalDue = BigDecimal("0.00")
+      )
+    } else {
+      val vapingProductsDuty = BigDecimal(10000 + random.nextInt(50000)) + BigDecimal(random.nextInt(100)) / 100
+      TotalDutyDue(
+        totalDutyDueVapingProducts = vapingProductsDuty,
+        totalDutyOverDeclaration = BigDecimal("0.00"),
+        totalDutyUnderDeclaration = BigDecimal("0.00"),
+        totalDutySpoiltProduct = BigDecimal("0.00"),
+        adjustmentAmount = BigDecimal("0.00"),
+        totalDue = vapingProductsDuty
+      )
+    }
+  }
+
+  private def generateNilReturnRequest(periodKey: String): ReturnCreateRequest = {
+    ReturnCreateRequest(
       periodKey = periodKey,
       vapingProductsProduced = VapingProductsProduced(
-        nilReturn = Seq.empty,
-        regularReturn = Seq(sampleRegularReturn)
+        vapingProdManufactured = "0",
+        returns = Seq.empty
       ),
-      totalDutyDue = sampleTotalDutyDue,
-      declaration = sampleDeclarationDetails
+      overDeclaration = None,
+      underDeclaration = None,
+      spoiltProduct = None,
+      totalDutyDue = generateTotalDutyDue(isNil = true),
+      otherOptions = None,
+      declaration = generateDeclaration()
     )
+  }
 
-    ReturnSubmission(
-      vpdId = vpdId,
+  private def generateRegularReturnRequest(periodKey: String): ReturnCreateRequest = {
+    val returns = Seq(generateVapingReturn())
+    ReturnCreateRequest(
       periodKey = periodKey,
-      chargeReference = chargeReference,
-      submittedReturn = returnCreateRequest,
-      submittedAt = submittedAt,
-      submissionId = submissionId
+      vapingProductsProduced = VapingProductsProduced(
+        vapingProdManufactured = "1",
+        returns = returns
+      ),
+      overDeclaration = None,
+      underDeclaration = None,
+      spoiltProduct = None,
+      totalDutyDue = generateTotalDutyDue(isNil = false),
+      otherOptions = None,
+      declaration = generateDeclaration()
     )
   }
 
-  def sampleReturnSubmission(vpdId: String): ReturnSubmission = {
-    // This matches the fulfilled obligation in ObligationsData (period 27AJ)
-    createReturnSubmission(
-      vpdId = vpdId,
-      periodKey = "27AJ",
-      chargeReference = "XMVPD0123456789ab",
-      submissionId = "submission-001",
-      submittedAt = Instant.parse("2027-11-15T10:30:00Z")
-    )
+  def generate33ReturnSubmissions(vpdId: String): Seq[ReturnSubmission] = {
+    val currentYear = Instant.now().atZone(ZoneId.systemDefault()).getYear
+    val startYear = currentYear - 2
+
+    (0 until 33).map { index =>
+      val year = startYear + (index / 12)
+      val month = (index % 12) + 1
+      val yearMonth = YearMonth.of(year, month)
+      val periodKey = ReturnPeriod(yearMonth).toPeriodKey
+
+      val isNil = random.nextBoolean()
+      val returnRequest = if (isNil) {
+        generateNilReturnRequest(periodKey)
+      } else {
+        generateRegularReturnRequest(periodKey)
+      }
+
+      val submissionId = f"${100000000000L + random.nextInt(900000000)}%012d"
+      val chargeReference = s"XMVPD${submissionId.take(12)}"
+
+      ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = chargeReference,
+        submittedReturn = returnRequest,
+        submittedAt = Instant.now().minusSeconds(random.nextInt(86400 * 30)),
+        submissionId = submissionId
+      )
+    }
   }
-
-  val sampleVpdIds: Seq[String] = Seq(
-    "GBWK0000001WK",
-    "GBWK0000002WK",
-    "GBWK0000003WK"
-  )
-
-  def allSampleReturnSubmissions: Seq[ReturnSubmission] =
-    sampleVpdIds.map(sampleReturnSubmission)
 }

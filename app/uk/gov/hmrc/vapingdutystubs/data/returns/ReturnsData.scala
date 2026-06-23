@@ -25,24 +25,29 @@ import java.time.{Instant, LocalDate}
 object ReturnsData {
   private val now = Instant.now()
 
-  private val regularReturn_ = RegularReturn(
-    taxType = "301",
-    dutyRate = BigDecimal("0.05"),
-    amountProducedLiquid = BigDecimal("9999999.9"),
-    dutyDue = BigDecimal("999999999.99")
+  private val sampleVapingReturn = VapingReturn(
+    taxType = "641",
+    dutyRate = BigDecimal("10.50"),
+    amountProducedLiquid = BigDecimal("1500.25"),
+    dutyDue = BigDecimal("15752.63")
   )
 
-  def idDetails(vpdReference: String, submissionId: String) = IdDetails(vpdReference, Some(submissionId))
-  def vapingProductsProduced(nilReturn: Seq[NilReturn], regularReturn: Seq[RegularReturn]) = VapingProductsProduced(nilReturn, regularReturn)
+  def idDetails(vpdReference: String, submissionId: String): IdDetails = 
+    IdDetails(vpdReference, Some(submissionId))
 
-  private val totalDutyDue_bigDecimal = BigDecimal("-99999999999.99")
+  def nilReturn(): VapingProductsProduced = 
+    VapingProductsProduced(vapingProdManufactured = "0", returns = Seq.empty)
+
+  def regularReturn(items: Seq[VapingReturn]): VapingProductsProduced = 
+    VapingProductsProduced(vapingProdManufactured = "1", returns = items)
+
   private val totalDutyDue = TotalDutyDue(
-    totalDutyDue = totalDutyDue_bigDecimal,
-    totalDutyDueVapingProducts = totalDutyDue_bigDecimal,
-    totalDutyOverDeclaration = totalDutyDue_bigDecimal,
-    totalDutySpoiltProduct = totalDutyDue_bigDecimal,
-    totalDutyUnderDeclaration = totalDutyDue_bigDecimal,
-    adjustmentAmount = totalDutyDue_bigDecimal
+    totalDutyDueVapingProducts = BigDecimal("15752.63"),
+    totalDutyOverDeclaration = BigDecimal("1050.00"),
+    totalDutyUnderDeclaration = BigDecimal("2100.00"),
+    totalDutySpoiltProduct = BigDecimal("525.00"),
+    adjustmentAmount = BigDecimal("0.00"),
+    totalDue = BigDecimal("14177.63")
   )
 
   private val sampleDeclarationDetails = DeclarationDetails(
@@ -51,7 +56,7 @@ object ReturnsData {
     signeesEmailAddress = "john.smith@example.com"
   )
 
-  private def chargeDetails(periodKey: String) = ChargeDetails(
+  private def chargeDetails(periodKey: String): ChargeDetails = ChargeDetails(
     periodKey,
     chargeReference = Some("XMVPDP0000123"),
     periodFrom = LocalDate.of(2026, 3, 14),
@@ -62,14 +67,13 @@ object ReturnsData {
   def apply(vpdReference: String, periodKey: String, submissionId: String): ReturnDisplayResponse = {
     val successResponse = ReturnDisplaySuccess(
       processingDate = now,
-      idDetails = Some(idDetails(vpdReference, submissionId)),
-      chargeDetails = Some(chargeDetails(periodKey)),
-      vapingProductsProduced = Some(vapingProductsProduced(nilReturn = Seq.empty, regularReturn = Seq(regularReturn_))),
+      idDetails = idDetails(vpdReference, submissionId),
+      chargeDetails = chargeDetails(periodKey),
+      vapingProductsProduced = regularReturn(Seq(sampleVapingReturn)),
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,
-      totalDutyDue = Some(totalDutyDue),
-      totalDutyDueByTaxType = None,
+      totalDutyDue = totalDutyDue,
       otherOptions = None,
       declaration = sampleDeclarationDetails
     )
@@ -83,21 +87,20 @@ object ReturnsData {
 
     val successResponse = ReturnDisplaySuccess(
       processingDate = submission.submittedAt,
-      idDetails = Some(IdDetails(submission.vpdId, Some(submission.submissionId))),
-      chargeDetails = Some(ChargeDetails(
+      idDetails = IdDetails(submission.vpdId, Some(submission.submissionId)),
+      chargeDetails = ChargeDetails(
         periodKey = submission.periodKey,
         chargeReference = Some(submission.chargeReference),
         periodFrom = returnPeriod.periodFromDate(),
         periodTo = returnPeriod.periodToDate(),
         receiptDate = submission.submittedAt
-      )),
-      vapingProductsProduced = Some(submittedReturn.vapingProductsProduced),
-      overDeclaration = None,
-      underDeclaration = None,
-      spoiltProduct = None,
-      totalDutyDue = Some(submittedReturn.totalDutyDue),
-      totalDutyDueByTaxType = None,
-      otherOptions = None,
+      ),
+      vapingProductsProduced = submittedReturn.vapingProductsProduced,
+      overDeclaration = submittedReturn.overDeclaration,
+      underDeclaration = submittedReturn.underDeclaration,
+      spoiltProduct = submittedReturn.spoiltProduct,
+      totalDutyDue = submittedReturn.totalDutyDue,
+      otherOptions = submittedReturn.otherOptions,
       declaration = submittedReturn.declaration
     )
 

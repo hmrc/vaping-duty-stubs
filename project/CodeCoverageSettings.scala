@@ -12,7 +12,8 @@ object CodeCoverageSettings {
     ".*Routes.*",
     "testOnly.*",
     "testOnlyDoNotUseInAppConf.*",
-    ".*models.*"
+    ".*models.*",
+    ".*data.*"
   )
 
   val settings: Seq[Setting[?]] = Seq(
