@@ -33,13 +33,12 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubmitReturnController @Inject()(
-  cc: ControllerComponents,
-  returnSubmissionRepository: ReturnSubmissionRepository,
-  obligationsRepository: ObligationsRepository,
-  uuidGenerator: RandomUUIDGenerator,
-  clock: Clock
-)(using ExecutionContext) extends BackendController(cc)
-  with Logging {
+                                        cc: ControllerComponents,
+                                        returnSubmissionRepository: ReturnSubmissionRepository,
+                                        obligationsRepository: ObligationsRepository,
+                                        uuidGenerator: RandomUUIDGenerator,
+                                        clock: Clock
+                                      )(using ExecutionContext) extends BackendController(cc) with Logging {
 
   private val submitReturnHeaders = Set(
     HeaderNames.AUTHORIZATION,
@@ -56,7 +55,8 @@ class SubmitReturnController @Inject()(
     implicit request =>
       logHeaders(request, "submitReturn", submitReturnHeaders)
 
-      logger.info(s"Return submission received with json: ${request.body}")
+      logger.info(s"[SubmitReturn] Received return submission request")
+      logger.debug(s"[SubmitReturn] Request body: ${request.body}")
 
       val vpdId = request.headers
         .get(xZVPD)
@@ -64,22 +64,31 @@ class SubmitReturnController @Inject()(
           throw new IllegalArgumentException("Expected x-zvpd header")
         )
 
+      logger.info(s"[SubmitReturn] Processing submission for vpdId: $vpdId")
+
       request.body.validate[ReturnCreateRequest].fold(
         errors => {
-          logger.error(s"Invalid return submission request: $errors")
+          logger.error(s"[SubmitReturn] JSON validation failed for vpdId: $vpdId, errors: $errors")
           Future.successful(BadRequest(Json.obj("error" -> "Invalid request body")))
         },
         returnRequest => {
+          logger.info(s"[SubmitReturn] JSON parsed successfully for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+          logger.debug(s"[SubmitReturn] Validating return request for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+          
           // Validate the request
           returnRequest.validate match {
             case Left(validationError) =>
-              logger.warn(s"Return validation failed: $validationError")
+              logger.warn(s"[SubmitReturn] Business validation failed for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, error: $validationError")
               Future.successful(BadRequest(Json.obj("error" -> validationError)))
-            
+
             case Right(_) =>
+              logger.info(s"[SubmitReturn] Validation passed for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+              
               val now = Instant.now(clock)
               val submissionId = uuidGenerator.uuid
               val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
+
+              logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, chargeReference: $chargeReference")
 
               val submission = ReturnSubmission(
                 vpdId = vpdId,
@@ -90,13 +99,18 @@ class SubmitReturnController @Inject()(
                 submissionId = submissionId
               )
 
+              logger.info(s"[SubmitReturn] Saving submission to repository for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+
               for {
-                _ <- returnSubmissionRepository.set(submission)
-                _ <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
+                savedSubmission <- returnSubmissionRepository.set(submission)
+                _ = logger.info(s"[SubmitReturn] Successfully saved submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, chargeRef: $chargeReference")
+                _ = logger.info(s"[SubmitReturn] Marking obligation as fulfilled for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+                obligationResult <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
+                _ = logger.info(s"[SubmitReturn] Obligation marked as fulfilled: ${obligationResult.isDefined} for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
               } yield {
                 val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
 
-                Created(Json.toJson(ReturnCreateResponse(
+                val response = ReturnCreateResponse(
                   ReturnSubmittedResponse(
                     processingDate = now,
                     vpdReferenceNumber = vpdId,
@@ -106,7 +120,12 @@ class SubmitReturnController @Inject()(
                     paymentDueDate = Some(paymentDueDate),
                     declaration = returnRequest.declaration
                   )
-                )))
+                )
+
+                logger.info(s"[SubmitReturn] Successfully completed submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, submissionId: $submissionId")
+                logger.debug(s"[SubmitReturn] Response: ${Json.toJson(response)}")
+
+                Created(Json.toJson(response))
               }
           }
         }
