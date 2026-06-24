@@ -98,71 +98,71 @@ sbt run
 
 ## Test Support Endpoints
 
-The service provides test support endpoints for managing obligations data. These endpoints are available when running the stub service.
+These endpoints are only available when running with test-only routes enabled:
 
-### Available Endpoints
+```bash
+sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
+```
+
+### Obligations Management
 
 #### Set Predefined Scenario
-
-Set a predefined obligations scenario for any VPD ID:
-
-```bash
-POST /test-support/obligations/{vpdId}/scenario/{scenarioName}
+```
+POST /test-support/obligations/:vpdId/scenario/:scenario
 ```
 
-**Available Scenarios:**
-- `only-open` - Multiple open returns with no completed returns (ideal for testing dynamic UI)
-- `only-completed` - All returns completed
-- `mixed` - Mix of open and completed returns (default behavior)
-- `none` - Empty obligations list
+Sets a predefined obligation scenario for a VPD ID.
+
+**Available scenarios:**
+- `only-open` - Only open (unfulfilled) obligations
+- `only-completed` - Only completed (fulfilled) obligations
+- `mixed` - Mix of open and completed obligations
+- `none` - No obligations
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/GBWK0000001WK/scenario/only-open
+curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/scenario/mixed
 ```
 
-**Response:**
-```json
-{
-  "message": "Successfully set scenario 'only-open' for VPD ID GBWK0000001WK",
-  "vpdId": "GBWK0000001WK",
-  "scenario": "only-open",
-  "obligationCount": 3
-}
+#### Set Custom Obligations
+```
+POST /test-support/obligations/:vpdId/custom
 ```
 
-#### Clear Obligations for Specific VPD ID
-
-Remove all obligations for a specific VPD ID:
-
-```bash
-DELETE /test-support/obligations/{vpdId}
-```
+Sets custom obligations for a VPD ID using JSON payload.
 
 **Example:**
 ```bash
-curl -X DELETE http://localhost:8142/test-support/obligations/GBWK0000001WK
+curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/custom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vpdId": "XIWK0904905WK",
+    "obligations": [...]
+  }'
 ```
 
-**Response:**
-```json
-{
-  "message": "Successfully cleared obligations for VPD ID GBWK0000001WK",
-  "vpdId": "GBWK0000001WK"
-}
+#### Clear Obligations for VPD ID
+```
+POST /test-support/obligations/:vpdId/clear
+```
+
+Clears all obligations for a specific VPD ID.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/clear
 ```
 
 #### Clear All Obligations
-
-Remove all obligations data from the database:
-
-```bash
-DELETE /test-support/obligations
 ```
+POST /test-support/obligations/clear-all
+```
+
+Clears all obligations data from the repository.
 
 **Example:**
 ```bash
-curl -X DELETE http://localhost:8142/test-support/obligations
+curl -X POST http://localhost:8142/test-support/obligations/clear-all
 ```
 
 **Response:**
