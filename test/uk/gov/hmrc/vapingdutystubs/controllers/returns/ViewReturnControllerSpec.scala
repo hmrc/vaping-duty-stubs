@@ -18,13 +18,14 @@ package uk.gov.hmrc.vapingdutystubs.controllers.returns
 
 import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
-import org.scalatest.matchers.should.Matchers.shouldBe
+import org.scalatest.matchers.should.Matchers.{should, shouldBe}
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.OK
+import play.api.http.Status.{BAD_REQUEST, FORBIDDEN, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, UNPROCESSABLE_ENTITY}
 import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status, stubControllerComponents}
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
@@ -39,10 +40,11 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
   override val cc: ControllerComponents = stubControllerComponents()
 
-  val controller = new ViewReturnController(
-    cc,
-    mockReturnSubmissionRepository
-  )
+  val controller = new ViewReturnController(cc, mockReturnSubmissionRepository)
+
+  // Default stub to prevent null pointer exceptions in error response tests
+  when(mockReturnSubmissionRepository.get(any(), any()))
+    .thenReturn(Future.successful(None))
 
   override val vpdId = "GBWK1234567WK"
   val periodKey = "24AL"
@@ -111,6 +113,81 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
       val result = controller.viewReturn(vpdId, periodKey)(request)
 
       status(result) shouldBe OK
+    }
+
+    "when VPD ID triggers test error responses" - {
+      "must return 400 Bad Request when VPD ID ends with 1" in {
+        val testVpdId = "GBWK1234561WK"
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe BAD_REQUEST
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "400"
+        errorResponse.error.message should include("Invalid request payload")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 403 Forbidden when VPD ID ends with 2" in {
+        val testVpdId = "GBWK1234562WK"
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe FORBIDDEN
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "403"
+        errorResponse.error.message shouldBe "Forbidden"
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 404 Not Found when VPD ID ends with 3" in {
+        val testVpdId = "GBWK1234563WK"
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe NOT_FOUND
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "404"
+        errorResponse.error.message shouldBe "Not Found"
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 422 Unprocessable Entity when VPD ID ends with 5" in {
+        val testVpdId = "GBWK1234565WK"
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe UNPROCESSABLE_ENTITY
+        val errorResponse = contentAsJson(result).as[EtmpDownstreamError]
+        errorResponse.error.code shouldBe "002"
+        errorResponse.error.text shouldBe "ID Number missing or invalid"
+        errorResponse.error.processingDate should not be empty
+      }
+
+      "must return 500 Internal Server Error when VPD ID ends with 8" in {
+        val testVpdId = "GBWK1234568WK"
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "500"
+        errorResponse.error.message should include("SAP PI system is currently unavailable")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must process normally when VPD ID ends with 0" in {
+        val testVpdId = "GBWK1234560WK"
+        when(mockReturnSubmissionRepository.get(eqTo(testVpdId), eqTo(periodKey)))
+          .thenReturn(Future.successful(Some(sampleSubmission.copy(vpdId = testVpdId))))
+
+        val request = FakeRequest()
+        val result = controller.viewReturn(testVpdId, periodKey)(request)
+
+        status(result) shouldBe OK
+        val responseJson = contentAsJson(result)
+        (responseJson \ "success" \ "idDetails" \ "vpdReferenceNumber").as[String] shouldBe testVpdId
+      }
     }
   }
 }
