@@ -24,7 +24,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartupSeeder @Inject()(
-  subscriptionSummaryRepository: SubscriptionSummaryRepository,
   obligationsRepository: ObligationsRepository,
   returnSubmissionRepository: ReturnSubmissionRepository
 )(implicit ec: ExecutionContext) extends Logging {

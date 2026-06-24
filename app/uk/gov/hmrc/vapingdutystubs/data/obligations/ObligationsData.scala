@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.vapingdutystubs.data.obligations
 
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState}
 
 import java.time.LocalDate
 
