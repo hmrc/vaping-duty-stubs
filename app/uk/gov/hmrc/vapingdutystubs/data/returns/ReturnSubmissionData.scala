@@ -20,9 +20,8 @@ import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 
-import java.time.{Instant, YearMonth, ZoneId}
+import java.time.{LocalDate, ZoneOffset}
 import scala.util.Random
-import java.time.{Instant, LocalDate, ZoneOffset}
 
 object ReturnSubmissionData {
 
