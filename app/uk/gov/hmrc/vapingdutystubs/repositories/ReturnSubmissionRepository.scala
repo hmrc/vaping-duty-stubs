@@ -17,6 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.repositories
 
 import org.mongodb.scala.model.*
+import play.api.Logging
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.vapingdutystubs.config.AppConfig
@@ -51,7 +52,7 @@ class ReturnSubmissionRepository @Inject()(
       ),
       extraCodecs = Seq.empty,
       replaceIndexes = true
-    ) {
+    ) with Logging {
 
   private def byVpdIdAndPeriodKey(vpdId: String, periodKey: String) =
     Filters.and(
@@ -59,12 +60,28 @@ class ReturnSubmissionRepository @Inject()(
       Filters.equal("periodKey", periodKey)
     )
 
-  def get(vpdId: String, periodKey: String): Future[Option[ReturnSubmission]] =
+  def get(vpdId: String, periodKey: String): Future[Option[ReturnSubmission]] = {
+    logger.debug(s"[ReturnSubmissionRepository.get] Querying for vpdId: $vpdId, periodKey: $periodKey")
+    
     collection
       .find(byVpdIdAndPeriodKey(vpdId, periodKey))
       .headOption()
+      .map { result =>
+        result match {
+          case Some(submission) =>
+            logger.info(s"[ReturnSubmissionRepository.get] Found submission for vpdId: $vpdId, periodKey: $periodKey, chargeRef: ${submission.chargeReference}")
+            logger.debug(s"[ReturnSubmissionRepository.get] Submission details - submissionId: ${submission.submissionId}, submittedAt: ${submission.submittedAt}")
+          case None =>
+            logger.info(s"[ReturnSubmissionRepository.get] No submission found for vpdId: $vpdId, periodKey: $periodKey")
+        }
+        result
+      }
+  }
 
-  def set(submission: ReturnSubmission): Future[ReturnSubmission] =
+  def set(submission: ReturnSubmission): Future[ReturnSubmission] = {
+    logger.info(s"[ReturnSubmissionRepository.set] Saving submission for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
+    logger.debug(s"[ReturnSubmissionRepository.set] Submission details - chargeRef: ${submission.chargeReference}, submissionId: ${submission.submissionId}, submittedAt: ${submission.submittedAt}")
+    
     collection
       .replaceOne(
         filter = byVpdIdAndPeriodKey(submission.vpdId, submission.periodKey),
@@ -72,8 +89,22 @@ class ReturnSubmissionRepository @Inject()(
         options = ReplaceOptions().upsert(true)
       )
       .toFuture()
-      .map(_ => submission)
+      .map { result =>
+        logger.info(s"[ReturnSubmissionRepository.set] Successfully saved submission for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}, matched: ${result.getMatchedCount}, modified: ${result.getModifiedCount}, upserted: ${Option(result.getUpsertedId).isDefined}")
+        submission
+      }
+      .recover { case ex =>
+        logger.error(s"[ReturnSubmissionRepository.set] Failed to save submission for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}", ex)
+        throw ex
+      }
+  }
 
-  def clear: Future[Option[Unit]] =
-    collection.drop().headOption()
+  def clear: Future[Option[Unit]] = {
+    logger.warn(s"[ReturnSubmissionRepository.clear] Clearing all return submissions from collection")
+    
+    collection.drop().headOption().map { result =>
+      logger.info(s"[ReturnSubmissionRepository.clear] Successfully cleared all return submissions")
+      result
+    }
+  }
 }
