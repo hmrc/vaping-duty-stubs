@@ -9,7 +9,7 @@
 # !!!WARNING!!! Every route defined in this file MUST be prefixed with "/test-only/".
 # Failing to follow this rule may result in test routes deployed in production.
 
-# Test-only routes for obligations management
+# Test-only routes for obligations and returns management
 POST   /test-support/obligations/:vpdId/scenario/:scenario   uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setScenario(vpdId: String, scenario: String)
 POST   /test-support/obligations/:vpdId/custom               uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setCustom(vpdId: String)
 POST   /test-support/obligations/:vpdId/clear                uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.clearForVpdId(vpdId: String)
