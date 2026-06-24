@@ -21,13 +21,18 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
+import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnSubmissionData
 import uk.gov.hmrc.vapingdutystubs.models.obligations.ObligationState
-import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
+import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
-@Singleton() class TestObligationsController @Inject()(cc: ControllerComponents, obligationsRepository: ObligationsRepository)(using ExecutionContext) extends BackendController(cc) with Logging {
+@Singleton() class TestObligationsController @Inject()(
+  cc: ControllerComponents,
+  obligationsRepository: ObligationsRepository,
+  returnSubmissionRepository: ReturnSubmissionRepository
+)(using ExecutionContext) extends BackendController(cc) with Logging {
 
   private val SCENARIO_ONLY_OPEN = "only-open"
   private val SCENARIO_ONLY_COMPLETED = "only-completed"
@@ -46,13 +51,43 @@ import scala.concurrent.{ExecutionContext, Future}
     } else {
       val obligationState = scenarioName match {
         case SCENARIO_ONLY_OPEN => ObligationsData.onlyOpenReturns(vpdId)
-        case SCENARIO_ONLY_COMPLETED => ObligationsData.onlyCompletedReturns(vpdId)
-        case SCENARIO_MIXED => ObligationsData.sampleObligations(vpdId)
+        case SCENARIO_ONLY_COMPLETED => ObligationsData.generate36MonthsAllFulfilled(vpdId)
+        case SCENARIO_MIXED => ObligationsData.generate36MonthsObligations(vpdId)
         case SCENARIO_NONE => ObligationsData.noObligations(vpdId)
       }
 
-      obligationsRepository.set(obligationState).map { _ =>
-        logger.info(s"Set scenario '$scenarioName' for vpdId=$vpdId")
+      // Seed returns for scenarios that have fulfilled obligations
+      val returnsFuture = scenarioName match {
+        case SCENARIO_ONLY_COMPLETED =>
+          // All 36 obligations are fulfilled, so seed all 36 returns
+          val returnSubmissions = ReturnSubmissionData.generate36ReturnSubmissions(vpdId)
+          Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
+            logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+          }
+        case SCENARIO_MIXED =>
+          // 33 fulfilled obligations (3 are open), so seed 33 returns
+          val returnSubmissions = ReturnSubmissionData.generate33ReturnSubmissions(vpdId)
+          Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
+            logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+          }
+        case _ =>
+          // For only-open and none scenarios, clear any existing returns
+          returnSubmissionRepository.getAll(vpdId).flatMap { submissions =>
+            if (submissions.nonEmpty) {
+              Future.sequence(submissions.map(sub => returnSubmissionRepository.delete(vpdId, sub.periodKey))).map { _ =>
+                logger.info(s"Cleared ${submissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+              }
+            } else {
+              Future.successful(())
+            }
+          }
+      }
+
+      for {
+        _ <- obligationsRepository.set(obligationState)
+        _ <- returnsFuture
+      } yield {
+        logger.info(s"Set scenario '$scenarioName' for vpdId=$vpdId with ${obligationState.obligations.size} obligations")
         Ok(Json.obj(
           "message" -> s"Successfully set scenario '$scenarioName' for VPD ID $vpdId",
           "vpdId" -> vpdId,
@@ -65,19 +100,37 @@ import scala.concurrent.{ExecutionContext, Future}
 
   def clearForVpdId(vpdId: String): Action[AnyContent] = Action.async { implicit request =>
     obligationsRepository.get(vpdId).flatMap {
-      case Some(_) => obligationsRepository.set(ObligationState(vpdId = vpdId, obligations = Seq.empty)).map { _ =>
-        logger.info(s"Cleared obligations for vpdId=$vpdId")
-        Ok(Json.obj("message" -> s"Successfully cleared obligations for VPD ID $vpdId", "vpdId" -> vpdId))
-      }
-      case None => logger.info(s"No obligations found for vpdId=$vpdId")
+      case Some(_) =>
+        // Clear both obligations and returns
+        val clearObligationsFuture = obligationsRepository.set(ObligationState(vpdId = vpdId, obligations = Seq.empty))
+        val clearReturnsFuture = returnSubmissionRepository.getAll(vpdId).flatMap { submissions =>
+          if (submissions.nonEmpty) {
+            Future.sequence(submissions.map(sub => returnSubmissionRepository.delete(vpdId, sub.periodKey)))
+          } else {
+            Future.successful(Seq.empty)
+          }
+        }
+        
+        for {
+          _ <- clearObligationsFuture
+          _ <- clearReturnsFuture
+        } yield {
+          logger.info(s"Cleared obligations and returns for vpdId=$vpdId")
+          Ok(Json.obj("message" -> s"Successfully cleared obligations and returns for VPD ID $vpdId", "vpdId" -> vpdId))
+        }
+      case None =>
+        logger.info(s"No obligations found for vpdId=$vpdId")
         Future.successful(NotFound(Json.obj("message" -> s"No obligations found for VPD ID $vpdId", "vpdId" -> vpdId)))
     }
   }
 
   def clearAll(): Action[AnyContent] = Action.async { implicit request =>
-    obligationsRepository.clear.map { _ =>
-      logger.info("Cleared all obligations data")
-      Ok(Json.obj("message" -> "Successfully cleared all obligations data"))
+    for {
+      _ <- obligationsRepository.clear
+      _ <- returnSubmissionRepository.clear
+    } yield {
+      logger.info("Cleared all obligations and returns data")
+      Ok(Json.obj("message" -> "Successfully cleared all obligations and returns data"))
     }
   }
 

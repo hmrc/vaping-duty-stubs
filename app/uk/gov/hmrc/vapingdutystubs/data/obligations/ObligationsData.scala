@@ -127,37 +127,44 @@ object ObligationsData {
     )
   }
 
-  def sampleObligations(vpdId: String): ObligationState = {
+  /**
+   * Generates 36 months of obligations with ALL fulfilled (no open obligations).
+   * All 36 obligations are marked as fulfilled with received dates.
+   */
+  def generate36MonthsAllFulfilled(vpdId: String): ObligationState = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+
+    val obligations = (0 until MONTHS_TO_GENERATE).map { monthsBack =>
+      // Calculate the year and month for this obligation
+      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val year = targetDate.getYear
+      val month = targetDate.getMonthValue
+
+      // Create proper period dates
+      val periodStart = LocalDate.of(year, month, 1)
+      val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
+
+      // Generate period key from the period start date
+      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+      val periodKey = returnPeriod.toPeriodKey
+
+      // All obligations are fulfilled with received date 5 days before due date
+      val receivedDate = dueDate.minusDays(5)
+      createObligation(
+        status = STATUS_FULFILLED,
+        fromDate = periodStart,
+        toDate = periodEnd,
+        dueDate = dueDate,
+        periodKey = periodKey,
+        receivedDate = Some(receivedDate)
+      )
+    }.toSeq.reverse // Reverse to get chronological order (oldest first)
 
     ObligationState(
       vpdId = vpdId,
-      obligations = Seq(
-        // Outstanding return - Due soon
-        createObligation(
-          status = "O",
-          fromDate = LocalDate.of(2027, 12, 1),
-          toDate = LocalDate.of(2027, 12, 31),
-          dueDate = LocalDate.of(2028, 1, 7),
-          periodKey = "27AL"
-        ),
-        // Outstanding return - Overdue
-        createObligation(
-          status = "O",
-          fromDate = LocalDate.of(2027, 11, 1),
-          toDate = LocalDate.of(2027, 11, 30),
-          dueDate = LocalDate.of(2027, 12, 7),
-          periodKey = "27AK"
-        ),
-        // Fulfilled return
-        createObligation(
-          status = "F",
-          fromDate = LocalDate.of(2027, 10, 1),
-          toDate = LocalDate.of(2027, 10, 31),
-          dueDate = LocalDate.of(2027, 11, 7),
-          periodKey = "27AJ",
-          receivedDate = Some(LocalDate.of(2027, 11, 15))
-        )
-      )
+      obligations = obligations
     )
   }
 
@@ -167,84 +174,60 @@ object ObligationsData {
     "GBWK0000003WK"
   )
 
-  def allSampleObligations: Seq[ObligationState] =
-    sampleVpdIds.map(sampleObligations)
-
   def onlyOpenReturns(vpdId: String): ObligationState = {
     val currentDate = LocalDate.now()
+    val currentMonthStart = LocalDate.of(currentDate.getYear, currentDate.getMonthValue, 1)
+
+    // Calculate period keys dynamically based on current date
+    val previousMonth = currentMonthStart.minusMonths(1)
+    val twoMonthsAgo = currentMonthStart.minusMonths(2)
+    val threeMonthsAgo = currentMonthStart.minusMonths(3)
+
+    val duePeriodKey = ReturnPeriod.fromDateInPeriod(previousMonth).toPeriodKey
+    val overdue1PeriodKey = ReturnPeriod.fromDateInPeriod(twoMonthsAgo).toPeriodKey
+    val overdue2PeriodKey = ReturnPeriod.fromDateInPeriod(threeMonthsAgo).toPeriodKey
+
+    // For the "due" obligation, set due date to 5 days in the future to ensure it's not overdue
+    val dueDateInFuture = currentDate.plusDays(5)
 
     ObligationState(
       vpdId = vpdId,
       obligations = Seq(
-        // Open return - Due in 10 days
+        // Open return - Due (not yet overdue - due date is in the future)
         createObligation(
-          status = "O",
-          fromDate = LocalDate.of(2027, 12, 1),
-          toDate = LocalDate.of(2027, 12, 31),
-          dueDate = currentDate.plusDays(10),
-          periodKey = "27AL"
+          status = STATUS_OPEN,
+          fromDate = previousMonth,
+          toDate = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth()),
+          dueDate = dueDateInFuture,
+          periodKey = duePeriodKey
         ),
-        // Open return - Overdue by 5 days
+        // Open return - Overdue (2 months ago)
         createObligation(
-          status = "O",
-          fromDate = LocalDate.of(2027, 11, 1),
-          toDate = LocalDate.of(2027, 11, 30),
-          dueDate = currentDate.minusDays(5),
-          periodKey = "27AK"
+          status = STATUS_OPEN,
+          fromDate = twoMonthsAgo,
+          toDate = twoMonthsAgo.withDayOfMonth(twoMonthsAgo.lengthOfMonth()),
+          dueDate = twoMonthsAgo.plusMonths(1).withDayOfMonth(DUE_DATE_DAY),
+          periodKey = overdue1PeriodKey
         ),
-        // Open return - Due in 30 days
+        // Open return - Overdue (3 months ago)
         createObligation(
-          status = "O",
-          fromDate = LocalDate.of(2028, 1, 1),
-          toDate = LocalDate.of(2028, 1, 31),
-          dueDate = currentDate.plusDays(30),
-          periodKey = "28AA"
+          status = STATUS_OPEN,
+          fromDate = threeMonthsAgo,
+          toDate = threeMonthsAgo.withDayOfMonth(threeMonthsAgo.lengthOfMonth()),
+          dueDate = threeMonthsAgo.plusMonths(1).withDayOfMonth(DUE_DATE_DAY),
+          periodKey = overdue2PeriodKey
         )
       )
     )
   }
 
-  def onlyCompletedReturns(vpdId: String): ObligationState = {
-    val currentDate = LocalDate.now()
-
-    ObligationState(
-      vpdId = vpdId,
-      obligations = Seq(
-        // Completed return 1
-        createObligation(
-          status = "F",
-          fromDate = LocalDate.of(2027, 10, 1),
-          toDate = LocalDate.of(2027, 10, 31),
-          dueDate = LocalDate.of(2027, 11, 30),
-          periodKey = "27AJ",
-          receivedDate = Some(LocalDate.of(2027, 11, 15))
-        ),
-        // Completed return 2
-        createObligation(
-          status = "F",
-          fromDate = LocalDate.of(2027, 9, 1),
-          toDate = LocalDate.of(2027, 9, 30),
-          dueDate = LocalDate.of(2027, 10, 31),
-          periodKey = "27AI",
-          receivedDate = Some(LocalDate.of(2027, 10, 20))
-        ),
-        // Completed return 3
-        createObligation(
-          status = "F",
-          fromDate = LocalDate.of(2027, 8, 1),
-          toDate = LocalDate.of(2027, 8, 31),
-          dueDate = LocalDate.of(2027, 9, 30),
-          periodKey = "27AH",
-          receivedDate = Some(LocalDate.of(2027, 9, 25))
-        )
-      )
-    )
-  }
 
   def noObligations(vpdId: String): ObligationState =
     ObligationState(
       vpdId = vpdId,
       obligations = Seq.empty
     )
+
+  def all36MonthsObligations: Seq[ObligationState] =
     sampleVpdIds.map(generate36MonthsObligations)
 }

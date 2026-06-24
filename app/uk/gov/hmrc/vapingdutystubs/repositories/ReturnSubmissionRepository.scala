@@ -99,6 +99,31 @@ class ReturnSubmissionRepository @Inject()(
       }
   }
 
+  def getAll(vpdId: String): Future[Seq[ReturnSubmission]] = {
+    logger.debug(s"[ReturnSubmissionRepository.getAll] Querying all submissions for vpdId: $vpdId")
+    
+    collection
+      .find(Filters.equal("vpdId", vpdId))
+      .toFuture()
+      .map { submissions =>
+        logger.info(s"[ReturnSubmissionRepository.getAll] Found ${submissions.size} submissions for vpdId: $vpdId")
+        submissions
+      }
+  }
+
+  def delete(vpdId: String, periodKey: String): Future[Boolean] = {
+    logger.info(s"[ReturnSubmissionRepository.delete] Deleting submission for vpdId: $vpdId, periodKey: $periodKey")
+    
+    collection
+      .deleteOne(byVpdIdAndPeriodKey(vpdId, periodKey))
+      .toFuture()
+      .map { result =>
+        val deleted = result.getDeletedCount > 0
+        logger.info(s"[ReturnSubmissionRepository.delete] Deletion result for vpdId: $vpdId, periodKey: $periodKey - deleted: $deleted")
+        deleted
+      }
+  }
+
   def clear: Future[Option[Unit]] = {
     logger.warn(s"[ReturnSubmissionRepository.clear] Clearing all return submissions from collection")
     
