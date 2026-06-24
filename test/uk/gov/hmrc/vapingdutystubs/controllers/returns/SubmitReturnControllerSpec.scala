@@ -20,15 +20,15 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatest.matchers.should.Matchers.{should, shouldBe}
 import org.scalatestplus.mockito.MockitoSugar
-import play.api.http.Status.{BAD_REQUEST, CREATED}
+import play.api.http.Status.*
 import play.api.libs.json.Json
 import play.api.mvc.ControllerComponents
-import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status, stubControllerComponents}
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.xZVPD
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
 import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
@@ -158,6 +158,123 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       status(result) shouldBe BAD_REQUEST
       val responseJson = contentAsJson(result)
       (responseJson \ "error").as[String] should include("returns array is not empty")
+    }
+
+    "when VPD ID triggers test error responses" - {
+      "must return 400 Bad Request when VPD ID ends with 1" in {
+        val testVpdId = "GBWK1234561WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe BAD_REQUEST
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "400"
+        errorResponse.error.message should include("Invalid request payload")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 403 Forbidden when VPD ID ends with 2" in {
+        val testVpdId = "GBWK1234562WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe FORBIDDEN
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "403"
+        errorResponse.error.message shouldBe "Forbidden"
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 409 Conflict when VPD ID ends with 4" in {
+        val testVpdId = "GBWK1234564WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe CONFLICT
+        val errorResponse = contentAsJson(result).as[EtmpDownstreamError]
+        errorResponse.error.code shouldBe "004"
+        errorResponse.error.text shouldBe "Duplicate submission"
+        errorResponse.error.processingDate should not be empty
+      }
+
+      "must return 422 Unprocessable Entity when VPD ID ends with 5" in {
+        val testVpdId = "GBWK1234565WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe UNPROCESSABLE_ENTITY
+        val errorResponse = contentAsJson(result).as[EtmpDownstreamError]
+        errorResponse.error.code shouldBe "001"
+        errorResponse.error.text shouldBe "Regime missing or invalid"
+        errorResponse.error.processingDate should not be empty
+      }
+
+      "must return 500 Internal Server Error when VPD ID ends with 8" in {
+        val testVpdId = "GBWK1234568WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "500"
+        errorResponse.error.message should include("SAP PI system is currently unavailable")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must process normally when VPD ID ends with 0" in {
+        val testVpdId = "GBWK1234560WK"
+        when(mockUuidGenerator.uuid).thenReturn(submissionId)
+        when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
+
+        val expectedSubmission = ReturnSubmission(
+          vpdId = testVpdId,
+          periodKey = periodKey,
+          chargeReference = chargeReference,
+          submittedReturn = validReturnRequest,
+          submittedAt = Instant.now(fixedClock),
+          submissionId = submissionId
+        )
+
+        when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+        when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe CREATED
+        val responseJson = contentAsJson(result)
+        (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe testVpdId
+      }
     }
   }
 }
