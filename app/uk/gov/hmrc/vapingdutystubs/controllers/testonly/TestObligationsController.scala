@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.vapingdutystubs.controllers
+package uk.gov.hmrc.vapingdutystubs.controllers.testonly
 
 import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess, Json}
