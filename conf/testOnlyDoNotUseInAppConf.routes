@@ -10,10 +10,10 @@
 # Failing to follow this rule may result in test routes deployed in production.
 
 # Test-only routes for obligations and returns management
-POST   /test-support/obligations/:vpdId/scenario/:scenario   uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setScenario(vpdId: String, scenario: String)
-POST   /test-support/obligations/:vpdId/custom               uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setCustom(vpdId: String)
-POST   /test-support/obligations/:vpdId/clear                uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.clearForVpdId(vpdId: String)
-POST   /test-support/obligations/clear-all                   uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.clearAll()
+POST   /test-only/obligations/:vpdId/scenario/:scenario   uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setScenario(vpdId: String, scenario: String)
+POST   /test-only/obligations/:vpdId/custom               uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.setCustom(vpdId: String)
+POST   /test-only/obligations/:vpdId/clear                uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.clearForVpdId(vpdId: String)
+POST   /test-only/obligations/clear-all                   uk.gov.hmrc.vapingdutystubs.controllers.TestObligationsController.clearAll()
 
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
