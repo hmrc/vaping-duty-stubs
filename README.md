@@ -108,7 +108,7 @@ sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
 
 #### Set Predefined Scenario
 ```
-POST /test-support/obligations/:vpdId/scenario/:scenario
+POST /test-only/obligations/:vpdId/scenario/:scenario
 ```
 
 Sets a predefined obligation scenario for a VPD ID.
@@ -121,19 +121,19 @@ Sets a predefined obligation scenario for a VPD ID.
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/scenario/mixed
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/scenario/mixed
 ```
 
 #### Set Custom Obligations
 ```
-POST /test-support/obligations/:vpdId/custom
+POST /test-only/obligations/:vpdId/custom
 ```
 
 Sets custom obligations for a VPD ID using JSON payload.
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/custom \
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/custom \
   -H "Content-Type: application/json" \
   -d '{
     "vpdId": "XIWK0904905WK",
@@ -143,26 +143,26 @@ curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/custom
 
 #### Clear Obligations for VPD ID
 ```
-POST /test-support/obligations/:vpdId/clear
+POST /test-only/obligations/:vpdId/clear
 ```
 
 Clears all obligations for a specific VPD ID.
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/XIWK0904905WK/clear
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/clear
 ```
 
 #### Clear All Obligations
 ```
-POST /test-support/obligations/clear-all
+POST /test-only/obligations/clear-all
 ```
 
 Clears all obligations data from the repository.
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/clear-all
+curl -X POST http://localhost:8142/test-only/obligations/clear-all
 ```
 
 **Response:**
@@ -177,13 +177,13 @@ curl -X POST http://localhost:8142/test-support/obligations/clear-all
 Post custom obligations JSON for advanced testing scenarios:
 
 ```bash
-POST /test-support/obligations/{vpdId}/custom
+POST /test-only/obligations/{vpdId}/custom
 Content-Type: application/json
 ```
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8142/test-support/obligations/GBWK0000001WK/custom \
+curl -X POST http://localhost:8142/test-only/obligations/GBWK0000001WK/custom \
   -H "Content-Type: application/json" \
   -d '{
     "vpdId": "GBWK0000001WK",
