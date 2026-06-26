@@ -72,14 +72,13 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-    totalDutyDue = TotalDutyDue(
-      totalDutyDueVapingProducts = BigDecimal("15752.63"),
-      totalDutyOverDeclaration = BigDecimal("0.00"),
-      totalDutyUnderDeclaration = BigDecimal("0.00"),
-      totalDutySpoiltProduct = BigDecimal("0.00"),
-      adjustmentAmount = BigDecimal("0.00"),
-      totalDue = BigDecimal("15752.63")
-    ),
+      totalDutyDue = TotalDutyDue(
+        totalDutyDueVapingProducts = BigDecimal("15752.63"),
+        totalDutyOverDeclaration = BigDecimal("1050.00"),
+        totalDutyUnderDeclaration = BigDecimal("2100.00"),
+        totalDutySpoiltProduct = BigDecimal("525.00"),
+        totalDue = BigDecimal("16277.63")
+      ),
     otherOptions = None,
     declaration = DeclarationDetails(
       fullName = "John Smith",
@@ -116,7 +115,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       status(result) shouldBe CREATED
       val responseJson = contentAsJson(result)
       (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe vpdId
-      (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("15752.63")
+      (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("16277.63")
     }
 
     "must return BAD_REQUEST when vapingProdManufactured is 1 but returns array is empty" in {

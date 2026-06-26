@@ -69,7 +69,6 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
       totalDutyOverDeclaration = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       totalDutySpoiltProduct = BigDecimal("0.00"),
-      adjustmentAmount = BigDecimal("0.00"),
       totalDue = BigDecimal("15752.63")
     ),
     otherOptions = None,
