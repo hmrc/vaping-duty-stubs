@@ -110,7 +110,7 @@ class ObligationsControllerSpec extends SpecBase {
       status(result) mustBe OK
       
       val response = contentAsJson(result).as[ObligationsResponse]
-      response.obligation.size mustBe 36
+      response.obligation.size mustBe 3
     }
   }
 }

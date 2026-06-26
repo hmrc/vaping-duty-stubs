@@ -118,7 +118,7 @@ class ViewReturnController @Inject()(
               Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
             case None =>
               logger.info(s"[ViewReturn] Period $periodKey not in fulfilled obligations for vpdId=$vpdReference - returning generated data")
-              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId", chargeReference = "chargeRef")))
+              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId")))
           }
         }
     }
