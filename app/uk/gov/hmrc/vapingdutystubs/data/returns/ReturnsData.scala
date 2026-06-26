@@ -46,7 +46,6 @@ object ReturnsData {
     totalDutyOverDeclaration = BigDecimal("1050.00"),
     totalDutyUnderDeclaration = BigDecimal("2100.00"),
     totalDutySpoiltProduct = BigDecimal("525.00"),
-    adjustmentAmount = BigDecimal("0.00"),
     totalDue = BigDecimal("14177.63")
   )
 
