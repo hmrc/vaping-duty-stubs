@@ -98,7 +98,6 @@ class TestObligationsControllerSpec extends SpecBase {
       totalDutyOverDeclaration = zeroAmount,
       totalDutyUnderDeclaration = zeroAmount,
       totalDutySpoiltProduct = zeroAmount,
-      adjustmentAmount = zeroAmount,
       totalDue = zeroAmount
     ),
     otherOptions = None,

@@ -52,7 +52,6 @@ object ReturnSubmissionData {
         totalDutyOverDeclaration = BigDecimal("0.00"),
         totalDutyUnderDeclaration = BigDecimal("0.00"),
         totalDutySpoiltProduct = BigDecimal("0.00"),
-        adjustmentAmount = BigDecimal("0.00"),
         totalDue = BigDecimal("0.00")
       )
     } else {
@@ -62,7 +61,6 @@ object ReturnSubmissionData {
         totalDutyOverDeclaration = BigDecimal("0.00"),
         totalDutyUnderDeclaration = BigDecimal("0.00"),
         totalDutySpoiltProduct = BigDecimal("0.00"),
-        adjustmentAmount = BigDecimal("0.00"),
         totalDue = vapingProductsDuty
       )
     }

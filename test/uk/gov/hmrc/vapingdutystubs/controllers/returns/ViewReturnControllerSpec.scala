@@ -29,6 +29,7 @@ import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
+import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,7 +41,7 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
   override val cc: ControllerComponents = stubControllerComponents()
 
-  val controller = new ViewReturnController(cc, mockReturnSubmissionRepository)
+  val controller = new ViewReturnController(cc, mockReturnSubmissionRepository, RandomUUIDGenerator())
 
   // Default stub to prevent null pointer exceptions in error response tests
   when(mockReturnSubmissionRepository.get(any(), any()))

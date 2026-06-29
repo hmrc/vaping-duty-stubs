@@ -20,9 +20,10 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.vapingdutystubs.data.returns.{ReturnsData, ReturnSubmissionData}
+import uk.gov.hmrc.vapingdutystubs.data.returns.{ReturnSubmissionData, ReturnsData}
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamError, EtmpDownstreamErrorDetails}
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
+import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.Instant
 import javax.inject.Inject
@@ -30,12 +31,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ViewReturnController @Inject()(
                                       cc: ControllerComponents,
-                                      returnSubmissionRepository: ReturnSubmissionRepository
+                                      returnSubmissionRepository: ReturnSubmissionRepository,
+                                      uuidGenerator: RandomUUIDGenerator
                                     )(using ExecutionContext) extends BackendController(cc)
   with Logging {
 
   private val LOG_ID = "ABCDEF1234567890ABCDEF1234567890"
-
+  private val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
   /**
    * Checks if the VPD ID's last digit triggers a test error response.
    * Returns Some(Result) if an error should be returned, None for normal flow.
@@ -80,38 +82,6 @@ class ViewReturnController @Inject()(
   def viewReturn(vpdReference: String, periodKey: String): Action[AnyContent] = Action.async {
     implicit request =>
       logger.info(s"[ViewReturn] Received request to view return for vpdId: $vpdReference, periodKey: $periodKey")
-      logger.debug(s"[ViewReturn] Querying repository for vpdId: $vpdReference, periodKey: $periodKey")
-
-      returnSubmissionRepository.get(vpdReference, periodKey).flatMap {
-        case Some(submission) =>
-          logger.info(s"[ViewReturn] Found return submission for vpdId: $vpdReference, periodKey: $periodKey")
-          logger.debug(s"[ViewReturn] Submission details - chargeRef: ${submission.chargeReference}, submissionId: ${submission.submissionId}, submittedAt: ${submission.submittedAt}")
-
-          val returnData = ReturnsData.fromSubmission(submission)
-          logger.debug(s"[ViewReturn] Transformed submission to display format for vpdId: $vpdReference, periodKey: $periodKey")
-          logger.debug(s"[ViewReturn] Response: ${Json.toJson(returnData)}")
-
-          Future.successful(Ok(Json.toJson(returnData)))
-
-        case None =>
-          logger.info(s"[ViewReturn] No return submission found for vpdId=$vpdReference, periodKey=$periodKey - generating submissions")
-          // Generate all 33 return submissions for this VPD ID
-          val submissions = ReturnSubmissionData.generate33ReturnSubmissions(vpdReference)
-
-          // Save all submissions
-          Future.sequence(submissions.map(returnSubmissionRepository.set)).flatMap { _ =>
-            // Try to retrieve the requested period again
-            returnSubmissionRepository.get(vpdReference, periodKey).map {
-              case Some(submission) =>
-                logger.info(s"[ViewReturn] Generated and found return submission for vpdId=$vpdReference, periodKey=$periodKey")
-                Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
-              case None =>
-                logger.info(s"[ViewReturn] Period $periodKey not in fulfilled obligations for vpdId=$vpdReference - returning generated data")
-                Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId", chargeReference = "chargeRef")))
-            }
-          }
-      }
-      logger.info(s"[ViewReturn] Received request to view return for vpdId: $vpdReference, periodKey: $periodKey")
 
       // Check for test error responses based on last digit of VPD ID
       checkForTestErrorResponse(vpdReference) match {
@@ -150,7 +120,7 @@ class ViewReturnController @Inject()(
               Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
             case None =>
               logger.info(s"[ViewReturn] Period $periodKey not in fulfilled obligations for vpdId=$vpdReference - returning generated data")
-              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId")))
+              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId", chargeReference = chargeReference)))
           }
         }
     }
