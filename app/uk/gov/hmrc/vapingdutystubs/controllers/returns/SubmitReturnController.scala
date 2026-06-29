@@ -60,7 +60,7 @@ class SubmitReturnController @Inject()(
    * VPD ID format: (GB|XI)WK[7 digits]WK, so we check the 7th digit (3rd from end)
    */
   private def checkForTestErrorResponse(vpdId: String): Option[Result] = {
-    // Extract the last digit before "WK" suffix (3rd character from end)
+    // Extract the last digit before "WK" suffix (3rd character from the end)
     val lastDigit = if (vpdId.length >= 3) vpdId.charAt(vpdId.length - 3).toString else ""
     val now = Instant.now(clock)
 
