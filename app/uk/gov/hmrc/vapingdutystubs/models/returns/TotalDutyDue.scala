@@ -18,14 +18,13 @@ package uk.gov.hmrc.vapingdutystubs.models.returns
 
 import play.api.libs.json.{Json, OFormat}
 
-case class TotalDutyDue(
-  totalDutyDueVapingProducts: BigDecimal,
-  totalDutyOverDeclaration: BigDecimal,
-  totalDutyUnderDeclaration: BigDecimal,
-  totalDutySpoiltProduct: BigDecimal,
-  adjustmentAmount: BigDecimal,
-  totalDutyDue: BigDecimal
-)
+final case class TotalDutyDue(
+                               totalDutyDueVapingProducts: BigDecimal,
+                               totalDutyOverDeclaration: BigDecimal,
+                               totalDutyUnderDeclaration: BigDecimal,
+                               totalDutySpoiltProduct: BigDecimal,
+                               totalDue: BigDecimal
+                             )
 
 object TotalDutyDue {
   given OFormat[TotalDutyDue] = Json.format[TotalDutyDue]

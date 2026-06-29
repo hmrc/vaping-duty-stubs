@@ -36,7 +36,7 @@ class ObligationsControllerSpec extends SpecBase {
   )
 
   val testPeriodKey = "27AJ"
-  val currentDate = LocalDate.now()
+  val currentDate: LocalDate = LocalDate.now()
 
   val openObligation = ObligationItem(
     identification = None,
@@ -110,7 +110,7 @@ class ObligationsControllerSpec extends SpecBase {
       status(result) mustBe OK
       
       val response = contentAsJson(result).as[ObligationsResponse]
-      response.obligation.size mustBe 3 // Generated mock data has 3 obligations
+      response.obligation.size mustBe 3
     }
   }
 }

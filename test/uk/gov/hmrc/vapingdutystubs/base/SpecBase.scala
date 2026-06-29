@@ -97,4 +97,5 @@ trait SpecBase
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit val hc: HeaderCarrier    = HeaderCarrier()
+  implicit lazy val materializer: org.apache.pekko.stream.Materializer = app.materializer
 }

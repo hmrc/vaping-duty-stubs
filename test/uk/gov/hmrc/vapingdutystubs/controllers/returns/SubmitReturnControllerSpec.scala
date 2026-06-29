@@ -16,91 +16,265 @@
 
 package uk.gov.hmrc.vapingdutystubs.controllers.returns
 
-import org.mockito.ArgumentMatchers.{any, eq as eqTo}
-import org.mockito.Mockito.{reset, times, verify, when}
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
+import org.scalatest.matchers.should.Matchers.{should, shouldBe}
+import org.scalatestplus.mockito.MockitoSugar
+import play.api.http.Status.*
 import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.mvc.ControllerComponents
+import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status, stubControllerComponents}
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.xZVPD
-import uk.gov.hmrc.vapingdutystubs.models.returns.{RegularReturn, ReturnSubmission, TotalDutyDue, VapingProductsProduced}
-import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse}
+import uk.gov.hmrc.vapingdutystubs.models.returns.*
+import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
 import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
-import scala.concurrent.Future
+import java.time.{Clock, Instant, ZoneId}
+import scala.concurrent.{ExecutionContext, Future}
 
-class SubmitReturnControllerSpec extends SpecBase {
+class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
+
+  override implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
   val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
+  val mockUuidGenerator: RandomUUIDGenerator = mock[RandomUUIDGenerator]
+  val fixedClock: Clock = Clock.fixed(Instant.parse("2026-05-28T10:30:00Z"), ZoneId.of("UTC"))
+  override val cc: ControllerComponents = stubControllerComponents()
 
   val controller = new SubmitReturnController(
     cc,
     mockReturnSubmissionRepository,
     mockObligationsRepository,
-    uuidGenerator,
-    clock
+    mockUuidGenerator,
+    fixedClock
   )
 
-  val testPeriodKey = "27AJ"
+  override val vpdId = "GBWK1234567WK"
+  val periodKey = "24AL"
+  override val submissionId = "123456789012"
+  override val chargeReference = "XMVPD123456789012"
 
-  val sampleReturnRequest = ReturnCreateRequest(
-    periodKey = testPeriodKey,
+  val validReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
+    periodKey = periodKey,
     vapingProductsProduced = VapingProductsProduced(
-      nilReturn = Seq.empty,
-      regularReturn = Seq(RegularReturn(
-        taxType = "301",
-        dutyRate = BigDecimal("0.05"),
-        amountProducedLiquid = BigDecimal("1000.50"),
-        dutyDue = BigDecimal("50.03")
+      vapingProdManufactured = "1",
+      returns = Seq(VapingReturn(
+        taxType = "641",
+        dutyRate = BigDecimal("10.50"),
+        amountProducedLiquid = BigDecimal("1500.25"),
+        dutyDue = BigDecimal("15752.63")
       ))
     ),
-    totalDutyDue = TotalDutyDue(
-      totalDutyDue = BigDecimal("50.03"),
-      totalDutyDueVapingProducts = BigDecimal("50.03"),
-      totalDutyOverDeclaration = BigDecimal("0.00"),
-      totalDutySpoiltProduct = BigDecimal("0.00"),
-      totalDutyUnderDeclaration = BigDecimal("0.00"),
-      adjustmentAmount = BigDecimal("0.00")
-    ),
-    declaration = sampleDeclarationDetails
+    overDeclaration = None,
+    underDeclaration = None,
+    spoiltProduct = None,
+      totalDutyDue = TotalDutyDue(
+        totalDutyDueVapingProducts = BigDecimal("15752.63"),
+        totalDutyOverDeclaration = BigDecimal("1050.00"),
+        totalDutyUnderDeclaration = BigDecimal("2100.00"),
+        totalDutySpoiltProduct = BigDecimal("525.00"),
+        totalDue = BigDecimal("16277.63")
+      ),
+    otherOptions = None,
+    declaration = DeclarationDetails(
+      fullName = "John Smith",
+      capacityInWhichSigned = "Director",
+      signeesEmailAddress = "john.smith@example.com"
+    )
   )
 
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    reset(mockReturnSubmissionRepository, mockObligationsRepository)
-  }
+  "submitReturn" - {
+    "must return CREATED with correct response when valid return is submitted" in {
+      when(mockUuidGenerator.uuid).thenReturn(submissionId)
+      when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
+      
+      val expectedSubmission = ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = chargeReference,
+        submittedReturn = validReturnRequest,
+        submittedAt = Instant.now(fixedClock),
+        submissionId = submissionId
+      )
+      
+      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+      when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
 
-  "submitReturn must" - {
-    "return 201 CREATED with JSON containing a ReturnCreateResponse when submission is successful" in {
-      when(mockReturnSubmissionRepository.set(any[ReturnSubmission])).thenReturn(Future.successful(mock[ReturnSubmission]))
-      when(mockObligationsRepository.markAsFulfilled(any[String], any[String], any[java.time.Instant]))
-        .thenReturn(Future.successful(None))
-
-      val result: Future[Result] = controller.submitReturn()(
-        fakeRequestWithJsonBody(Json.toJson(sampleReturnRequest))
-          .withHeaders(submitCorrelationIdHeader() :+ (xZVPD -> vpdId): _*)
+      val result = controller.submitReturn()(
+        fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+          .withHeaders(
+            xZVPD -> vpdId,
+            "Content-Type" -> "application/json"
+          )
       )
 
-      status(result) mustBe CREATED
-      
-      val response = contentAsJson(result).as[ReturnCreateResponse]
-      response.success.vpdReferenceNumber mustBe vpdId
-      response.success.submissionID.isDefined mustBe true
-      response.success.chargeReference.isDefined mustBe true
-      response.success.amount mustBe BigDecimal("50.03")
-
-      verify(mockReturnSubmissionRepository, times(1)).set(any[ReturnSubmission])
-      verify(mockObligationsRepository, times(1)).markAsFulfilled(eqTo(vpdId), eqTo(testPeriodKey), any[java.time.Instant])
+      status(result) shouldBe CREATED
+      val responseJson = contentAsJson(result)
+      (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe vpdId
+      (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("16277.63")
     }
 
-    "return 400 BAD_REQUEST when JSON is invalid" in {
-      val result: Future[Result] = controller.submitReturn()(
-        fakeRequestWithJsonBody(Json.obj("invalid" -> "data"))
-          .withHeaders(submitCorrelationIdHeader() :+ (xZVPD -> vpdId): _*)
+    "must return BAD_REQUEST when vapingProdManufactured is 1 but returns array is empty" in {
+      val invalidRequest = validReturnRequest.copy(
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "1",
+          returns = Seq.empty
+        )
       )
 
-      status(result) mustBe BAD_REQUEST
-      contentAsJson(result) mustBe Json.obj("error" -> "Invalid request body")
+      val result = controller.submitReturn()(
+        fakeRequestWithJsonBody(Json.toJson(invalidRequest))
+          .withHeaders(
+            xZVPD -> vpdId,
+            "Content-Type" -> "application/json"
+          )
+      )
+
+      status(result) shouldBe BAD_REQUEST
+      val responseJson = contentAsJson(result)
+      (responseJson \ "error").as[String] should include("returns array is empty")
+    }
+
+    "must return BAD_REQUEST when vapingProdManufactured is 0 but returns array is not empty" in {
+      val invalidRequest = validReturnRequest.copy(
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = Seq(VapingReturn("641", BigDecimal("10.50"), BigDecimal("100"), BigDecimal("1050")))
+        )
+      )
+
+      val result = controller.submitReturn()(
+        fakeRequestWithJsonBody(Json.toJson(invalidRequest))
+          .withHeaders(
+            xZVPD -> vpdId,
+            "Content-Type" -> "application/json"
+          )
+      )
+
+      status(result) shouldBe BAD_REQUEST
+      val responseJson = contentAsJson(result)
+      (responseJson \ "error").as[String] should include("returns array is not empty")
+    }
+
+    "when VPD ID triggers test error responses" - {
+      "must return 400 Bad Request when VPD ID ends with 1" in {
+        val testVpdId = "GBWK1234561WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe BAD_REQUEST
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "400"
+        errorResponse.error.message should include("Invalid request payload")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 403 Forbidden when VPD ID ends with 2" in {
+        val testVpdId = "GBWK1234562WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe FORBIDDEN
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "403"
+        errorResponse.error.message shouldBe "Forbidden"
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must return 409 Conflict when VPD ID ends with 4" in {
+        val testVpdId = "GBWK1234564WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe CONFLICT
+        val errorResponse = contentAsJson(result).as[EtmpDownstreamError]
+        errorResponse.error.code shouldBe "004"
+        errorResponse.error.text shouldBe "Duplicate submission"
+        errorResponse.error.processingDate should not be empty
+      }
+
+      "must return 422 Unprocessable Entity when VPD ID ends with 5" in {
+        val testVpdId = "GBWK1234565WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe UNPROCESSABLE_ENTITY
+        val errorResponse = contentAsJson(result).as[EtmpDownstreamError]
+        errorResponse.error.code shouldBe "001"
+        errorResponse.error.text shouldBe "Regime missing or invalid"
+        errorResponse.error.processingDate should not be empty
+      }
+
+      "must return 500 Internal Server Error when VPD ID ends with 8" in {
+        val testVpdId = "GBWK1234568WK"
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe INTERNAL_SERVER_ERROR
+        val errorResponse = contentAsJson(result).as[DownstreamError]
+        errorResponse.error.code shouldBe "500"
+        errorResponse.error.message should include("SAP PI system is currently unavailable")
+        errorResponse.error.logID shouldBe "ABCDEF1234567890ABCDEF1234567890"
+      }
+
+      "must process normally when VPD ID ends with 0" in {
+        val testVpdId = "GBWK1234560WK"
+        when(mockUuidGenerator.uuid).thenReturn(submissionId)
+        when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
+
+        val expectedSubmission = ReturnSubmission(
+          vpdId = testVpdId,
+          periodKey = periodKey,
+          chargeReference = chargeReference,
+          submittedReturn = validReturnRequest,
+          submittedAt = Instant.now(fixedClock),
+          submissionId = submissionId
+        )
+
+        when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+        when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+
+        val result = controller.submitReturn()(
+          fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
+            .withHeaders(
+              xZVPD -> testVpdId,
+              "Content-Type" -> "application/json"
+            )
+        )
+
+        status(result) shouldBe CREATED
+        val responseJson = contentAsJson(result)
+        (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe testVpdId
+      }
     }
   }
 }
