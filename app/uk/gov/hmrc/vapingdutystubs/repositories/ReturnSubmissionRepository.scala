@@ -62,7 +62,7 @@ class ReturnSubmissionRepository @Inject()(
 
   def get(vpdId: String, periodKey: String): Future[Option[ReturnSubmission]] = {
     logger.debug(s"[ReturnSubmissionRepository.get] Querying for vpdId: $vpdId, periodKey: $periodKey")
-    
+
     collection
       .find(byVpdIdAndPeriodKey(vpdId, periodKey))
       .headOption()
@@ -81,7 +81,7 @@ class ReturnSubmissionRepository @Inject()(
   def set(submission: ReturnSubmission): Future[ReturnSubmission] = {
     logger.info(s"[ReturnSubmissionRepository.set] Saving submission for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
     logger.debug(s"[ReturnSubmissionRepository.set] Submission details - chargeRef: ${submission.chargeReference}, submissionId: ${submission.submissionId}, submittedAt: ${submission.submittedAt}")
-    
+
     collection
       .replaceOne(
         filter = byVpdIdAndPeriodKey(submission.vpdId, submission.periodKey),
@@ -99,9 +99,34 @@ class ReturnSubmissionRepository @Inject()(
       }
   }
 
+  def getAll(vpdId: String): Future[Seq[ReturnSubmission]] = {
+    logger.debug(s"[ReturnSubmissionRepository.getAll] Querying all submissions for vpdId: $vpdId")
+
+    collection
+      .find(Filters.equal("vpdId", vpdId))
+      .toFuture()
+      .map { submissions =>
+        logger.info(s"[ReturnSubmissionRepository.getAll] Found ${submissions.size} submissions for vpdId: $vpdId")
+        submissions
+      }
+  }
+
+  def delete(vpdId: String, periodKey: String): Future[Boolean] = {
+    logger.info(s"[ReturnSubmissionRepository.delete] Deleting submission for vpdId: $vpdId, periodKey: $periodKey")
+
+    collection
+      .deleteOne(byVpdIdAndPeriodKey(vpdId, periodKey))
+      .toFuture()
+      .map { result =>
+        val deleted = result.getDeletedCount > 0
+        logger.info(s"[ReturnSubmissionRepository.delete] Deletion result for vpdId: $vpdId, periodKey: $periodKey - deleted: $deleted")
+        deleted
+      }
+  }
+
   def clear: Future[Option[Unit]] = {
     logger.warn(s"[ReturnSubmissionRepository.clear] Clearing all return submissions from collection")
-    
+
     collection.drop().headOption().map { result =>
       logger.info(s"[ReturnSubmissionRepository.clear] Successfully cleared all return submissions")
       result

@@ -20,9 +20,10 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.vapingdutystubs.data.returns.{ReturnsData, ReturnSubmissionData}
+import uk.gov.hmrc.vapingdutystubs.data.returns.{ReturnSubmissionData, ReturnsData}
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamError, EtmpDownstreamErrorDetails}
 import uk.gov.hmrc.vapingdutystubs.repositories.ReturnSubmissionRepository
+import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.Instant
 import javax.inject.Inject
@@ -30,12 +31,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ViewReturnController @Inject()(
                                       cc: ControllerComponents,
-                                      returnSubmissionRepository: ReturnSubmissionRepository
+                                      returnSubmissionRepository: ReturnSubmissionRepository,
+                                      uuidGenerator: RandomUUIDGenerator
                                     )(using ExecutionContext) extends BackendController(cc)
   with Logging {
 
   private val LOG_ID = "ABCDEF1234567890ABCDEF1234567890"
-
+  private val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
   /**
    * Checks if the VPD ID's last digit triggers a test error response.
    * Returns Some(Result) if an error should be returned, None for normal flow.
@@ -118,7 +120,7 @@ class ViewReturnController @Inject()(
               Ok(Json.toJson(ReturnsData.fromSubmission(submission)))
             case None =>
               logger.info(s"[ViewReturn] Period $periodKey not in fulfilled obligations for vpdId=$vpdReference - returning generated data")
-              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId")))
+              Ok(Json.toJson(ReturnsData(vpdReference, periodKey, submissionId = "submissionId", chargeReference = chargeReference)))
           }
         }
     }

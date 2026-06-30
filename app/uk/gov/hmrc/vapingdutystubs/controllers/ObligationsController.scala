@@ -42,7 +42,7 @@ class ObligationsController @Inject()(
         Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))
       case None =>
         logger.info(s"No obligations found for vpdId=${params._2} - returning generated data")
-        val sampleState = ObligationsData.sampleObligations(params._2)
+        val sampleState = ObligationsData.generate36MonthsObligations(params._2)
         obligationsRepository.set(sampleState).map { _ =>
           Ok(Json.toJson(ObligationsResponse(obligation = sampleState.obligations)))
         }

@@ -32,13 +32,13 @@ object ReturnsData {
     dutyDue = BigDecimal("15752.63")
   )
 
-  def idDetails(vpdReference: String, submissionId: String): IdDetails = 
+  def idDetails(vpdReference: String, submissionId: String): IdDetails =
     IdDetails(vpdReference, Some(submissionId))
 
-  def nilReturn(): VapingProductsProduced = 
+  def nilReturn(): VapingProductsProduced =
     VapingProductsProduced(vapingProdManufactured = "0", returns = Seq.empty)
 
-  def regularReturn(items: Seq[VapingReturn]): VapingProductsProduced = 
+  def regularReturn(items: Seq[VapingReturn]): VapingProductsProduced =
     VapingProductsProduced(vapingProdManufactured = "1", returns = items)
 
   private val totalDutyDue = TotalDutyDue(
@@ -55,19 +55,19 @@ object ReturnsData {
     signeesEmailAddress = "john.smith@example.com"
   )
 
-  private def chargeDetails(periodKey: String): ChargeDetails = ChargeDetails(
+  private def chargeDetails(periodKey: String, chargeReference: String): ChargeDetails = ChargeDetails(
     periodKey,
-    chargeReference = Some("XMVPDP0000123"),
-    periodFrom = LocalDate.of(2026, 3, 14),
-    periodTo = LocalDate.of(2026, 3, 30),
-    receiptDate = now,
+    chargeReference,
+    LocalDate.of(2024, 1, 1),
+    LocalDate.of(2024, 1, 31),
+    Instant.parse("2024-02-01T10:00:00Z")
   )
 
-  def apply(vpdReference: String, periodKey: String, submissionId: String): ReturnDisplayResponse = {
+  def apply(vpdReference: String, periodKey: String, submissionId: String, chargeReference: String): ReturnDisplayResponse = {
     val successResponse = ReturnDisplaySuccess(
       processingDate = now,
       idDetails = idDetails(vpdReference, submissionId),
-      chargeDetails = chargeDetails(periodKey),
+      chargeDetails = chargeDetails(periodKey, chargeReference),
       vapingProductsProduced = regularReturn(Seq(sampleVapingReturn)),
       overDeclaration = None,
       underDeclaration = None,
@@ -89,7 +89,7 @@ object ReturnsData {
       idDetails = IdDetails(submission.vpdId, Some(submission.submissionId)),
       chargeDetails = ChargeDetails(
         periodKey = submission.periodKey,
-        chargeReference = Some(submission.chargeReference),
+        chargeReference = submission.chargeReference,
         periodFrom = returnPeriod.periodFromDate(),
         periodTo = returnPeriod.periodToDate(),
         receiptDate = submission.submittedAt

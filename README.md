@@ -96,6 +96,313 @@ To run the stub locally without using sm2, first:
 sbt run
 ```
 
-#### License
+## Test Support Endpoints
 
-This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
+These endpoints are only available when running with test-only routes enabled:
+
+```bash
+sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
+```
+
+### Obligations Management
+
+#### Set Predefined Scenario
+```
+POST /test-only/obligations/:vpdId/scenario/:scenario
+```
+
+Sets a predefined obligation scenario for a VPD ID.
+
+**Available scenarios:**
+- `only-open` - Only open (unfulfilled) obligations
+- `only-completed` - Only completed (fulfilled) obligations
+- `mixed` - Mix of open and completed obligations
+- `none` - No obligations
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/scenario/mixed
+```
+
+#### Set Custom Obligations
+```
+POST /test-only/obligations/:vpdId/custom
+```
+
+Sets custom obligations for a VPD ID using JSON payload.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/custom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vpdId": "XIWK0904905WK",
+    "obligations": [...]
+  }'
+```
+
+#### Clear Obligations for VPD ID
+```
+POST /test-only/obligations/:vpdId/clear
+```
+
+Clears all obligations for a specific VPD ID.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-only/obligations/XIWK0904905WK/clear
+```
+
+#### Clear All Obligations
+```
+POST /test-only/obligations/clear-all
+```
+
+Clears all obligations data from the repository.
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-only/obligations/clear-all
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully cleared all obligations data"
+}
+```
+
+#### Set Custom Obligations
+
+Post custom obligations JSON for advanced testing scenarios:
+
+```bash
+POST /test-only/obligations/{vpdId}/custom
+Content-Type: application/json
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8142/test-only/obligations/GBWK0000001WK/custom \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vpdId": "GBWK0000001WK",
+    "obligations": [
+      {
+        "identification": null,
+        "obligationDetails": {
+          "openOrFulfilledStatus": "O",
+          "iCFromDate": "2027-12-01",
+          "iCToDate": "2027-12-31",
+          "iCDateReceived": null,
+          "iCDueDate": "2028-01-31",
+          "periodKey": "27AL"
+        }
+      }
+    ]
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully set custom obligations for VPD ID GBWK0000001WK",
+  "vpdId": "GBWK0000001WK",
+  "obligationCount": 1
+}
+```
+
+### Scenario Details
+
+#### only-open Scenario
+Creates 3 open returns with no completed returns:
+- One return due in 10 days (period 27AL)
+- One return overdue by 5 days (period 27AK)
+- One return due in 30 days (period 28AA)
+
+#### only-completed Scenario
+Creates 3 completed returns with no open returns:
+- Three fulfilled returns from previous periods (27AJ, 27AI, 27AH)
+
+#### mixed Scenario
+Creates a mix of open and completed returns (default):
+- Two open returns (one due soon, one overdue)
+- One completed return
+
+#### none Scenario
+Creates an empty obligations list for testing edge cases.
+
+## Returns API
+
+### VPD ID Test Error Triggering
+
+Both returns endpoints support test error triggering based on the VPD ID format. The mechanism extracts the last digit before the "WK" suffix (3rd character from the end) to determine which error response to return.
+
+**VPD ID Format:** `(GB|XI)WK[7 digits]WK`
+
+**Example:** `GBWK0000001WK` → digit is `1` → triggers 400 Bad Request
+
+```scala
+// Extract the last digit before "WK" suffix (3rd character from end)
+val lastDigit = vpdId.charAt(vpdId.length - 3).toString
+```
+
+### Submit Return
+
+**Endpoint:** `POST /vaping-products-duty/returns/:periodKey`
+
+**Headers Required:**
+- `Authorization`
+- `x-message-type`
+- `x-regime-type`
+- `x-correlation-id`
+- `x-originating-system`
+- `x-receipt-date`
+- `x-transmitting-system`
+- `x-zvpd` (VPD ID - used for test error triggering)
+
+#### Test Error Responses (VPD ID Based)
+
+| Last Digit | Status Code | Error Type | Description | Example VPD ID |
+|------------|-------------|------------|-------------|----------------|
+| 1 | 400 | Bad Request | Invalid request payload. Missing required field 'periodKey'. | `GBWK0000001WK` |
+| 2 | 403 | Forbidden | Forbidden | `GBWK0000002WK` |
+| 4 | 409 | Conflict | Duplicate submission | `GBWK0000004WK` |
+| 5 | 422 | Unprocessable Entity | Regime missing or invalid | `GBWK0000005WK` |
+| 8 | 500 | Internal Server Error | SAP PI system is currently unavailable | `GBWK0000008WK` |
+
+**Example Error Response (Standard Format):**
+```json
+{
+  "errorDetail": {
+    "errorCode": "400",
+    "errorMessage": "Invalid request payload. Missing required field 'periodKey'.",
+    "source": "ABCDEF1234567890ABCDEF1234567890"
+  }
+}
+```
+
+**Example Error Response (ETMP Format):**
+```json
+{
+  "failures": {
+    "code": "004",
+    "reason": "Duplicate submission",
+    "timestamp": "2026-06-25T06:14:10.123Z"
+  }
+}
+```
+
+#### Normal Flow Errors
+
+| Status Code | Scenario | Description |
+|-------------|----------|-------------|
+| 400 | Invalid JSON | Request body cannot be parsed as valid JSON |
+| 400 | Validation Failure | Business validation failed (e.g., invalid period key format, negative amounts) |
+| 500 | Repository Error | Database operation failed |
+
+#### Success Response
+
+**Status:** `201 Created`
+
+**Example Response:**
+```json
+{
+  "success": {
+    "processingDate": "2026-06-25T06:14:10.123Z",
+    "vpdReferenceNumber": "GBWK0000000WK",
+    "submissionID": "01234567-89ab-cdef-0123-456789abcdef",
+    "chargeReference": "XMVPD0123456789AB",
+    "amount": 1234.56,
+    "paymentDueDate": "2026-07-25",
+    "declaration": {
+      "fullName": "John Smith",
+      "capacityInWhichSigned": "Director",
+      "signeesEmailAddress": "john.smith@example.com"
+    }
+  }
+}
+```
+
+### View Return
+
+**Endpoint:** `GET /vaping-products-duty/returns/:vpdReference/:periodKey`
+
+**Path Parameters:**
+- `vpdReference` - VPD ID (used for test error triggering)
+- `periodKey` - Period key (e.g., "27AL")
+
+#### Test Error Responses (VPD ID Based)
+
+| Last Digit | Status Code | Error Type | Description | Example VPD ID |
+|------------|-------------|------------|-------------|----------------|
+| 1 | 400 | Bad Request | Invalid request payload. Missing required field 'periodKey'. | `GBWK0000001WK` |
+| 2 | 403 | Forbidden | Forbidden | `GBWK0000002WK` |
+| 3 | 404 | Not Found | Not Found | `GBWK0000003WK` |
+| 5 | 422 | Unprocessable Entity | ID Number missing or invalid | `GBWK0000005WK` |
+| 8 | 500 | Internal Server Error | SAP PI system is currently unavailable | `GBWK0000008WK` |
+
+**Example Error Response (Standard Format):**
+```json
+{
+  "errorDetail": {
+    "errorCode": "404",
+    "errorMessage": "Not Found",
+    "source": "ABCDEF1234567890ABCDEF1234567890"
+  }
+}
+```
+
+**Example Error Response (ETMP Format):**
+```json
+{
+  "failures": {
+    "code": "002",
+    "reason": "ID Number missing or invalid",
+    "timestamp": "2026-06-25T06:14:10.123Z"
+  }
+}
+```
+
+#### Normal Flow Behavior
+
+When a return is not found in the repository for the given VPD ID and period key, the stub will:
+1. Generate 33 return submissions for all fulfilled obligations for that VPD ID
+2. Save them to the repository
+3. Return the requested period's data if it exists in the generated set
+4. Return a minimal response if the period is not in the fulfilled obligations
+
+#### Success Response
+
+**Status:** `200 OK`
+
+**Example Response:**
+```json
+{
+  "processingDate": "2026-06-25T06:14:10.123Z",
+  "idDetails": {
+    "vpdReference": "GBWK0000000WK",
+    "submissionID": "01234567-89ab-cdef-0123-456789abcdef"
+  },
+  "chargeDetails": {
+    "periodKey": "27AL",
+    "chargeReference": "XMVPD0123456789AB",
+    "periodFrom": "2027-12-01",
+    "periodTo": "2027-12-31",
+    "receiptDate": "2028-01-15T10:30:00Z"
+  },
+  "vapingProducts": {
+    "nicotineProducts": 1000,
+    "nonNicotineProducts": 500
+  },
+  "totalDutyDue": {
+    "totalDue": 1234.56
+  },
+  "declaration": {
+    "fullName": "John Smith",
+    "capacityInWhichSigned": "Director",
+    "signeesEmailAddress": "john.smith@example.com"
+  }
+}
+```
+

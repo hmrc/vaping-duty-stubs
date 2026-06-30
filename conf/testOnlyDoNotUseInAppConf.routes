@@ -9,5 +9,11 @@
 # !!!WARNING!!! Every route defined in this file MUST be prefixed with "/test-only/".
 # Failing to follow this rule may result in test routes deployed in production.
 
+# Test-only routes for obligations and returns management
+POST   /test-only/obligations/:vpdId/scenario/:scenario   uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.setScenario(vpdId: String, scenario: String)
+POST   /test-only/obligations/:vpdId/custom               uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.setCustom(vpdId: String)
+POST   /test-only/obligations/:vpdId/clear                uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.clearForVpdId(vpdId: String)
+POST   /test-only/obligations/clear-all                   uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.clearAll()
+
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes

@@ -24,17 +24,48 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class StartupSeeder @Inject()(
-  subscriptionSummaryRepository: SubscriptionSummaryRepository,
   obligationsRepository: ObligationsRepository,
   returnSubmissionRepository: ReturnSubmissionRepository
 )(implicit ec: ExecutionContext) extends Logging {
 
+  import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
+  import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnSubmissionData
+
+  logger.info("StartupSeeder: Beginning initialization...")
+
   // Clear return submissions on startup to prevent deserialization issues with old data structure
   logger.info("Clearing return submissions repository on startup...")
-  returnSubmissionRepository.clear.map { _ =>
+  val clearFuture = returnSubmissionRepository.clear.map { _ =>
     logger.info("Return submissions repository cleared successfully")
   }.recover { case e =>
     logger.error(s"Failed to clear return submissions repository: ${e.getMessage}", e)
+  }
+
+  // Seed 36 months of obligations and returns for all sample VPD IDs
+  val seedFuture = clearFuture.flatMap { _ =>
+    logger.info("Seeding 36 months of obligations and returns for sample VPD IDs...")
+
+    val obligationsFuture = Future.sequence(
+      ObligationsData.all36MonthsObligations.map { obligationState =>
+        obligationsRepository.set(obligationState).map { _ =>
+          logger.info(s"Seeded ${obligationState.obligations.size} obligations for VPD ID: ${obligationState.vpdId}")
+        }
+      }
+    )
+
+    val returnsFuture = Future.sequence(
+      ReturnSubmissionData.all36ReturnSubmissions.map { returnSubmission =>
+        returnSubmissionRepository.set(returnSubmission).map { _ =>
+          logger.info(s"Seeded return submission for VPD ID: ${returnSubmission.vpdId}, Period: ${returnSubmission.periodKey}")
+        }
+      }
+    )
+
+    Future.sequence(Seq(obligationsFuture, returnsFuture)).map { _ =>
+      logger.info("Successfully seeded 36 months of obligations and returns for all sample VPD IDs")
+    }.recover { case e =>
+      logger.error(s"Failed to seed test  ${e.getMessage}", e)
+    }
   }
 
   logger.info("StartupSeeder initialized")
