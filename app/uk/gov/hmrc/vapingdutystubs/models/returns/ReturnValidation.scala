@@ -24,6 +24,10 @@ object ReturnValidation {
   private val FLAG_YES = "1"
   private val FLAG_NO = "0"
 
+  // Mirrors AdjustmentType.dutyThreshold in vaping-duty-frontend: a reason is only
+  // mandatory (and therefore only sent) when the declared duty total is £1000 or more.
+  private val REASON_REQUIRED_DUTY_THRESHOLD: BigDecimal = BigDecimal(1000)
+
   def validate(request: ReturnCreateRequest): Either[String, Unit] = {
     for {
       _ <- validateVapingProductsProduced(request.vapingProductsProduced)
@@ -50,8 +54,11 @@ object ReturnValidation {
       case None => Right(())
       case Some(od) => od.overDeclFilled match {
         case FLAG_YES =>
-          if (od.reasonForOverDecl.isEmpty) {
-            Left("overDeclFilled is '1' but reasonForOverDecl is missing")
+          val totalDutyDue = od.overDeclarationProducts.getOrElse(Seq.empty).map(_.dutyDue).sum
+          val reasonRequired = totalDutyDue >= REASON_REQUIRED_DUTY_THRESHOLD
+
+          if (reasonRequired && od.reasonForOverDecl.isEmpty) {
+            Left(s"overDeclFilled is '1' and total duty due is $totalDutyDue (>= $REASON_REQUIRED_DUTY_THRESHOLD) but reasonForOverDecl is missing")
           } else if (od.overDeclarationProducts.isEmpty || od.overDeclarationProducts.exists(_.isEmpty)) {
             Left("overDeclFilled is '1' but overDeclarationProducts is empty")
           } else {
@@ -73,8 +80,11 @@ object ReturnValidation {
       case None => Right(())
       case Some(ud) => ud.underDeclFilled match {
         case FLAG_YES =>
-          if (ud.reasonForUnderDecl.isEmpty) {
-            Left("underDeclFilled is '1' but reasonForUnderDecl is missing")
+          val totalDutyDue = ud.underDeclarationProducts.getOrElse(Seq.empty).map(_.dutyDue).sum
+          val reasonRequired = totalDutyDue >= REASON_REQUIRED_DUTY_THRESHOLD
+
+          if (reasonRequired && ud.reasonForUnderDecl.isEmpty) {
+            Left(s"underDeclFilled is '1' and total duty due is $totalDutyDue (>= $REASON_REQUIRED_DUTY_THRESHOLD) but reasonForUnderDecl is missing")
           } else if (ud.underDeclarationProducts.isEmpty || ud.underDeclarationProducts.exists(_.isEmpty)) {
             Left("underDeclFilled is '1' but underDeclarationProducts is empty")
           } else {
