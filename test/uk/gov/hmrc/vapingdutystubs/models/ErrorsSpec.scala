@@ -46,6 +46,14 @@ class ErrorsSpec extends SpecBase {
     "de-serialise HIPFailureResponse from json" in new SetUp {
       Json.parse(hipFailureResponseJson).as[HIPFailureResponse] mustBe hipFailureResponse
     }
+
+    "serialise UnprocessableEntityError to json" in new SetUp {
+      Json.toJson(unprocessableEntityError).toString mustBe unprocessableEntityErrorJson
+    }
+
+    "de-serialise UnprocessableEntityError from json" in new SetUp {
+      Json.parse(unprocessableEntityErrorJson).as[UnprocessableEntityError] mustBe unprocessableEntityError
+    }
   }
 
   class SetUp {
@@ -58,14 +66,17 @@ class ErrorsSpec extends SpecBase {
     val `type`     = "Errortype"
     val reason     = "There is no reason"
 
-    val hipFailureResponse = HIPFailureResponse(Seq(HIPFailure(`type`, reason)))
-    val downstreamErrors   = DownstreamErrors(Seq(DownstreamErrorsDetails(now, errorCode, text)))
-    val downstreamError    = DownstreamError(DownstreamErrorDetails(returnCode, message, logId))
+    val hipFailureResponse       = HIPFailureResponse(Seq(HIPFailure(`type`, reason)))
+    val downstreamErrors         = DownstreamErrors(Seq(DownstreamErrorsDetails(now, errorCode, text)))
+    val downstreamError          = DownstreamError(DownstreamErrorDetails(returnCode, message, logId))
+    val unprocessableEntityError = UnprocessableEntityError(DownstreamErrorsDetails(now, "011", "ID_TYPE missing or invalid"))
 
     val downstreamErrorsJson    =
       s"""{"errors":[{"processingDate":"2024-06-11T15:07:47.838Z","code":"$errorCode","text":"$text"}]}"""
     val internalServerErrorJson =
       s"""{"error":{"code":"$returnCode","message":"$message","logID":"$logId"}}"""
     val hipFailureResponseJson  = s"""{"failures":[{"type":"${`type`}","reason":"$reason"}]}"""
+    val unprocessableEntityErrorJson =
+      s"""{"errors":{"processingDate":"2024-06-11T15:07:47.838Z","code":"011","text":"ID_TYPE missing or invalid"}}"""
   }
 }

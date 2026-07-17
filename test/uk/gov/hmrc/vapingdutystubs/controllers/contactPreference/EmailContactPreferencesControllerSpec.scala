@@ -157,6 +157,45 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
       headers(result) mustBe responseHeadersWithCorrelationId
     }
 
+    "return a 422 with code 012 if the second digit is 2" in new SetUp {
+      val vpdId                  = getVpdId('2')
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result)          mustBe UNPROCESSABLE_ENTITY
+      headers(result)         mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.idValueInvalid).toString()
+    }
+
+    "return a 422 with code 014 if the second digit is 3" in new SetUp {
+      val vpdId                  = getVpdId('3')
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result)          mustBe UNPROCESSABLE_ENTITY
+      headers(result)         mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.emailAddressInvalid).toString()
+    }
+
+    "return a 422 with code 015 if the second digit is 4" in new SetUp {
+      val vpdId                  = getVpdId('4')
+      val result: Future[Result] =
+        emailContactPreferencesController.submitPreferences(regime, idType, vpdId)(
+          fakeRequestWithJsonBody(Json.toJson(paperlessPreference))
+            .withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result)          mustBe UNPROCESSABLE_ENTITY
+      headers(result)         mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.previousAmendmentInProgress).toString()
+    }
+
     "return a 422 if the request payload specified paperless but email verified property is not present" in new SetUp {
       val vpdId                  = getVpdId('0')
       val result: Future[Result] =
@@ -167,7 +206,7 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
 
       status(result)          mustBe UNPROCESSABLE_ENTITY
       headers(result)         mustBe responseHeadersWithCorrelationId
-      contentAsString(result) mustBe Json.toJson(errorData.etmpUnprocessableEntity).toString()
+      contentAsString(result) mustBe Json.toJson(errorData.emailVerificationMissing).toString()
     }
 
     "return a 422 if the regime is not VPD" in new SetUp {
@@ -178,8 +217,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
 
-      status(result)  mustBe UNPROCESSABLE_ENTITY
-      headers(result) mustBe responseHeadersWithCorrelationId
+      status(result)          mustBe UNPROCESSABLE_ENTITY
+      headers(result)         mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.regimeInvalid).toString()
     }
 
     "return a 422 if the idType is not ZVPD" in new SetUp {
@@ -190,8 +230,9 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
             .withHeaders(submitCorrelationIdHeader(): _*)
         )
 
-      status(result)  mustBe UNPROCESSABLE_ENTITY
-      headers(result) mustBe responseHeadersWithCorrelationId
+      status(result)          mustBe UNPROCESSABLE_ENTITY
+      headers(result)         mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.idTypeInvalid).toString()
     }
 
     "throw an error if the correlation ID header is not present" in new SetUp {

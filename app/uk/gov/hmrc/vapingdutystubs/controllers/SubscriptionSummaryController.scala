@@ -164,7 +164,9 @@ class SubscriptionSummaryController @Inject()(
       val emailPreferences = getEmailPreferences(idValue)
       val correspondenceAddress = getCorrespondenceAddress(idValue)
 
-      idValue.replaceAll(allChars, "") match {
+      val digits = idValue.replaceAll(allChars, "")
+
+      digits match {
         case approved() =>
           Ok(
             Json.toJson(
@@ -217,7 +219,13 @@ class SubscriptionSummaryController @Inject()(
           BadRequest(Json.toJson(errorData.badRequest)).withHeaders(correlationIdHeader -> correlationId)
         case notFound() => NotFound
         case unprocessableEntity() =>
-          UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
+          val body = digits.takeRight(3) match {
+            case "501" => errorData.regimeInvalid
+            case "511" => errorData.idTypeInvalid
+            case "512" => errorData.idValueInvalid
+            case _     => errorData.requestCouldNotBeProcessed
+          }
+          UnprocessableEntity(Json.toJson(body))
             .withHeaders(correlationIdHeader -> correlationId)
         case _ =>
           InternalServerError(Json.toJson(errorData.internalServerError))

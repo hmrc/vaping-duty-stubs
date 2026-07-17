@@ -77,6 +77,50 @@ The address indicator digit is the same digit as the email indicator digit.
 | 8    | No country code    | Building 1<br>Example City<br>P88888 |
 | *    | UK address         | Flat 123<br>1 Example Road<br>London<br>AB1 2CD<br>GB |
 
+#### 422 Unprocessable Entity scenarios
+
+The suffix digits `5xx` (third-from-last digit `5`) trigger a 422. The last two digits select which real upstream error code is returned:
+
+| Suffix | Code | Text |
+| ------ | ---- | ---- |
+| 501    | 001  | REGIME missing or invalid |
+| 511    | 011  | ID_TYPE missing or invalid |
+| 512    | 012  | ID_VALUE missing or invalid |
+| any other 5xx (e.g. 500) | 003 | Request could not be processed |
+
+Example error response:
+```json
+{
+  "errors": {
+    "processingDate": "2026-02-25T10:44:26.089402Z",
+    "code": "001",
+    "text": "REGIME missing or invalid"
+  }
+}
+```
+
+### **PUT** `/etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue`
+
+Outcome is selected by the second digit of `idValue` (`getStubIndex`), with the same `{"errors": {"processingDate", "code", "text"}}` shape used for every 422 below:
+
+| Digit | Status | Scenario |
+| ----- | ------ | -------- |
+| 0     | 200    | Success |
+| 2     | 422    | code 012 - ID_VALUE missing or invalid |
+| 3     | 422    | code 014 - Email Address missing or invalid |
+| 4     | 422    | code 015 - Previous Amendment is in progress |
+| 5     | 403    | Forbidden |
+| 6     | 415    | Unsupported Media Type |
+| 7     | 400    | Bad Request |
+| 8     | 404    | Not Found |
+| 9     | 200    | Success (dynamic, Mongo-backed) |
+| other | 500    | Internal Server Error |
+
+Two further 422 scenarios don't depend on the `idValue` digit:
+- `regime` other than `VPD` → code 001 - REGIME missing or invalid
+- `idType` other than `ZVPD` → code 011 - ID_TYPE missing or invalid
+- request body has `paperlessPreference: true` with no `emailVerification` → code 013 - Email Verification missing
+
 ### Running this stub
 #### Run the stub using sm2
 To run the stub using sm2, use the following command:

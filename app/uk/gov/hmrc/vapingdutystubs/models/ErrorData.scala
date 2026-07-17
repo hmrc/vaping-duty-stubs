@@ -34,12 +34,32 @@ class ErrorData @Inject()(uuidGenerator: RandomUUIDGenerator, clock: Clock) {
     DownstreamErrorDetails("500", "Computer says No!", uuidGenerator.uuidHyphenTrimmed.toUpperCase())
   )
 
-  val unprocessableEntity = DownstreamError(
-    DownstreamErrorDetails("422", "Invalid regime or idType", uuidGenerator.uuidHyphenTrimmed.toUpperCase())
+  val regimeInvalid               = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "001", "REGIME missing or invalid")
   )
 
-  val etmpUnprocessableEntity = EtmpDownstreamError(
-    EtmpDownstreamErrorDetails("422", "Email Verification missing", "2022-01-31T09:26:17Z")
+  val requestCouldNotBeProcessed  = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "003", "Request could not be processed")
+  )
+
+  val idTypeInvalid               = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "011", "ID_TYPE missing or invalid")
+  )
+
+  val idValueInvalid              = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "012", "ID_VALUE missing or invalid")
+  )
+
+  val emailVerificationMissing    = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "013", "Email Verification missing")
+  )
+
+  val emailAddressInvalid         = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "014", "Email Address missing or invalid")
+  )
+
+  val previousAmendmentInProgress = UnprocessableEntityError(
+    DownstreamErrorsDetails(Instant.now(clock), "015", "Previous Amendment is in progress")
   )
 
   val duplicateSubmission044 = DuplicateSubmissionError(
