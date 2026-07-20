@@ -118,6 +118,51 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("16277.63")
     }
 
+    "must return CREATED with no charge reference when totalDue is zero" in {
+      when(mockUuidGenerator.uuid).thenReturn(submissionId)
+      when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
+
+      val nilReturnRequest = validReturnRequest.copy(
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = Seq.empty
+        ),
+        totalDutyDue = TotalDutyDue(
+          totalDutyDueVapingProducts = BigDecimal("0.00"),
+          totalDutyOverDeclaration = BigDecimal("0.00"),
+          totalDutyUnderDeclaration = BigDecimal("0.00"),
+          totalDutySpoiltProduct = BigDecimal("0.00"),
+          totalDue = BigDecimal("0.00")
+        )
+      )
+
+      val expectedSubmission = ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = None,
+        submittedReturn = nilReturnRequest,
+        submittedAt = Instant.now(fixedClock),
+        submissionId = submissionId
+      )
+
+      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+      when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+
+      val result = controller.submitReturn()(
+        fakeRequestWithJsonBody(Json.toJson(nilReturnRequest))
+          .withHeaders(
+            xZVPD -> vpdId,
+            "Content-Type" -> "application/json"
+          )
+      )
+
+      status(result) shouldBe CREATED
+      val responseJson = contentAsJson(result)
+      (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe vpdId
+      (responseJson \ "success" \ "chargeReference").asOpt[String] shouldBe None
+      (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("0.00")
+    }
+
     "must return BAD_REQUEST when vapingProdManufactured is 1 but returns array is empty" in {
       val invalidRequest = validReturnRequest.copy(
         vapingProductsProduced = VapingProductsProduced(
