@@ -200,6 +200,40 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
 
       status(result) mustBe UNPROCESSABLE_ENTITY
       headers(result) mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.requestCouldNotBeProcessed).toString()
+    }
+
+    "return 422 UNPROCESSABLE_ENTITY with code 001 if the suffix is 501" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("501"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      headers(result) mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.regimeInvalid).toString()
+    }
+
+    "return 422 UNPROCESSABLE_ENTITY with code 011 if the suffix is 511" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("511"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      headers(result) mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.idTypeInvalid).toString()
+    }
+
+    "return 422 UNPROCESSABLE_ENTITY with code 012 if the suffix is 512" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("512"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      headers(result) mustBe responseHeadersWithCorrelationId
+      contentAsString(result) mustBe Json.toJson(errorData.idValueInvalid).toString()
     }
 
 

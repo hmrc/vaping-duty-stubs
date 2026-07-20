@@ -45,9 +45,14 @@ case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptio
   
   private def checkIdRegime(idType: String, regime: String, idValue: String, correlationId: String)
                            (implicit request: Request[JsValue]) = {
-    if (HasCorrectIdentifiers(idType, regime)) {
+    if (regime != "VPD") {
       Future.successful(
-        UnprocessableEntity(Json.toJson(errorData.unprocessableEntity))
+        UnprocessableEntity(Json.toJson(errorData.regimeInvalid))
+          .withHeaders(correlationIdHeader -> correlationId)
+      )
+    } else if (idType != "ZVPD") {
+      Future.successful(
+        UnprocessableEntity(Json.toJson(errorData.idTypeInvalid))
           .withHeaders(correlationIdHeader -> correlationId)
       )
     } else {
@@ -65,7 +70,7 @@ case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptio
 
       if (HasCorrectPreferences(preference)) {
         Future.successful(
-          UnprocessableEntity(Json.toJson(errorData.etmpUnprocessableEntity))
+          UnprocessableEntity(Json.toJson(errorData.emailVerificationMissing))
             .withHeaders(correlationIdHeader -> correlationId)
         )
       } else {
@@ -84,6 +89,9 @@ case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptio
               PaperlessPreferenceSubmittedResponse(processingDate = now, "910000000000")
             )
           )).withHeaders(correlationIdHeader -> correlationId)
+        case 2 => UnprocessableEntity(Json.toJson(errorData.idValueInvalid)).withHeaders(correlationIdHeader -> correlationId)
+        case 3 => UnprocessableEntity(Json.toJson(errorData.emailAddressInvalid)).withHeaders(correlationIdHeader -> correlationId)
+        case 4 => UnprocessableEntity(Json.toJson(errorData.previousAmendmentInProgress)).withHeaders(correlationIdHeader -> correlationId)
         case 5 => Forbidden.withHeaders(correlationIdHeader -> correlationId)
         case 6 => UnsupportedMediaType(Json.toJson(errorData.unsupportedMediaType)).withHeaders(correlationIdHeader -> correlationId)
         case 7 =>

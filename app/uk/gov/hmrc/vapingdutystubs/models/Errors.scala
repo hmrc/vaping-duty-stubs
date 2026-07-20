@@ -74,3 +74,9 @@ case class DuplicateSubmissionError(errors: DownstreamErrorsDetails)
 object DuplicateSubmissionError {
   implicit val duplicateSubmissionErrorWrites: OFormat[DuplicateSubmissionError] = Json.format[DuplicateSubmissionError]
 }
+
+case class UnprocessableEntityError(errors: DownstreamErrorsDetails)
+
+object UnprocessableEntityError {
+  implicit val unprocessableEntityErrorWrites: OFormat[UnprocessableEntityError] = Json.format[UnprocessableEntityError]
+}
