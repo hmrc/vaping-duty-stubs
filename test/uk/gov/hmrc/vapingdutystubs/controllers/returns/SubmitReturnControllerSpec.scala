@@ -92,7 +92,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       when(mockUuidGenerator.uuid).thenReturn(submissionId)
       when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
       
-      val expectedSubmission = ReturnSubmission(
+      val submission = ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
         chargeReference = Some(chargeReference),
@@ -101,7 +101,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         submissionId = submissionId
       )
       
-      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
       when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
 
       val result = controller.submitReturn()(
@@ -136,7 +136,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         )
       )
 
-      val expectedSubmission = ReturnSubmission(
+      val submission = ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
         chargeReference = None,
@@ -145,7 +145,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         submissionId = submissionId
       )
 
-      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
       when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
 
       val result = controller.submitReturn()(
@@ -296,7 +296,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         when(mockUuidGenerator.uuid).thenReturn(submissionId)
         when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
 
-        val expectedSubmission = ReturnSubmission(
+        val submission = ReturnSubmission(
           vpdId = testVpdId,
           periodKey = periodKey,
           chargeReference = Some(chargeReference),
@@ -305,7 +305,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
           submissionId = submissionId
         )
 
-        when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(expectedSubmission))
+        when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
         when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
 
         val result = controller.submitReturn()(
