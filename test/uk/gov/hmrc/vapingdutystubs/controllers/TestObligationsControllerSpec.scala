@@ -107,7 +107,7 @@ class TestObligationsControllerSpec extends SpecBase {
   val testReturnSubmission = ReturnSubmission(
     vpdId = vpdId,
     periodKey = testPeriodKey,
-    chargeReference = chargeReference,
+    chargeReference = Some(chargeReference),
     submittedReturn = sampleReturnRequest,
     submittedAt = Instant.now(clock),
     submissionId = submissionId

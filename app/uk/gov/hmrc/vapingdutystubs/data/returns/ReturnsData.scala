@@ -57,7 +57,7 @@ object ReturnsData {
 
   private def chargeDetails(periodKey: String, chargeReference: String): ChargeDetails = ChargeDetails(
     periodKey,
-    chargeReference,
+    Some(chargeReference),
     LocalDate.of(2024, 1, 1),
     LocalDate.of(2024, 1, 31),
     Instant.parse("2024-02-01T10:00:00Z")
@@ -67,7 +67,7 @@ object ReturnsData {
     val successResponse = ReturnDisplaySuccess(
       processingDate = now,
       idDetails = idDetails(vpdReference, submissionId),
-      chargeDetails = chargeDetails(periodKey, chargeReference),
+      chargeDetails = Some(chargeDetails(periodKey, chargeReference)),
       vapingProductsProduced = regularReturn(Seq(sampleVapingReturn)),
       overDeclaration = None,
       underDeclaration = None,
@@ -84,16 +84,21 @@ object ReturnsData {
     val submittedReturn = submission.submittedReturn
     val returnPeriod = ReturnPeriod.fromPeriodKeyOrThrow(submission.periodKey)
 
-    val successResponse = ReturnDisplaySuccess(
-      processingDate = submission.submittedAt,
-      idDetails = IdDetails(submission.vpdId, Some(submission.submissionId)),
-      chargeDetails = ChargeDetails(
+    // Only include chargeDetails if chargeReference exists
+    val chargeDetails = submission.chargeReference.map { chargeRef =>
+      ChargeDetails(
         periodKey = submission.periodKey,
-        chargeReference = submission.chargeReference,
+        chargeReference = Some(chargeRef),
         periodFrom = returnPeriod.periodFromDate(),
         periodTo = returnPeriod.periodToDate(),
         receiptDate = submission.submittedAt
-      ),
+      )
+    }
+
+    val successResponse = ReturnDisplaySuccess(
+      processingDate = submission.submittedAt,
+      idDetails = IdDetails(submission.vpdId, Some(submission.submissionId)),
+      chargeDetails = chargeDetails,
       vapingProductsProduced = submittedReturn.vapingProductsProduced,
       overDeclaration = submittedReturn.overDeclaration,
       underDeclaration = submittedReturn.underDeclaration,

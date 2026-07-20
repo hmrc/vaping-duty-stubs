@@ -22,7 +22,7 @@ import java.time.{Instant, LocalDate}
 
 final case class ChargeDetails(
   periodKey: String,
-  chargeReference: String,
+  chargeReference: Option[String],
   periodFrom: LocalDate,
   periodTo: LocalDate,
   receiptDate: Instant

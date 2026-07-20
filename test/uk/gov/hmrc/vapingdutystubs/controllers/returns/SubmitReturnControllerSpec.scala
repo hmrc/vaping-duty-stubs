@@ -95,7 +95,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       val expectedSubmission = ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
-        chargeReference = chargeReference,
+        chargeReference = Some(chargeReference),
         submittedReturn = validReturnRequest,
         submittedAt = Instant.now(fixedClock),
         submissionId = submissionId
@@ -254,7 +254,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         val expectedSubmission = ReturnSubmission(
           vpdId = testVpdId,
           periodKey = periodKey,
-          chargeReference = chargeReference,
+          chargeReference = Some(chargeReference),
           submittedReturn = validReturnRequest,
           submittedAt = Instant.now(fixedClock),
           submissionId = submissionId

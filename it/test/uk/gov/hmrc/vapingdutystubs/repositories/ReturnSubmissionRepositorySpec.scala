@@ -42,7 +42,7 @@ class ReturnSubmissionRepositorySpec
   }
 
   val vpdId = "GBWK1234567WK"
-  val periodKey = "24AL"
+  val periodKey = "24KA"
 
   val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
     periodKey = periodKey,
@@ -74,9 +74,9 @@ class ReturnSubmissionRepositorySpec
   )
 
   val sampleSubmission: ReturnSubmission = ReturnSubmission(
-    vpdId = vpdId,
-    periodKey = periodKey,
-    chargeReference = "XMVPD123456789012",
+    vpdId = "GBWK1234567WK",
+    periodKey = "24KA",
+    chargeReference = Some("XMVPD123456789012"),
     submittedReturn = sampleReturnRequest,
     submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
     submissionId = "123456789012"
@@ -94,7 +94,7 @@ class ReturnSubmissionRepositorySpec
         repository.set(sampleSubmission).futureValue
 
         val updatedSubmission = sampleSubmission.copy(
-          chargeReference = "XMVPD999999999999"
+          chargeReference = Some("XMVPD999999999999")
         )
 
         val result = repository.set(updatedSubmission).futureValue

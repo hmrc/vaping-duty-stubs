@@ -83,7 +83,7 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
   val sampleSubmission: ReturnSubmission = ReturnSubmission(
     vpdId = vpdId,
     periodKey = periodKey,
-    chargeReference = "XMVPD123456789012",
+    chargeReference = Some("XMVPD123456789012"),
     submittedReturn = sampleReturnRequest,
     submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
     submissionId = submissionId

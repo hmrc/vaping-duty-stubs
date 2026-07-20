@@ -140,9 +140,16 @@ class SubmitReturnController @Inject()(
             
             val now = Instant.now(clock)
             val submissionId = uuidGenerator.uuid
-            val chargeReference = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
-
-            logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, chargeReference: $chargeReference")
+            
+            // Only generate charge reference if totalDue is not zero
+            val chargeReference = if (returnRequest.totalDutyDue.totalDue != 0) {
+              val ref = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
+              logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, chargeReference: $ref")
+              Some(ref)
+            } else {
+              logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, no chargeReference (totalDue is zero)")
+              None
+            }
 
             val submission = ReturnSubmission(
               vpdId = vpdId,
@@ -169,7 +176,7 @@ class SubmitReturnController @Inject()(
                   processingDate = now,
                   vpdReferenceNumber = vpdId,
                   submissionID = Some(submissionId),
-                  chargeReference = Some(chargeReference),
+                  chargeReference = chargeReference,
                   amount = returnRequest.totalDutyDue.totalDue,
                   paymentDueDate = Some(paymentDueDate),
                   declaration = returnRequest.declaration

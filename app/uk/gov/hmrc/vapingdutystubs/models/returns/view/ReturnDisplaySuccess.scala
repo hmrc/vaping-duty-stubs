@@ -24,7 +24,7 @@ import java.time.Instant
 final case class ReturnDisplaySuccess(
   processingDate: Instant,
   idDetails: IdDetails,
-  chargeDetails: ChargeDetails,
+  chargeDetails: Option[ChargeDetails],
   vapingProductsProduced: VapingProductsProduced,
   overDeclaration: Option[OverDeclaration],
   underDeclaration: Option[UnderDeclaration],

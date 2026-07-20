@@ -141,10 +141,10 @@ object ReturnSubmissionData {
       ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
-        chargeReference = chargeReference,
+        chargeReference = Some(chargeReference),
         submittedReturn = submittedReturn,
-        submissionId = submissionId,
-        submittedAt = submittedAt
+        submittedAt = submittedAt,
+        submissionId = submissionId
       )
     }
   }
@@ -192,10 +192,10 @@ object ReturnSubmissionData {
       ReturnSubmission(
         vpdId = vpdId,
         periodKey = periodKey,
-        chargeReference = chargeReference,
+        chargeReference = Some(chargeReference),
         submittedReturn = submittedReturn,
-        submissionId = submissionId,
-        submittedAt = submittedAt
+        submittedAt = submittedAt,
+        submissionId = submissionId
       )
     }
   }
