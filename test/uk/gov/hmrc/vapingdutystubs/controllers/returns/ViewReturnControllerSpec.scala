@@ -83,7 +83,7 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
   val sampleSubmission: ReturnSubmission = ReturnSubmission(
     vpdId = vpdId,
     periodKey = periodKey,
-    chargeReference = "XMVPD123456789012",
+    chargeReference = Some("XMVPD123456789012"),
     submittedReturn = sampleReturnRequest,
     submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
     submissionId = submissionId
@@ -101,6 +101,38 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
       val responseJson = contentAsJson(result)
       (responseJson \ "success" \ "idDetails" \ "vpdReferenceNumber").as[String] shouldBe vpdId
       (responseJson \ "success" \ "chargeDetails" \ "periodKey").as[String] shouldBe periodKey
+    }
+
+    "must return OK with no chargeDetails when submission has no charge reference" in {
+      val nilReturnRequest = sampleReturnRequest.copy(
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = Seq.empty
+        ),
+        totalDutyDue = TotalDutyDue(
+          totalDutyDueVapingProducts = BigDecimal("0.00"),
+          totalDutyOverDeclaration = BigDecimal("0.00"),
+          totalDutyUnderDeclaration = BigDecimal("0.00"),
+          totalDutySpoiltProduct = BigDecimal("0.00"),
+          totalDue = BigDecimal("0.00")
+        )
+      )
+
+      val nilSubmission = sampleSubmission.copy(
+        chargeReference = None,
+        submittedReturn = nilReturnRequest
+      )
+
+      when(mockReturnSubmissionRepository.get(eqTo(vpdId), eqTo(periodKey)))
+        .thenReturn(Future.successful(Some(nilSubmission)))
+
+      val request = FakeRequest()
+      val result = controller.viewReturn(vpdId, periodKey)(request)
+
+      status(result) shouldBe OK
+      val responseJson = contentAsJson(result)
+      (responseJson \ "success" \ "idDetails" \ "vpdReferenceNumber").as[String] shouldBe vpdId
+      (responseJson \ "success" \ "chargeDetails").toOption shouldBe None
     }
 
     "must generate and return data when submission does not exist" in {

@@ -24,7 +24,7 @@ import java.time.Instant
 case class ReturnSubmission(
   vpdId: String,
   periodKey: String,
-  chargeReference: String,
+  chargeReference: Option[String],
   submittedReturn: ReturnCreateRequest,
   submittedAt: Instant,
   submissionId: String
