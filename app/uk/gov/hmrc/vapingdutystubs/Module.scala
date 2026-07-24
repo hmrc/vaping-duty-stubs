@@ -18,7 +18,7 @@ package uk.gov.hmrc.vapingdutystubs
 
 import com.google.inject.AbstractModule
 import uk.gov.hmrc.vapingdutystubs.config.{AppConfig, StartupSeeder}
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository}
 
 import java.time.Clock
 
@@ -29,6 +29,7 @@ class Module extends AbstractModule {
     bind(classOf[Clock]).toInstance(Clock.systemUTC)
     bind(classOf[ReturnSubmissionRepository]).asEagerSingleton()
     bind(classOf[ObligationsRepository]).asEagerSingleton()
+    bind(classOf[FinancialDataRepository]).asEagerSingleton()
     bind(classOf[StartupSeeder]).asEagerSingleton()
   }
 }

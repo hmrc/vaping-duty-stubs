@@ -27,6 +27,7 @@ class AppConfig @Inject()(config: Configuration) {
   val subscriptionSummaryUserTTL: Long = config.get[Long]("mongodb.timeToLive")
   val returnSubmissionTTL: Long = config.get[Long]("mongodb.returnSubmissionTTL")
   val obligationsTTL: Long = config.get[Long]("mongodb.obligationsTTL")
+  val financialDataTTL: Long = config.get[Long]("mongodb.financialDataTTL")
 
   object Patterns {
 
