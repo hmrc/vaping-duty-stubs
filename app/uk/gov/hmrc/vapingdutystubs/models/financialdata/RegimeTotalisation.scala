@@ -18,28 +18,13 @@ package uk.gov.hmrc.vapingdutystubs.models.financialdata
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.Instant
-
-final case class FinancialDataBody(
-  documentDetails: Seq[DocumentDetails],
-  totalisation: Option[Totalisation]
+final case class RegimeTotalisation(
+  totalAccountOverdue: Option[BigDecimal],
+  totalAccountNotYetDue: Option[BigDecimal],
+  totalAccountCredit: Option[BigDecimal],
+  totalAccountBalance: Option[BigDecimal]
 )
 
-object FinancialDataBody {
-  given format: OFormat[FinancialDataBody] = Json.format[FinancialDataBody]
-}
-
-final case class FinancialDataSuccessBody(
-  processingDate: Instant,
-  financialData: FinancialDataBody
-)
-
-object FinancialDataSuccessBody {
-  given format: OFormat[FinancialDataSuccessBody] = Json.format[FinancialDataSuccessBody]
-}
-
-final case class FinancialDataResponse(success: FinancialDataSuccessBody)
-
-object FinancialDataResponse {
-  given format: OFormat[FinancialDataResponse] = Json.format[FinancialDataResponse]
+object RegimeTotalisation {
+  given format: OFormat[RegimeTotalisation] = Json.format[RegimeTotalisation]
 }

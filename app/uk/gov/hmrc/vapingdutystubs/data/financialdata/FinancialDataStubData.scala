@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.data.financialdata
 
 import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
-import uk.gov.hmrc.vapingdutystubs.models.financialdata.{DocumentDetails, FinancialDataState, LineItemDetails}
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.{DocumentDetails, FinancialDataState, LineItemDetails, RegimeTotalisation, Totalisation}
 
 import java.time.{Instant, LocalDate}
 
@@ -27,6 +27,48 @@ object FinancialDataStubData {
   // relevant for VPD unallocated payments for now.
   private val unallocatedMainTransaction = "0060"
   private val returnMainTransaction = "4060"
+
+  def calculateTotalisation(documentDetails: Seq[DocumentDetails]): Option[Totalisation] = {
+    if (documentDetails.isEmpty) {
+      None
+    } else {
+      val today = LocalDate.now()
+      
+      val (overdue, notYetDue, credit) = documentDetails.foldLeft((BigDecimal(0), BigDecimal(0), BigDecimal(0))) {
+        case ((overdueAcc, notYetDueAcc, creditAcc), doc) =>
+          val outstanding = doc.documentOutstandingAmount
+          
+          // Credit amounts are negative outstanding amounts or unallocated payments
+          if (outstanding < 0 || doc.documentType == "Payment on Account") {
+            (overdueAcc, notYetDueAcc, creditAcc + outstanding.abs)
+          } else if (outstanding > 0) {
+            // Check if overdue based on line item net due dates
+            val isOverdue = doc.lineItemDetails.exists { lineItem =>
+              lineItem.netDueDate.isBefore(today)
+            }
+            
+            if (isOverdue) {
+              (overdueAcc + outstanding, notYetDueAcc, creditAcc)
+            } else {
+              (overdueAcc, notYetDueAcc + outstanding, creditAcc)
+            }
+          } else {
+            (overdueAcc, notYetDueAcc, creditAcc)
+          }
+      }
+      
+      val balance = overdue + notYetDue - credit
+      
+      Some(Totalisation(
+        regimeTotalisation = Some(RegimeTotalisation(
+          totalAccountOverdue = if (overdue > 0) Some(overdue) else None,
+          totalAccountNotYetDue = if (notYetDue > 0) Some(notYetDue) else None,
+          totalAccountCredit = if (credit > 0) Some(credit) else None,
+          totalAccountBalance = Some(balance)
+        ))
+      ))
+    }
+  }
 
   private def periodKeyFor(date: LocalDate): String = ReturnPeriod.fromDateInPeriod(date).toPeriodKey
 

@@ -22,7 +22,7 @@ import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.financialdata.FinancialDataStubData
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamErrorsDetails, UnprocessableEntityError}
-import uk.gov.hmrc.vapingdutystubs.models.financialdata.{FinancialDataBody, FinancialDataQueryRequest, FinancialDataResponse, FinancialDataState, FinancialDataSuccessBody}
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.{FinancialDataBody, FinancialDataQueryRequest, FinancialDataResponse, FinancialDataState, FinancialDataSuccessBody, Totalisation}
 import uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository
 
 import java.time.{Clock, Instant}
@@ -68,11 +68,16 @@ class FinancialDataController @Inject()(
     }
   }
 
-  private def successResponse(state: FinancialDataState): FinancialDataResponse =
+  private def successResponse(state: FinancialDataState): FinancialDataResponse = {
+
     FinancialDataResponse(
       success = FinancialDataSuccessBody(
         processingDate = Instant.now(clock),
-        financialData = FinancialDataBody(documentDetails = state.documentDetails)
+        financialData = FinancialDataBody(
+          documentDetails = state.documentDetails,
+          totalisation = FinancialDataStubData.calculateTotalisation(state.documentDetails)
+        )
       )
     )
+  }
 }
