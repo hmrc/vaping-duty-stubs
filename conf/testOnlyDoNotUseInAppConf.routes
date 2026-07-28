@@ -15,5 +15,11 @@ POST   /test-only/obligations/:vpdId/custom               uk.gov.hmrc.vapingduty
 POST   /test-only/obligations/:vpdId/clear                uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.clearForVpdId(vpdId: String)
 POST   /test-only/obligations/clear-all                   uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController.clearAll()
 
+# Test-only routes for financial data management
+POST   /test-only/financial-data/:vpdId/scenario/:scenario   uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestFinancialDataController.setScenario(vpdId: String, scenario: String)
+POST   /test-only/financial-data/:vpdId/custom                uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestFinancialDataController.setCustom(vpdId: String)
+POST   /test-only/financial-data/:vpdId/clear                 uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestFinancialDataController.clearForVpdId(vpdId: String)
+POST   /test-only/financial-data/clear-all                    uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestFinancialDataController.clearAll()
+
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
