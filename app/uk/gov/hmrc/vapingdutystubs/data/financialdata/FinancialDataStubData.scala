@@ -142,7 +142,7 @@ object FinancialDataStubData {
         periodFromDate = periodStart,
         periodToDate = periodEnd,
         periodKey = periodKeyFor(periodStart),
-        netDueDate = periodEnd.plusDays(14),
+        netDueDate = periodEnd.plusMonths(1).withDayOfMonth(15),
         formBundleNumber = s"FB$chargeReference",
         statisticalKey = "1",
         amount = amount,
@@ -182,7 +182,7 @@ object FinancialDataStubData {
         periodFromDate = postingDate,
         periodToDate = postingDate,
         periodKey = periodKeyFor(postingDate),
-        netDueDate = postingDate,
+        netDueDate = postingDate.withDayOfMonth(15),
         formBundleNumber = s"FB$documentNumber",
         statisticalKey = "1",
         amount = amount
@@ -195,8 +195,8 @@ object FinancialDataStubData {
       vpdId = vpdId,
       noDataIdentified = false,
       documentDetails = Seq(
-        outstandingDocument(vpdId, "XMVPD0000000001", today.minusMonths(1), today.plusDays(14), BigDecimal("500.00")),
-        outstandingDocument(vpdId, "XMVPD0000000002", today.minusMonths(2), today.minusDays(10), BigDecimal("250.00"))
+        outstandingDocument(vpdId, "XMVPD0000000001", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
+        outstandingDocument(vpdId, "XMVPD0000000002", today.minusMonths(2), today.minusMonths(1).withDayOfMonth(15), BigDecimal("250.00"))
       ),
       lastUpdated = Instant.now()
     )
@@ -208,7 +208,7 @@ object FinancialDataStubData {
       vpdId = vpdId,
       noDataIdentified = false,
       documentDetails = Seq(
-        outstandingDocument(vpdId, "XMVPD0000000003", today.minusMonths(1), today.plusDays(14), BigDecimal("500.00")),
+        outstandingDocument(vpdId, "XMVPD0000000003", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
         unallocatedDocument(vpdId, "3000000000001", today.minusDays(5), BigDecimal("150.00"))
       ),
       lastUpdated = Instant.now()
@@ -233,7 +233,7 @@ object FinancialDataStubData {
       vpdId = vpdId,
       noDataIdentified = false,
       documentDetails = Seq(
-        outstandingDocument(vpdId, "XMVPD0000000005", today.minusMonths(1), today.plusDays(14), BigDecimal("500.00")),
+        outstandingDocument(vpdId, "XMVPD0000000005", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
         unallocatedDocument(vpdId, "3000000000002", today.minusDays(5), BigDecimal("150.00")),
         clearedDocument(vpdId, "XMVPD0000000006", today.minusMonths(2), today.minusMonths(1).plusDays(9), BigDecimal("750.00"))
       ),
