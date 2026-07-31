@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.config
 
 import play.api.Logging
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository, SubscriptionSummaryRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository, SubscriptionSummaryRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,9 +25,11 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StartupSeeder @Inject()(
   obligationsRepository: ObligationsRepository,
-  returnSubmissionRepository: ReturnSubmissionRepository
+  returnSubmissionRepository: ReturnSubmissionRepository,
+  financialDataRepository: FinancialDataRepository
 )(implicit ec: ExecutionContext) extends Logging {
 
+  import uk.gov.hmrc.vapingdutystubs.data.financialdata.FinancialDataStubData
   import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
   import uk.gov.hmrc.vapingdutystubs.data.returns.ReturnSubmissionData
 
@@ -66,6 +68,19 @@ class StartupSeeder @Inject()(
     }.recover { case e =>
       logger.error(s"Failed to seed test  ${e.getMessage}", e)
     }
+  }
+
+  logger.info("Seeding fixed financial-data (BTA payments) scenarios...")
+  val financialDataSeedFuture = Future.sequence(
+    FinancialDataStubData.sampleFinancialDataScenarios.map { state =>
+      financialDataRepository.set(state).map { _ =>
+        logger.info(s"Seeded financial data scenario for VPD ID: ${state.vpdId}")
+      }
+    }
+  ).map { _ =>
+    logger.info("Successfully seeded financial-data scenarios")
+  }.recover { case e =>
+    logger.error(s"Failed to seed financial-data scenarios: ${e.getMessage}", e)
   }
 
   logger.info("StartupSeeder initialized")

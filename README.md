@@ -450,3 +450,24 @@ When a return is not found in the repository for the given VPD ID and period key
 }
 ```
 
+## BTA Summary Payments Scenarios
+
+Fixed VPD IDs are seeded at startup (see `StartupSeeder`) to cover the payment/balance scenarios needed
+by the BTA summary tile (`vaping-duty-account`'s `GET /vpd/summary/:vpdId`). Digits `1`-`5` and `8` are
+already reserved by the returns/obligations error-simulation and sample-obligations sets above, so these
+use the remaining unused digits.
+
+| VPD ID | Scenario | Balance |
+|---|---|---|
+| `GBWK0900906WKWK` | Single outstanding charge, not yet due | Positive, single charge reference |
+| `GBWK0900907WKWK` | Single outstanding charge, overdue | Positive, single charge reference |
+| `GBWK0900909WKWK` | Unallocated payment on account only | Negative (in credit) |
+| `GBWK0900900WKWK` | No outstanding or unallocated amounts | Zero (nothing owed) |
+
+These can also be re-seeded on demand, or set to any other existing financial-data scenario, via the
+existing test-only endpoints:
+```
+POST /test-only/financial-data/:vpdId/scenario/:scenario
+POST /test-only/financial-data/:vpdId/custom
+```
+

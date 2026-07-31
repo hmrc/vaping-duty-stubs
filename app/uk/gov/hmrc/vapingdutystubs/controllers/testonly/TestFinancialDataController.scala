@@ -37,9 +37,23 @@ import scala.concurrent.{ExecutionContext, Future}
   private val SCENARIO_CLEARED_ONLY = "cleared-only"
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
+  private val SCENARIO_SINGLE_OUTSTANDING = "single-outstanding"
+  private val SCENARIO_OVERDUE_BALANCE = "overdue-balance"
+  private val SCENARIO_CREDIT_BALANCE = "credit-balance"
+  private val SCENARIO_NOTHING_OWED = "nothing-owed"
 
   private val validScenarios =
-    Set(SCENARIO_OUTSTANDING_ONLY, SCENARIO_WITH_UNALLOCATED, SCENARIO_CLEARED_ONLY, SCENARIO_MIXED, SCENARIO_NONE)
+    Set(
+      SCENARIO_OUTSTANDING_ONLY,
+      SCENARIO_WITH_UNALLOCATED,
+      SCENARIO_CLEARED_ONLY,
+      SCENARIO_MIXED,
+      SCENARIO_NONE,
+      SCENARIO_SINGLE_OUTSTANDING,
+      SCENARIO_OVERDUE_BALANCE,
+      SCENARIO_CREDIT_BALANCE,
+      SCENARIO_NOTHING_OWED
+    )
 
   def setScenario(vpdId: String, scenarioName: String): Action[AnyContent] = Action.async { implicit request =>
     if (!validScenarios.contains(scenarioName)) {
@@ -55,6 +69,10 @@ import scala.concurrent.{ExecutionContext, Future}
         case SCENARIO_CLEARED_ONLY => FinancialDataStubData.clearedOnly(vpdId)
         case SCENARIO_MIXED => FinancialDataStubData.mixed(vpdId)
         case SCENARIO_NONE => FinancialDataStubData.noData(vpdId)
+        case SCENARIO_SINGLE_OUTSTANDING => FinancialDataStubData.singleOutstanding(vpdId)
+        case SCENARIO_OVERDUE_BALANCE => FinancialDataStubData.overdueBalance(vpdId)
+        case SCENARIO_CREDIT_BALANCE => FinancialDataStubData.creditBalance(vpdId)
+        case SCENARIO_NOTHING_OWED => FinancialDataStubData.nothingOwed(vpdId)
       }
 
       financialDataRepository.set(state).map { _ =>
