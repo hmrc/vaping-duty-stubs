@@ -35,6 +35,10 @@ class TestFinancialDataControllerSpec extends SpecBase {
   private val SCENARIO_CLEARED_ONLY = "cleared-only"
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
+  private val SCENARIO_SINGLE_OUTSTANDING = "single-outstanding"
+  private val SCENARIO_OVERDUE_BALANCE = "overdue-balance"
+  private val SCENARIO_CREDIT_BALANCE = "credit-balance"
+  private val SCENARIO_NOTHING_OWED = "nothing-owed"
   private val INVALID_SCENARIO = "invalid-scenario"
 
   val mockFinancialDataRepository: FinancialDataRepository = mock[FinancialDataRepository]
@@ -58,7 +62,16 @@ class TestFinancialDataControllerSpec extends SpecBase {
   "TestFinancialDataController" - {
 
     "setScenario" - {
-      Seq(SCENARIO_OUTSTANDING_ONLY, SCENARIO_WITH_UNALLOCATED, SCENARIO_CLEARED_ONLY, SCENARIO_MIXED).foreach { scenario =>
+      Seq(
+        SCENARIO_OUTSTANDING_ONLY,
+        SCENARIO_WITH_UNALLOCATED,
+        SCENARIO_CLEARED_ONLY,
+        SCENARIO_MIXED,
+        SCENARIO_SINGLE_OUTSTANDING,
+        SCENARIO_OVERDUE_BALANCE,
+        SCENARIO_CREDIT_BALANCE,
+        SCENARIO_NOTHING_OWED
+      ).foreach { scenario =>
         s"must return OK when setting '$scenario' scenario" in {
           when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(testState))
 

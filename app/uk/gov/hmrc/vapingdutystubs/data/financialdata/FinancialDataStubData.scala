@@ -252,4 +252,64 @@ object FinancialDataStubData {
     )
 
   def defaultData(vpdId: String): FinancialDataState = mixed(vpdId)
+
+  // BTA summary tile scenarios - a single outstanding charge, not yet due.
+  def singleOutstanding(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        outstandingDocument(vpdId, "XMVPD0000000010", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("4574.84"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
+  // BTA summary tile scenario - a single outstanding charge whose due date has already passed.
+  // The Payments schema itself has no separate "overdue" flag - this scenario exists to prove the
+  // aggregation logic correctly includes overdue amounts in the totalised balance.
+  def overdueBalance(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        outstandingDocument(vpdId, "XMVPD0000000011", today.minusMonths(3), today.minusMonths(2).withDayOfMonth(15), BigDecimal("1200.00"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
+  // BTA summary tile scenario - only an unallocated payment on account, no outstanding charges,
+  // so calculateTotalisation nets out to a negative (credit) balance.
+  def creditBalance(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        unallocatedDocument(vpdId, "3000000000099", today.minusDays(5), BigDecimal("325.50"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
+  // BTA summary tile scenario - nothing owed. Reuses clearedOnly, which already nets to a zero balance.
+  def nothingOwed(vpdId: String): FinancialDataState = clearedOnly(vpdId)
+
+  // Fixed VPD IDs for the BTA summary tile payments scenarios, seeded at startup (see StartupSeeder).
+  // Digits 1-5 and 8 are reserved by the returns/obligations error-simulation and sample-obligations
+  // sets (see README.md), so these use the remaining unused digits.
+  val singleOutstandingVpdId = "GBWK0900906WK"
+  val overdueBalanceVpdId    = "GBWK0900907WK"
+  val creditBalanceVpdId     = "GBWK0900909WK"
+  val nothingOwedVpdId       = "GBWK0900900WK"
+
+  def sampleFinancialDataScenarios: Seq[FinancialDataState] = Seq(
+    singleOutstanding(singleOutstandingVpdId),
+    overdueBalance(overdueBalanceVpdId),
+    creditBalance(creditBalanceVpdId),
+    nothingOwed(nothingOwedVpdId)
+  )
 }
