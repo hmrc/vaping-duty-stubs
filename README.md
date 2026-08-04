@@ -459,10 +459,10 @@ use the remaining unused digits.
 
 | VPD ID | Scenario | Balance |
 |---|---|---|
-| `GBWK0900906WKWK` | Single outstanding charge, not yet due | Positive, single charge reference |
-| `GBWK0900907WKWK` | Single outstanding charge, overdue | Positive, single charge reference |
-| `GBWK0900909WKWK` | Unallocated payment on account only | Negative (in credit) |
-| `GBWK0900900WKWK` | No outstanding or unallocated amounts | Zero (nothing owed) |
+| `GBWK0900906WK` | Single outstanding charge, not yet due | Positive, single charge reference |
+| `GBWK0900907WK` | Single outstanding charge, overdue | Positive, single charge reference |
+| `GBWK0900909WK` | Unallocated payment on account only | Negative (in credit) |
+| `GBWK0900900WK` | No outstanding or unallocated amounts | Zero (nothing owed) |
 
 These can also be re-seeded on demand, or set to any other existing financial-data scenario, via the
 existing test-only endpoints:
