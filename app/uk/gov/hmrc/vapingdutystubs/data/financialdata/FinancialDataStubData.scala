@@ -27,6 +27,7 @@ object FinancialDataStubData {
   // relevant for VPD unallocated payments for now.
   private val unallocatedMainTransaction = "0060"
   private val returnMainTransaction = "4060"
+  private val interestMainTransaction = "4061"
 
   def calculateTotalisation(documentDetails: Seq[DocumentDetails]): Option[Totalisation] = {
     if (documentDetails.isEmpty) {
@@ -189,6 +190,44 @@ object FinancialDataStubData {
       ))
     )
 
+  // Interest is charged on an already-overdue payment, so netDueDate is expected to be in the past
+  // (matching how a real interest document is only ever raised against an overdue charge).
+  private def interestDocument(
+    vpdId: String,
+    chargeReference: String,
+    netDueDate: LocalDate,
+    amount: BigDecimal
+  ): DocumentDetails =
+    DocumentDetails(
+      documentNumber = s"4${chargeReference.takeRight(11)}",
+      documentType = "Interest Document",
+      chargeReferenceNumber = Some(chargeReference),
+      businessPartnerNumber = s"BP$vpdId",
+      contractAccountNumber = s"CA$vpdId",
+      contractAccountCategory = "Excise",
+      contractObjectNumber = s"CO$vpdId",
+      contractObjectType = "ZVPD",
+      postingDate = netDueDate,
+      issueDate = netDueDate,
+      documentTotalAmount = amount,
+      documentClearedAmount = BigDecimal(0),
+      documentOutstandingAmount = amount,
+      lineItemDetails = Seq(LineItemDetails(
+        itemNumber = "0001",
+        subItemNumber = "000",
+        mainTransaction = interestMainTransaction,
+        subTransaction = "3392",
+        chargeDescription = "Vaping Duty Return Interest",
+        periodFromDate = netDueDate,
+        periodToDate = netDueDate,
+        periodKey = periodKeyFor(netDueDate),
+        netDueDate = netDueDate,
+        formBundleNumber = s"FB$chargeReference",
+        statisticalKey = "1",
+        amount = amount
+      ))
+    )
+
   def outstandingOnly(vpdId: String): FinancialDataState = {
     val today = LocalDate.now()
     FinancialDataState(
@@ -236,6 +275,22 @@ object FinancialDataStubData {
         outstandingDocument(vpdId, "XMVPD0000000005", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
         unallocatedDocument(vpdId, "3000000000002", today.minusDays(5), BigDecimal("150.00")),
         clearedDocument(vpdId, "XMVPD0000000006", today.minusMonths(2), today.minusMonths(1).plusDays(9), BigDecimal("750.00"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
+  // An overdue original charge plus its late payment interest, raised as a separate document with
+  // its own charge reference and mainTransaction 4061 - proves the "Late payment interest" heading
+  // renders for the interest row while the original charge keeps the normal payment heading.
+  def interestPayment(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        outstandingDocument(vpdId, "XMVPD0000000007", today.minusMonths(3), today.minusMonths(2).withDayOfMonth(15), BigDecimal("10000.00")),
+        interestDocument(vpdId, "XIVPD0000000001", today.minusMonths(1).withDayOfMonth(15), BigDecimal("200.00"))
       ),
       lastUpdated = Instant.now()
     )
