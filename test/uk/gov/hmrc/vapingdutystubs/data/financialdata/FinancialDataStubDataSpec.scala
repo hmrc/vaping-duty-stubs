@@ -57,6 +57,19 @@ class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionVal
       totalisation.totalAccountBalance mustBe Some(BigDecimal(0))
     }
 
+    "interestPayment must produce an overdue original charge and an overdue interest charge with mainTransaction 4061" in {
+      val state = FinancialDataStubData.interestPayment(vpdId)
+      val totalisation = FinancialDataStubData.calculateTotalisation(state.documentDetails).value.regimeTotalisation.value
+
+      state.documentDetails must have size 2
+
+      val interestLineItems = state.documentDetails.flatMap(_.lineItemDetails).filter(_.mainTransaction == "4061")
+      interestLineItems must have size 1
+      interestLineItems.head.netDueDate.isBefore(java.time.LocalDate.now()) mustBe true
+
+      totalisation.totalAccountOverdue.value mustBe BigDecimal("10200.00")
+    }
+
     "sampleFinancialDataScenarios must contain one state per fixed VPD ID" in {
       val states = FinancialDataStubData.sampleFinancialDataScenarios
 
