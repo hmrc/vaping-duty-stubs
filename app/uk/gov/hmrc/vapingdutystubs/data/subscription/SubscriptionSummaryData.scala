@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.data.subscription
 
 import uk.gov.hmrc.vapingdutystubs.models.subscription.*
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Rejected, Withdrawn}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Deregistered, Revoked}
 
 import java.time.Instant
 
@@ -62,7 +62,7 @@ object SubscriptionSummaryData {
       correspondenceAddress
     )
 
-  def withDrawnSubscriptionSummary(
+  def revokedSubscriptionSummary(
     now: Instant,
     insolvencyFlag: Boolean,
     emailPreferences: EmailPreferences,
@@ -70,13 +70,13 @@ object SubscriptionSummaryData {
   ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
-      Withdrawn,
+      Revoked,
       insolvencyFlag,
       emailPreferences,
       correspondenceAddress
     )
 
-  def rejectedSubscriptionSummary(
+  def deregisteredSubscriptionSummary(
     now: Instant,
     insolvencyFlag: Boolean,
     emailPreferences: EmailPreferences,
@@ -84,7 +84,7 @@ object SubscriptionSummaryData {
   ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
-      Rejected,
+      Deregistered,
       insolvencyFlag,
       emailPreferences,
       correspondenceAddress

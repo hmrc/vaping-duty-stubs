@@ -37,20 +37,20 @@ object ApprovalStatus extends Enum[ApprovalStatus] {
 
   case object Approved extends ApprovalStatus
 
-  case object Rejected extends ApprovalStatus
+  case object Deregistered extends ApprovalStatus
 
-  case object Withdrawn extends ApprovalStatus
+  case object Revoked extends ApprovalStatus
 
   implicit val approvalStatusWrites: Writes[ApprovalStatus] = {
     case Approved => JsString("01")
-    case Rejected => JsString("02")
-    case Withdrawn => JsString("03")
+    case Deregistered => JsString("04")
+    case Revoked => JsString("05")
   }
 
   implicit val approvalStatusReads: Reads[ApprovalStatus] = {
     case JsString("01") => JsSuccess(Approved)
-    case JsString("02") => JsSuccess(Rejected)
-    case JsString("03") => JsSuccess(Withdrawn)
+    case JsString("04") => JsSuccess(Deregistered)
+    case JsString("05") => JsSuccess(Revoked)
   }
 }
 

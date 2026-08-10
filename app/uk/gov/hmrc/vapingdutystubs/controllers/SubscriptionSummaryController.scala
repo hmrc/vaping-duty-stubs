@@ -60,8 +60,8 @@ class SubscriptionSummaryController @Inject()(
   /** Matches third from last digit to the first number in the below regex
    */
   private val approved            = "\\w+2\\d{2}$".r
-  private val rejected            = "\\w+7\\d{2}$".r
-  private val withdrawn           = "\\w+8\\d{2}$".r
+  private val deregistered        = "\\w+7\\d{2}$".r
+  private val revoked             = "\\w+8\\d{2}$".r
   private val notFound            = "\\w+4\\d{2}$".r
   private val badRequest          = "\\w+6\\d{2}$".r
   private val unprocessableEntity = "\\w+5\\d{2}$".r
@@ -179,11 +179,11 @@ class SubscriptionSummaryController @Inject()(
                 )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
-        case rejected() =>
+        case deregistered() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
-                .rejectedSubscriptionSummary(
+                .deregisteredSubscriptionSummary(
                   now,
                   false,
                   emailPreferences,
@@ -191,11 +191,11 @@ class SubscriptionSummaryController @Inject()(
                 )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
-        case withdrawn() =>
+        case revoked() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
-                .withDrawnSubscriptionSummary(
+                .revokedSubscriptionSummary(
                   now,
                   false,
                   emailPreferences,
