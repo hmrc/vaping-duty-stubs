@@ -20,7 +20,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.data.subscription.SubscriptionSummaryData
 import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus
-import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Rejected, Withdrawn}
+import uk.gov.hmrc.vapingdutystubs.models.subscription.ApprovalStatus.{Approved, Deregistered, Revoked}
 
 import java.time.Instant
 
@@ -39,7 +39,7 @@ class SubscriptionSummarySpec extends SpecBase {
         .toString mustBe subscriptionSummaryJson
     }
 
-    Seq((Approved, "01"), (Rejected, "02"), (Withdrawn, "03")).foreach { case (approvalStatus, code) =>
+    Seq((Approved, "01"), (Deregistered, "04"), (Revoked, "05")).foreach { case (approvalStatus, code) =>
       s"serialise ApprovalStatus ${approvalStatus.entryName} to the code $code" in new SetUp {
         Json.toJson(approvalStatus: ApprovalStatus).toString mustBe s""""$code""""
       }
