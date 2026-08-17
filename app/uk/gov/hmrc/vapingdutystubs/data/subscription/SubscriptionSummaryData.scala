@@ -27,7 +27,7 @@ object SubscriptionSummaryData {
   private def subscriptionSummarySuccess(
                                           now: Instant,
                                           approvalStatus: ApprovalStatus,
-                                          insolvencyFlag: Boolean,
+                                          insolvencyStatus: String,
                                           emailPreferences: EmailPreferences,
                                           correspondenceAddress: CorrespondenceAddress
                                         ): SubscriptionSummaryResponse =
@@ -43,49 +43,49 @@ object SubscriptionSummaryData {
       addressLine3 = correspondenceAddress.addressLine3,
       postCode = correspondenceAddress.postCode,
       approvalStatus = approvalStatus,
-      insolvencyFlag = insolvencyFlag,
+      insolvencyStatus = insolvencyStatus,
       vpdId = None
     )
 
 
   def approvedSubscriptionSummary(
     now: Instant,
-    insolvencyFlag: Boolean,
+    insolvencyStatus: String,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
   ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Approved,
-      insolvencyFlag,
+      insolvencyStatus,
       emailPreferences,
       correspondenceAddress
     )
 
   def revokedSubscriptionSummary(
     now: Instant,
-    insolvencyFlag: Boolean,
+    insolvencyStatus: String,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
   ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Revoked,
-      insolvencyFlag,
+      insolvencyStatus,
       emailPreferences,
       correspondenceAddress
     )
 
   def deregisteredSubscriptionSummary(
     now: Instant,
-    insolvencyFlag: Boolean,
+    insolvencyStatus: String,
     emailPreferences: EmailPreferences,
     correspondenceAddress: CorrespondenceAddress
   ): SubscriptionSummaryResponse =
     subscriptionSummarySuccess(
       now,
       Deregistered,
-      insolvencyFlag,
+      insolvencyStatus,
       emailPreferences,
       correspondenceAddress
     )

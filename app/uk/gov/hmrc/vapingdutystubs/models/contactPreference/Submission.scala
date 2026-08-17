@@ -102,7 +102,7 @@ case class Submission @Inject() (clock: Clock, errorData: ErrorData, subscriptio
             subscriptionSummaryRepository.set(
               SubscriptionSummaryData.approvedSubscriptionSummary(
                 Instant.now(),
-                false,
+                "N",
                 EmailPreferences(submission.paperlessPreference, submission.emailAddress, submission.emailVerification, submission.bouncedEmail),
                 CorrespondenceAddress(
                   addressLine1 = Some("Flat 123"),

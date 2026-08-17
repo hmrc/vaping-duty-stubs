@@ -31,7 +31,7 @@ class SubscriptionSummarySpec extends SpecBase {
         .toJson(
           SubscriptionSummaryData.approvedSubscriptionSummary(
             now,
-            false,
+            "N",
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -49,6 +49,6 @@ class SubscriptionSummarySpec extends SpecBase {
   class SetUp {
     val now                     = Instant.now(clock)
     val subscriptionSummaryJson =
-      """{"processingDate":{"$date":{"$numberLong":"1718118467838"}},"organisationName":"testAwNwaIL Ltd","paperlessPreference":"1","emailAddress":"john.doe@example.com","verifiedEmail":"1","bouncedEmail":"0","addressLine1":"Flat 123","addressLine2":"1 Example Road","postCode":"AB1 2CD","approvalStatus":"01","insolvencyFlag":"0"}"""
+      """{"processingDate":{"$date":{"$numberLong":"1718118467838"}},"organisationName":"testAwNwaIL Ltd","paperlessPreference":"1","emailAddress":"john.doe@example.com","verifiedEmail":"1","bouncedEmail":"0","addressLine1":"Flat 123","addressLine2":"1 Example Road","postCode":"AB1 2CD","approvalStatus":"01","insolvencyStatus":"N"}"""
   }
 }

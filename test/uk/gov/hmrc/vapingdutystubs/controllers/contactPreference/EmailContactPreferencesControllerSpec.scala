@@ -56,7 +56,7 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
 
     "submit a preference for paperless communication with email details dynamic user" in new SetUp {
       val vpdId: String = getVpdId('9')
-      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, false, standardEmailPreferences, ukCorrespondenceAddress)
+      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, "N", standardEmailPreferences, ukCorrespondenceAddress)
 
       when(mockRepository.set(any(), any())).thenReturn(Future.successful(summary))
 
