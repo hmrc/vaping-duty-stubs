@@ -60,6 +60,7 @@ class SubscriptionSummaryController @Inject()(
   /** Matches third from last digit to the first number in the below regex
    */
   private val approved            = "\\w+2\\d{2}$".r
+  private val insolvent           = "\\w+3\\d{2}$".r
   private val deregistered        = "\\w+7\\d{2}$".r
   private val revoked             = "\\w+8\\d{2}$".r
   private val notFound            = "\\w+4\\d{2}$".r
@@ -171,36 +172,48 @@ class SubscriptionSummaryController @Inject()(
           Ok(
             Json.toJson(
               SubscriptionSummaryData
-                .approvedSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
+                  .approvedSubscriptionSummary(
+                    now,
+                    "N",
+                    emailPreferences,
+                    correspondenceAddress
+                  )
+            )
+          ).withHeaders(correlationIdHeader -> correlationId)
+        case insolvent() =>
+          Ok(
+            Json.toJson(
+              SubscriptionSummaryData
+                  .approvedSubscriptionSummary(
+                    now,
+                    "Y",
+                    emailPreferences,
+                    correspondenceAddress
+                  )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
         case deregistered() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
-                .deregisteredSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
+                  .deregisteredSubscriptionSummary(
+                    now,
+                    "N",
+                    emailPreferences,
+                    correspondenceAddress
+                  )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
         case revoked() =>
           Ok(
             Json.toJson(
               SubscriptionSummaryData
-                .revokedSubscriptionSummary(
-                  now,
-                  false,
-                  emailPreferences,
-                  correspondenceAddress
-                )
+                  .revokedSubscriptionSummary(
+                    now,
+                    "N",
+                    emailPreferences,
+                    correspondenceAddress
+                  )
             )
           ).withHeaders(correlationIdHeader -> correlationId)
         case dynamic() =>
@@ -209,7 +222,7 @@ class SubscriptionSummaryController @Inject()(
               case Some(value) => Future.successful(Ok(Json.toJson(value)))
               case None =>
                 subscriptionSummaryRepository.set(SubscriptionSummaryData
-                    .approvedSubscriptionSummary(now, false, emailPreferences, correspondenceAddress), idValue)
+                    .approvedSubscriptionSummary(now, "N", emailPreferences, correspondenceAddress), idValue)
                   .flatMap { data =>
                     Future.successful(Ok(Json.toJson(data)))
                   }
