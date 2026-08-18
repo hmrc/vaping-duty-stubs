@@ -110,6 +110,9 @@ The third digit from the end determines the subscription approval status and ins
 | **7**xx | Deregistered (04) | Not Insolvent (N) | Subscription deregistered | `GBWK0000700WK` |
 | **8**xx | Revoked (05) | Not Insolvent (N) | Subscription revoked | `GBWK0000800WK` |
 
+> **Note:**\
+The approval status (approved/deregistered/revoked) is independent of the Insolvent flag. A manufacturer could be Insolvent from any of these statuses. We have chosen to only represent the Approved + Insolvent case here as this is sufficient to test the insolvent behaviour externally. Unit tests show that the other combinations work.
+
 **Approval Status Codes:**
 - `01` = Approved
 - `04` = Deregistered  
