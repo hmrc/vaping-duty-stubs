@@ -233,7 +233,6 @@ object FinancialDataStubData {
 
   // Represents a partially paid charge - a single document with multiple line items showing
   // both the outstanding amount and the cleared payment as separate line items.
-  // This matches Scenario 2.7 from Digital_Scenarios_D1564.
   private def partiallyPaidDocument(
     vpdId: String,
     chargeReference: String,
@@ -424,7 +423,7 @@ object FinancialDataStubData {
   // BTA summary tile scenario - nothing owed. Reuses clearedOnly, which already nets to a zero balance.
   def nothingOwed(vpdId: String): FinancialDataState = clearedOnly(vpdId)
 
-  // Scenario 2.7: Partially paid charge - £10,000 return with £3,000 paid, £7,000 outstanding.
+  // Partially paid charge - £10,000 return with £3,000 paid, £7,000 outstanding.
   // Demonstrates a single document with multiple line items representing both the outstanding
   // balance and the cleared payment portion.
   def partiallyPaid(vpdId: String): FinancialDataState = {
