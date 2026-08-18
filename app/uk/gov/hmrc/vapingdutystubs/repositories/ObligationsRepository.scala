@@ -74,16 +74,17 @@ class ObligationsRepository @Inject()(
     get(vpdId).flatMap {
       case Some(state) =>
         val updatedObligations = state.obligations.map { item =>
-          if (item.obligationDetails.periodKey == periodKey) {
-            item.copy(
-              obligationDetails = item.obligationDetails.copy(
+          val updatedDetails = item.obligationDetails.map { detail =>
+            if (detail.periodKey == periodKey) {
+              detail.copy(
                 openOrFulfilledStatus = "F",
                 iCDateReceived = Some(LocalDate.ofInstant(receivedDate, ZoneId.systemDefault()))
               )
-            )
-          } else {
-            item
+            } else {
+              detail
+            }
           }
+          item.copy(obligationDetails = updatedDetails)
         }
         set(state.copy(obligations = updatedObligations)).map(Some(_))
       case None => Future.successful(None)
