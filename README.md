@@ -99,6 +99,41 @@ Example error response:
 }
 ```
 
+#### Subscription Status Patterns (Third-from-last digit)
+
+The third digit from the end determines the subscription approval status and insolvency state:
+
+| Pattern | Approval Status | Insolvency Status | Description | Example VPD ID |
+|---------|----------------|-------------------|-------------|----------------|
+| **2**xx | Approved (01) | Not Insolvent (N) | Standard approved subscription | `GBWK0000200WK` |
+| **3**xx | Approved (01) | **Insolvent (Y)** | Approved but insolvent | `GBWK0000300WK` |
+| **7**xx | Deregistered (04) | Not Insolvent (N) | Subscription deregistered | `GBWK0000700WK` |
+| **8**xx | Revoked (05) | Not Insolvent (N) | Subscription revoked | `GBWK0000800WK` |
+
+> **Note:**\
+The approval status (approved/deregistered/revoked) is independent of the Insolvent flag. A manufacturer could be Insolvent from any of these statuses. We have chosen to only represent the Approved + Insolvent case here as this is sufficient to test the insolvent behaviour externally. Unit tests show that the other combinations work.
+
+**Approval Status Codes:**
+- `01` = Approved
+- `04` = Deregistered  
+- `05` = Revoked
+
+**Insolvency Status Values:**
+- `Y` = Insolvent
+- `N` = Not Insolvent
+
+**Combination Examples:**
+
+These patterns can be combined with email flags (first digit) for different scenarios:
+
+| VPD ID | Email Flag | Status Pattern | Result |
+|--------|-----------|----------------|--------|
+| `GBWK0000200WK` | 0 (Digital) | 2 (Approved) | Approved, not insolvent, digital preference |
+| `GBWK1000300WK` | 1 (Postal) | 3 (Insolvent) | Approved, insolvent, postal preference |
+| `GBWK5000300WK` | 5 (Overseas 1) | 3 (Insolvent) | Approved, insolvent, overseas address 1 |
+| `GBWK0000700WK` | 0 (Digital) | 7 (Deregistered) | Deregistered, not insolvent |
+| `GBWK2000800WK` | 2 (Unverified) | 8 (Revoked) | Revoked, unverified email |
+
 ### **PUT** `/etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue`
 
 Outcome is selected by the second digit of `idValue` (`getStubIndex`), with the same `{"errors": {"processingDate", "code", "text"}}` shape used for every 422 below:

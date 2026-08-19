@@ -45,7 +45,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
         SubscriptionSummaryData
           .approvedSubscriptionSummary(
             now,
-            false,
+            "N",
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -72,8 +72,8 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
           SubscriptionSummaryData
             .approvedSubscriptionSummary(
               now,
-              false,
-              expectedEmailPreferences,
+            "N",
+            expectedEmailPreferences,
               ukCorrespondenceAddress
             )
         )
@@ -100,7 +100,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
           SubscriptionSummaryData
             .approvedSubscriptionSummary(
               now,
-              false,
+              "N",
               standardEmailPreferences,
               expectedCorrespondenceAddress
             )
@@ -109,7 +109,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
     }
 
     "return 200 OK with the approval status Approved 01 when the vpdId suffix is 900" in new SetUp {
-      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, false, standardEmailPreferences, ukCorrespondenceAddress)
+      val summary: SubscriptionSummaryResponse = SubscriptionSummaryData.approvedSubscriptionSummary(now, "N", standardEmailPreferences, ukCorrespondenceAddress)
 
       when(mockRepository.get(any())).thenReturn(Future.successful(Some(summary)))
 
@@ -125,7 +125,27 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
         SubscriptionSummaryData
           .approvedSubscriptionSummary(
             now,
-            false,
+            "N",
+            standardEmailPreferences,
+            ukCorrespondenceAddress
+          )
+      )
+    }
+
+    "return 200 OK with the approval status Approved 01 and insolvencyStatus Y when the vpdId suffix is 300" in new SetUp {
+      val result: Future[Result] =
+        controller.getSubscriptionSummary(vpdId("300"))(
+          fakeRequest.withHeaders(submitCorrelationIdHeader(): _*)
+        )
+
+      status(result)  mustBe OK
+      headers(result) mustBe responseHeadersWithCorrelationId
+
+      contentAsJson(result) mustBe Json.toJson(
+        SubscriptionSummaryData
+          .approvedSubscriptionSummary(
+            now,
+            "Y",
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -145,7 +165,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
         SubscriptionSummaryData
           .deregisteredSubscriptionSummary(
             now,
-            false,
+            "N",
             standardEmailPreferences,
             ukCorrespondenceAddress
           )
@@ -165,7 +185,7 @@ class SubscriptionSummaryControllerSpec extends SpecBase {
         SubscriptionSummaryData
           .revokedSubscriptionSummary(
             now,
-            false,
+            "N",
             standardEmailPreferences,
             ukCorrespondenceAddress
           )

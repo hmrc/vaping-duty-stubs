@@ -80,7 +80,7 @@ final case class SubscriptionSummaryResponse(
                                               addressLine3: Option[String],
                                               postCode: Option[String],
                                               approvalStatus: ApprovalStatus,
-                                              insolvencyFlag: Boolean,
+                                              insolvencyStatus: String,
                                               vpdId: Option[String]
                                             )
 
@@ -101,7 +101,7 @@ object SubscriptionSummaryResponse {
         (__ \ "addressLine3").formatNullable[String] and
         (__ \ "postCode").formatNullable[String] and
         (__ \ "approvalStatus").format[ApprovalStatus] and
-        (__ \ "insolvencyFlag").format[Boolean] and
+        (__ \ "insolvencyStatus").format[String] and
         (__ \ "vpdId").formatNullable[String]
       )(SubscriptionSummaryResponse.apply, o => Tuple.fromProductTyped(o))
 }
