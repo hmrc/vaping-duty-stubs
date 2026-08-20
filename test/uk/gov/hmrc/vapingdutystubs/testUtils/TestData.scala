@@ -66,6 +66,8 @@ trait TestData extends ModelGenerators {
     addressLine1 = Some("Flat 123"),
     addressLine2 = Some("1 Example Road"),
     addressLine3 = Some("Toronto"),
+    addressLine4 = Some("Canada"),
+    addressLine5 = Some("Earth"),
     postCode = Some("P55555")
   )
   val overseasAddress2           = CorrespondenceAddress(
