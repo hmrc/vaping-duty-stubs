@@ -80,5 +80,36 @@ class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionVal
         FinancialDataStubData.nothingOwedVpdId
       )
     }
+
+    "partiallyPaid must produce a document with correct amounts" in {
+      val state = FinancialDataStubData.partiallyPaid(vpdId)
+      val document = state.documentDetails.head
+
+      state.noDataIdentified mustBe false
+      state.documentDetails must have size 1
+      document.documentTotalAmount mustBe BigDecimal("10000.00")
+      document.documentClearedAmount mustBe BigDecimal("3000.00")
+      document.documentOutstandingAmount mustBe BigDecimal("7000.00")
+    }
+
+    "partiallyPaid must have two line items with correct amounts" in {
+      val state = FinancialDataStubData.partiallyPaid(vpdId)
+      val lineItems = state.documentDetails.head.lineItemDetails
+
+      lineItems must have size 2
+      lineItems.head.amount mustBe BigDecimal("7000.00")
+      lineItems(1).amount mustBe BigDecimal("-3000.00")
+    }
+
+    "partiallyPaid must have clearing details on the cleared line item only" in {
+      val state = FinancialDataStubData.partiallyPaid(vpdId)
+      val lineItems = state.documentDetails.head.lineItemDetails
+
+      lineItems.head.clearingDate mustBe None
+      lineItems.head.clearingReason mustBe None
+      lineItems(1).clearingDate mustBe defined
+      lineItems(1).clearingReason mustBe Some("01")
+      lineItems(1).clearingDocument mustBe Some("719283701921")
+    }
   }
 }

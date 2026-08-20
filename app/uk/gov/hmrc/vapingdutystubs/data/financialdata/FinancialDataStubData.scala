@@ -28,6 +28,9 @@ object FinancialDataStubData {
   private val unallocatedMainTransaction = "0060"
   private val returnMainTransaction = "4060"
   private val interestMainTransaction = "4061"
+  
+  // Clearing reason codes
+  private val clearingReasonIncomingPayment = "01"
 
   def calculateTotalisation(documentDetails: Seq[DocumentDetails]): Option[Totalisation] = {
     if (documentDetails.isEmpty) {
@@ -228,6 +231,73 @@ object FinancialDataStubData {
       ))
     )
 
+  // Represents a partially paid charge - a single document with multiple line items showing
+  // both the outstanding amount and the cleared payment as separate line items.
+  private def partiallyPaidDocument(
+    vpdId: String,
+    chargeReference: String,
+    periodStart: LocalDate,
+    netDueDate: LocalDate,
+    totalAmount: BigDecimal,
+    paidAmount: BigDecimal,
+    clearingDate: LocalDate,
+    clearingDocument: String
+  ): DocumentDetails = {
+    val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+    val outstandingAmount = totalAmount - paidAmount
+    
+    DocumentDetails(
+      documentNumber = s"1${chargeReference.takeRight(11)}",
+      documentType = "TRM New Charge",
+      chargeReferenceNumber = Some(chargeReference),
+      businessPartnerNumber = s"BP$vpdId",
+      contractAccountNumber = s"CA$vpdId",
+      contractAccountCategory = "Excise",
+      contractObjectNumber = s"CO$vpdId",
+      contractObjectType = "ZVPD",
+      postingDate = periodEnd,
+      issueDate = periodEnd,
+      documentTotalAmount = totalAmount,
+      documentClearedAmount = paidAmount,
+      documentOutstandingAmount = outstandingAmount,
+      lineItemDetails = Seq(
+        // Line item for outstanding amount
+        LineItemDetails(
+          itemNumber = "0001",
+          subItemNumber = "000",
+          mainTransaction = returnMainTransaction,
+          subTransaction = "3392",
+          chargeDescription = "VPD Return",
+          periodFromDate = periodStart,
+          periodToDate = periodEnd,
+          periodKey = periodKeyFor(periodStart),
+          netDueDate = netDueDate,
+          formBundleNumber = s"FB$chargeReference",
+          statisticalKey = "1",
+          amount = outstandingAmount
+        ),
+        // Line item for cleared payment (negative amount)
+        LineItemDetails(
+          itemNumber = "0001",
+          subItemNumber = "001",
+          mainTransaction = returnMainTransaction,
+          subTransaction = "3392",
+          chargeDescription = "VPD Return",
+          periodFromDate = periodStart,
+          periodToDate = periodEnd,
+          periodKey = periodKeyFor(periodStart),
+          netDueDate = netDueDate,
+          formBundleNumber = s"FB$chargeReference",
+          statisticalKey = "1",
+          amount = -paidAmount,
+          clearingDate = Some(clearingDate),
+          clearingReason = Some(clearingReasonIncomingPayment),
+          clearingDocument = Some(clearingDocument)
+        )
+      )
+    )
+  }
+
   def outstandingOnly(vpdId: String): FinancialDataState = {
     val today = LocalDate.now()
     FinancialDataState(
@@ -352,6 +422,34 @@ object FinancialDataStubData {
 
   // BTA summary tile scenario - nothing owed. Reuses clearedOnly, which already nets to a zero balance.
   def nothingOwed(vpdId: String): FinancialDataState = clearedOnly(vpdId)
+
+  // Partially paid charge - £10,000 return with £3,000 paid, £7,000 outstanding.
+  // Demonstrates a single document with multiple line items representing both the outstanding
+  // balance and the cleared payment portion.
+  def partiallyPaid(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    val periodStart = LocalDate.of(2026, 10, 1)
+    val netDueDate = LocalDate.of(2026, 11, 15)
+    val clearingDate = LocalDate.of(2026, 11, 4)
+    
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        partiallyPaidDocument(
+          vpdId = vpdId,
+          chargeReference = "XMVPD0000000012",
+          periodStart = periodStart,
+          netDueDate = netDueDate,
+          totalAmount = BigDecimal("10000.00"),
+          paidAmount = BigDecimal("3000.00"),
+          clearingDate = clearingDate,
+          clearingDocument = "719283701921"
+        )
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
 
   // Fixed VPD IDs for the BTA summary tile payments scenarios, seeded at startup (see StartupSeeder).
   // Digits 1-5 and 8 are reserved by the returns/obligations error-simulation and sample-obligations
