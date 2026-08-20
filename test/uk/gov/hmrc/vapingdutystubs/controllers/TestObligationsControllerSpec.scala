@@ -209,7 +209,7 @@ class TestObligationsControllerSpec extends SpecBase {
         (jsonResponse \ "message").as[String] must include(SCENARIO_NONE)
         (jsonResponse \ "vpdId").as[String] mustBe vpdId
         (jsonResponse \ "scenario").as[String] mustBe SCENARIO_NONE
-        (jsonResponse \ "obligationCount").as[Int] mustBe 1
+        (jsonResponse \ "obligationCount").as[Int] mustBe 0
 
         verify(mockObligationsRepository).set(any[ObligationState]())
       }
@@ -385,4 +385,3 @@ class TestObligationsControllerSpec extends SpecBase {
     }
   }
 }
-
