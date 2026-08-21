@@ -65,6 +65,8 @@ case class CorrespondenceAddress(
                                   addressLine1: Option[String],
                                   addressLine2: Option[String] = None,
                                   addressLine3: Option[String] = None,
+                                  addressLine4: Option[String] = None,
+                                  addressLine5: Option[String] = None,
                                   postCode: Option[String]
                                 )
 
@@ -78,6 +80,8 @@ final case class SubscriptionSummaryResponse(
                                               addressLine1: Option[String],
                                               addressLine2: Option[String],
                                               addressLine3: Option[String],
+                                              addressLine4: Option[String],
+                                              addressLine5: Option[String],
                                               postCode: Option[String],
                                               approvalStatus: ApprovalStatus,
                                               insolvencyStatus: String,
@@ -99,6 +103,8 @@ object SubscriptionSummaryResponse {
         (__ \ "addressLine1").formatNullable[String] and
         (__ \ "addressLine2").formatNullable[String] and
         (__ \ "addressLine3").formatNullable[String] and
+        (__ \ "addressLine4").formatNullable[String] and
+        (__ \ "addressLine5").formatNullable[String] and
         (__ \ "postCode").formatNullable[String] and
         (__ \ "approvalStatus").format[ApprovalStatus] and
         (__ \ "insolvencyStatus").format[String] and
