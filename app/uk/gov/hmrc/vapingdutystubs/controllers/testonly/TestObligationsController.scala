@@ -87,12 +87,18 @@ import scala.concurrent.{ExecutionContext, Future}
         _ <- obligationsRepository.set(obligationState)
         _ <- returnsFuture
       } yield {
-        logger.info(s"Set scenario '$scenarioName' for vpdId=$vpdId with ${obligationState.obligations.size} obligations")
+        logger.info(s"Set scenario '$scenarioName' for vpdId=$vpdId with ${obligationState.obligations.head.obligationDetails.size} obligations")
+        logger.info("&& " + Json.obj(
+          "message" -> s"Successfully set scenario '$scenarioName' for VPD ID $vpdId",
+          "vpdId" -> vpdId,
+          "scenario" -> scenarioName,
+          "obligationCount" -> obligationState.obligations.head.obligationDetails.size
+        ))
         Ok(Json.obj(
           "message" -> s"Successfully set scenario '$scenarioName' for VPD ID $vpdId",
           "vpdId" -> vpdId,
           "scenario" -> scenarioName,
-          "obligationCount" -> obligationState.obligations.size
+          "obligationCount" -> obligationState.obligations.head.obligationDetails.size
         ))
       }
     }
@@ -138,15 +144,26 @@ import scala.concurrent.{ExecutionContext, Future}
     request.body.asJson match {
       case Some(json) => json.validate[ObligationState] match {
         case JsSuccess(obligationState, _) => if (obligationState.vpdId != vpdId) {
-          Future.successful(BadRequest(Json.obj("error" -> "VPD ID mismatch", "message" -> s"VPD ID in URL ($vpdId) does not match VPD ID in body (${obligationState.vpdId})")))
+          Future.successful(BadRequest(Json.obj(
+            "error" -> "VPD ID mismatch",
+            "message" -> s"VPD ID in URL ($vpdId) does not match VPD ID in body (${obligationState.vpdId})"
+          )))
         } else {
           obligationsRepository.set(obligationState).map { _ =>
-            logger.info(s"Set custom obligations for vpdId=$vpdId with ${obligationState.obligations.size} obligations")
-            Ok(Json.obj("message" -> s"Successfully set custom obligations for VPD ID $vpdId", "vpdId" -> vpdId, "obligationCount" -> obligationState.obligations.size))
+            logger.info(s"Set custom obligations for vpdId=$vpdId with ${obligationState.obligations.head.obligationDetails.size} obligations")
+            Ok(Json.obj(
+              "message" -> s"Successfully set custom obligations for VPD ID $vpdId",
+              "vpdId" -> vpdId,
+              "obligationCount" -> obligationState.obligations.head.obligationDetails.size
+            ))
           }
         }
         case JsError(errors) => logger.warn(s"Invalid JSON for custom obligations: $errors")
-          Future.successful(BadRequest(Json.obj("error" -> "Invalid JSON", "message" -> "Could not parse obligation state from request body", "details" -> JsError.toJson(errors))))
+          Future.successful(BadRequest(Json.obj(
+            "error" -> "Invalid JSON",
+            "message" -> "Could not parse obligation state from request body",
+            "details" -> JsError.toJson(errors)
+          )))
       }
       case None => Future.successful(BadRequest(Json.obj("error" -> "Missing JSON body", "message" -> "Request body must contain valid ObligationState JSON")))
     }

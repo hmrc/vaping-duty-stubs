@@ -20,7 +20,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
 import java.time.LocalDate
@@ -38,33 +38,36 @@ class ObligationsControllerSpec extends SpecBase {
   val testPeriodKey = "27AJ"
   val currentDate: LocalDate = LocalDate.now(clock)
 
-  val openObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "O",
-      iCFromDate = LocalDate.of(2027, 12, 1),
-      iCToDate = LocalDate.of(2027, 12, 31),
-      iCDateReceived = None,
-      iCDueDate = currentDate.plusDays(10),
-      periodKey = "27AL"
-    )
+  val openObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "O",
+    iCFromDate = LocalDate.of(2027, 12, 1),
+    iCToDate = LocalDate.of(2027, 12, 31),
+    iCDateReceived = None,
+    iCDueDate = currentDate.plusDays(10),
+    periodKey = "27AL"
   )
 
-  val fulfilledObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "F",
-      iCFromDate = LocalDate.of(2027, 10, 1),
-      iCToDate = LocalDate.of(2027, 10, 31),
-      iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-      iCDueDate = LocalDate.of(2027, 11, 30),
-      periodKey = testPeriodKey
-    )
+  val fulfilledObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "F",
+    iCFromDate = LocalDate.of(2027, 10, 1),
+    iCToDate = LocalDate.of(2027, 10, 31),
+    iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
+    iCDueDate = LocalDate.of(2027, 11, 30),
+    periodKey = testPeriodKey
+  )
+
+  val testObligationItem = ObligationItem(
+    identification = Identification(
+      referenceType = "ZVPD",
+      referenceNumber = vpdId,
+      incomeSourceType = None
+    ),
+    obligationDetails = Seq(openObligationDetails, fulfilledObligationDetails)
   )
 
   val testObligationState = ObligationState(
     vpdId = vpdId,
-    obligations = Seq(openObligation, fulfilledObligation)
+    obligations = Seq(testObligationItem)
   )
 
   override def beforeEach(): Unit = {
@@ -87,10 +90,13 @@ class ObligationsControllerSpec extends SpecBase {
       status(result) mustBe OK
       
       val response = contentAsJson(result).as[ObligationsResponse]
-      response.obligation.size mustBe 2
-      response.obligation.head.obligationDetails.openOrFulfilledStatus mustBe "O"
-      response.obligation(1).obligationDetails.openOrFulfilledStatus mustBe "F"
-      response.obligation(1).obligationDetails.periodKey mustBe testPeriodKey
+      response.obligation.size mustBe 1
+      response.obligation.head.identification.referenceType mustBe "ZVPD"
+      response.obligation.head.identification.referenceNumber mustBe vpdId
+      response.obligation.head.obligationDetails.size mustBe 2
+      response.obligation.head.obligationDetails.head.openOrFulfilledStatus mustBe "O"
+      response.obligation.head.obligationDetails(1).openOrFulfilledStatus mustBe "F"
+      response.obligation.head.obligationDetails(1).periodKey mustBe testPeriodKey
     }
 
     "return 200 OK with generated obligations when none are stored" in {
@@ -110,7 +116,8 @@ class ObligationsControllerSpec extends SpecBase {
       status(result) mustBe OK
       
       val response = contentAsJson(result).as[ObligationsResponse]
-      response.obligation.size mustBe 36
+      response.obligation.size mustBe 1
+      response.obligation.head.obligationDetails.size mustBe 36
     }
   }
 }

@@ -19,8 +19,8 @@ package uk.gov.hmrc.vapingdutystubs.models.obligations
 import play.api.libs.json.{Json, OFormat}
 
 final case class ObligationItem(
-  identification: Option[Identification],
-  obligationDetails: ObligationDetails
+  identification: Identification,
+  obligationDetails: Seq[ObligationDetails]
 )
 
 object ObligationItem {

@@ -19,7 +19,7 @@ package uk.gov.hmrc.vapingdutystubs.repositories
 import org.mongodb.scala.model.Filters
 import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState}
 
 import java.time.{Instant, LocalDate}
 
@@ -36,33 +36,36 @@ class ObligationsRepositorySpec
   val testPeriodKey = "27AJ"
   val currentDate = LocalDate.now()
 
-  val openObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "O",
-      iCFromDate = LocalDate.of(2027, 12, 1),
-      iCToDate = LocalDate.of(2027, 12, 31),
-      iCDateReceived = None,
-      iCDueDate = currentDate.plusDays(10),
-      periodKey = "27AL"
-    )
+  val openObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "O",
+    iCFromDate = LocalDate.of(2027, 12, 1),
+    iCToDate = LocalDate.of(2027, 12, 31),
+    iCDateReceived = None,
+    iCDueDate = currentDate.plusDays(10),
+    periodKey = "27AL"
   )
 
-  val fulfilledObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "F",
-      iCFromDate = LocalDate.of(2027, 10, 1),
-      iCToDate = LocalDate.of(2027, 10, 31),
-      iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-      iCDueDate = LocalDate.of(2027, 11, 30),
-      periodKey = testPeriodKey
-    )
+  val fulfilledObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "F",
+    iCFromDate = LocalDate.of(2027, 10, 1),
+    iCToDate = LocalDate.of(2027, 10, 31),
+    iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
+    iCDueDate = LocalDate.of(2027, 11, 30),
+    periodKey = testPeriodKey
+  )
+
+  val testObligationItem = ObligationItem(
+    identification = Identification(
+      referenceType = "ZVPD",
+      referenceNumber = testVpdId,
+      incomeSourceType = None
+    ),
+    obligationDetails = Seq(openObligationDetails, fulfilledObligationDetails)
   )
 
   val testObligationState: ObligationState = ObligationState(
     vpdId = testVpdId,
-    obligations = Seq(openObligation, fulfilledObligation)
+    obligations = Seq(testObligationItem)
   )
 
   "get must" - {
@@ -91,15 +94,17 @@ class ObligationsRepositorySpec
     "upsert if the vpdId already exists in the repository" in {
       repository.set(testObligationState).futureValue
 
-      val updatedObligation = openObligation.copy(
-        obligationDetails = openObligation.obligationDetails.copy(
-          openOrFulfilledStatus = "F",
-          iCDateReceived = Some(currentDate)
-        )
+      val updatedObligationDetails = openObligationDetails.copy(
+        openOrFulfilledStatus = "F",
+        iCDateReceived = Some(currentDate)
+      )
+
+      val updatedObligationItem = testObligationItem.copy(
+        obligationDetails = Seq(updatedObligationDetails, fulfilledObligationDetails)
       )
 
       val updatedState = testObligationState.copy(
-        obligations = Seq(updatedObligation, fulfilledObligation)
+        obligations = Seq(updatedObligationItem)
       )
 
       val savedState = repository.set(updatedState).futureValue
@@ -116,16 +121,18 @@ class ObligationsRepositorySpec
 
   "markAsFulfilled must" - {
     "update the obligation status to fulfilled for the matching periodKey" in {
+      val openObligationDetailsForTest = openObligationDetails.copy(
+        periodKey = testPeriodKey,
+        openOrFulfilledStatus = "O",
+        iCDateReceived = None
+      )
+
+      val itemWithOpenObligation = testObligationItem.copy(
+        obligationDetails = Seq(openObligationDetailsForTest)
+      )
+
       val stateWithOpenObligation = testObligationState.copy(
-        obligations = Seq(
-          openObligation.copy(
-            obligationDetails = openObligation.obligationDetails.copy(
-              periodKey = testPeriodKey,
-              openOrFulfilledStatus = "O",
-              iCDateReceived = None
-            )
-          )
-        )
+        obligations = Seq(itemWithOpenObligation)
       )
 
       repository.set(stateWithOpenObligation).futureValue
@@ -133,8 +140,8 @@ class ObligationsRepositorySpec
       val receivedDate = Instant.parse("2027-11-15T10:30:00Z")
       val result = repository.markAsFulfilled(testVpdId, testPeriodKey, receivedDate).futureValue
 
-      result.value.obligations.head.obligationDetails.openOrFulfilledStatus mustBe "F"
-      result.value.obligations.head.obligationDetails.iCDateReceived.value mustBe receivedDate.atZone(java.time.ZoneId.systemDefault()).toLocalDate
+      result.value.obligations.head.obligationDetails.head.openOrFulfilledStatus mustBe "F"
+      result.value.obligations.head.obligationDetails.head.iCDateReceived.value mustBe receivedDate.atZone(java.time.ZoneId.systemDefault()).toLocalDate
     }
 
     "not update obligations with different periodKeys" in {

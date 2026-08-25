@@ -23,7 +23,7 @@ import play.api.mvc.{AnyContentAsJson, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationItem, ObligationState}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState}
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
@@ -50,38 +50,50 @@ class TestObligationsControllerSpec extends SpecBase {
 
   val testPeriodKey = "27AJ"
 
-  val openObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "O",
-      iCFromDate = LocalDate.of(2027, 12, 1),
-      iCToDate = LocalDate.of(2027, 12, 31),
-      iCDateReceived = None,
-      iCDueDate = LocalDate.of(2028, 1, 31),
-      periodKey = "27AL"
-    )
+  val openObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "O",
+    iCFromDate = LocalDate.of(2027, 12, 1),
+    iCToDate = LocalDate.of(2027, 12, 31),
+    iCDateReceived = None,
+    iCDueDate = LocalDate.of(2028, 1, 31),
+    periodKey = "27AL"
   )
 
-  val fulfilledObligation = ObligationItem(
-    identification = None,
-    obligationDetails = ObligationDetails(
-      openOrFulfilledStatus = "F",
-      iCFromDate = LocalDate.of(2027, 10, 1),
-      iCToDate = LocalDate.of(2027, 10, 31),
-      iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-      iCDueDate = LocalDate.of(2027, 11, 30),
-      periodKey = testPeriodKey
-    )
+  val fulfilledObligationDetails = ObligationDetails(
+    openOrFulfilledStatus = "F",
+    iCFromDate = LocalDate.of(2027, 10, 1),
+    iCToDate = LocalDate.of(2027, 10, 31),
+    iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
+    iCDueDate = LocalDate.of(2027, 11, 30),
+    periodKey = testPeriodKey
+  )
+
+  val testObligationItem = ObligationItem(
+    identification = Identification(
+      referenceType = "ZVPD",
+      referenceNumber = vpdId,
+      incomeSourceType = None
+    ),
+    obligationDetails = Seq(openObligationDetails, fulfilledObligationDetails)
   )
 
   val testObligationState = ObligationState(
     vpdId = vpdId,
-    obligations = Seq(openObligation, fulfilledObligation)
+    obligations = Seq(testObligationItem)
+  )
+
+  val emptyObligationItem = ObligationItem(
+    identification = Identification(
+      referenceType = "ZVPD",
+      referenceNumber = vpdId,
+      incomeSourceType = None
+    ),
+    obligationDetails = Seq.empty
   )
 
   val emptyObligationState = ObligationState(
     vpdId = vpdId,
-    obligations = Seq.empty
+    obligations = Seq(emptyObligationItem)
   )
 
   val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
@@ -319,7 +331,7 @@ class TestObligationsControllerSpec extends SpecBase {
         val jsonResponse = contentAsJson(result)
         (jsonResponse \ "message").as[String] must include("Successfully set custom obligations")
         (jsonResponse \ "vpdId").as[String] mustBe vpdId
-        (jsonResponse \ "obligationCount").as[Int] mustBe testObligationState.obligations.size
+        (jsonResponse \ "obligationCount").as[Int] mustBe testObligationState.obligations.head.obligationDetails.size
 
         verify(mockObligationsRepository).set(eqTo(testObligationState))
       }
@@ -373,4 +385,3 @@ class TestObligationsControllerSpec extends SpecBase {
     }
   }
 }
-
