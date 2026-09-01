@@ -38,8 +38,9 @@ import scala.concurrent.{ExecutionContext, Future}
   private val SCENARIO_ONLY_COMPLETED = "only-completed"
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
+  private val SCENARIO_ERROR = "error"
 
-  private val validScenarios = Set(SCENARIO_ONLY_OPEN, SCENARIO_ONLY_COMPLETED, SCENARIO_MIXED, SCENARIO_NONE)
+  private val validScenarios = Set(SCENARIO_ONLY_OPEN, SCENARIO_ONLY_COMPLETED, SCENARIO_MIXED, SCENARIO_NONE, SCENARIO_ERROR)
 
   def setScenario(vpdId: String, scenarioName: String): Action[AnyContent] = Action.async { implicit request =>
     if (!validScenarios.contains(scenarioName)) {
@@ -54,6 +55,7 @@ import scala.concurrent.{ExecutionContext, Future}
         case SCENARIO_ONLY_COMPLETED => ObligationsData.generate36MonthsAllFulfilled(vpdId)
         case SCENARIO_MIXED => ObligationsData.generate36MonthsObligations(vpdId)
         case SCENARIO_NONE => ObligationsData.noObligations(vpdId)
+        case SCENARIO_ERROR => ObligationsData.simulatedError(vpdId)
       }
 
       // Seed returns for scenarios that have fulfilled obligations

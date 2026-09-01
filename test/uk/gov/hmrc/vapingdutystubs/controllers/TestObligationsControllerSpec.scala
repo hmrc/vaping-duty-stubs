@@ -23,6 +23,7 @@ import play.api.mvc.{AnyContentAsJson, Result}
 import play.api.test.FakeRequest
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.controllers.testonly.TestObligationsController
+import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState}
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
@@ -37,6 +38,7 @@ class TestObligationsControllerSpec extends SpecBase {
   private val SCENARIO_ONLY_COMPLETED = "only-completed"
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
+  private val SCENARIO_ERROR = "error"
   private val INVALID_SCENARIO = "invalid-scenario"
 
   val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
@@ -212,6 +214,26 @@ class TestObligationsControllerSpec extends SpecBase {
         (jsonResponse \ "obligationCount").as[Int] mustBe 0
 
         verify(mockObligationsRepository).set(any[ObligationState]())
+      }
+
+      "must return OK when setting 'error' scenario" in {
+        when(mockObligationsRepository.set(eqTo(ObligationsData.simulatedError(vpdId))))
+          .thenReturn(Future.successful(ObligationsData.simulatedError(vpdId)))
+
+        when(mockReturnSubmissionRepository.getAll(eqTo(vpdId)))
+          .thenReturn(Future.successful(Seq.empty))
+
+        val result: Future[Result] = controller.setScenario(vpdId, SCENARIO_ERROR)(fakeRequest)
+
+        status(result) mustBe OK
+
+        val jsonResponse = contentAsJson(result)
+        (jsonResponse \ "message").as[String] must include(SCENARIO_ERROR)
+        (jsonResponse \ "vpdId").as[String] mustBe vpdId
+        (jsonResponse \ "scenario").as[String] mustBe SCENARIO_ERROR
+        (jsonResponse \ "obligationCount").as[Int] mustBe 0
+
+        verify(mockObligationsRepository).set(eqTo(ObligationsData.simulatedError(vpdId)))
       }
 
       "must return BAD_REQUEST when scenario name is invalid" in {

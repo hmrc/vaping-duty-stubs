@@ -266,6 +266,23 @@ object ObligationsData {
     )
   }
 
+  def simulatedError(vpdId: String): ObligationState = {
+    val obligationItem = ObligationItem(
+      identification = Identification(
+        referenceType = REFERENCE_TYPE_VPD,
+        referenceNumber = vpdId,
+        incomeSourceType = None
+      ),
+      obligationDetails = Seq.empty
+    )
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(obligationItem),
+      simulateError = true
+    )
+  }
+
   def all36MonthsObligations: Seq[ObligationState] =
     sampleVpdIds.map(generate36MonthsObligations)
 }

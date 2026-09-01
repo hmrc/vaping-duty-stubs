@@ -99,6 +99,20 @@ class ObligationsControllerSpec extends SpecBase {
       response.obligation.head.obligationDetails(1).periodKey mustBe testPeriodKey
     }
 
+    "return 500 INTERNAL_SERVER_ERROR when the stored obligations have simulateError set" in {
+      when(mockObligationsRepository.get(eqTo(vpdId)))
+        .thenReturn(Future.successful(Some(testObligationState.copy(simulateError = true))))
+
+      val result: Future[Result] = controller.get()(fakeRequestWithParameters(
+        Map[String, String](
+          "displayRequest" -> "A",
+          "referenceNumber" -> vpdId
+        )
+      ))
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+    }
+
     "return 200 OK with generated obligations when none are stored" in {
       when(mockObligationsRepository.get(eqTo(vpdId)))
         .thenReturn(Future.successful(None))

@@ -37,6 +37,9 @@ class ObligationsController @Inject()(
     val params = extractParameters(request)
 
     obligationsRepository.get(params._2).flatMap {
+      case Some(obligationState) if obligationState.simulateError =>
+        logger.warn(s"Simulating obligations failure for vpdId=${params._2}")
+        Future.successful(InternalServerError(Json.obj("error" -> "Simulated obligations failure")))
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
         Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))
