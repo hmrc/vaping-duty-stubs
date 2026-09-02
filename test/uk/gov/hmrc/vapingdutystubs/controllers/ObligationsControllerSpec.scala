@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.models.DownstreamError
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
@@ -111,6 +112,10 @@ class ObligationsControllerSpec extends SpecBase {
       ))
 
       status(result) mustBe INTERNAL_SERVER_ERROR
+      val errorResponse = contentAsJson(result).as[DownstreamError]
+      errorResponse.error.code mustBe "500"
+      errorResponse.error.message mustBe "Simulated obligations failure"
+      errorResponse.error.logID mustBe "ABCDEF1234567890ABCDEF1234567890"
     }
 
     "return 200 OK with generated obligations when none are stored" in {

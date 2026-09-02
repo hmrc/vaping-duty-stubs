@@ -21,6 +21,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails}
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationState, ObligationStatus, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
@@ -33,13 +34,17 @@ class ObligationsController @Inject()(
   obligationsRepository: ObligationsRepository
 )(using ExecutionContext) extends BackendController(cc) with Logging {
 
+  private val LOG_ID = "ABCDEF1234567890ABCDEF1234567890"
+
   def get(): Action[AnyContent] = Action.async { request =>
     val params = extractParameters(request)
 
     obligationsRepository.get(params._2).flatMap {
       case Some(obligationState) if obligationState.simulateError =>
         logger.warn(s"Simulating obligations failure for vpdId=${params._2}")
-        Future.successful(InternalServerError(Json.obj("error" -> "Simulated obligations failure")))
+        Future.successful(InternalServerError(Json.toJson(DownstreamError(
+          DownstreamErrorDetails("500", "Simulated obligations failure", LOG_ID)
+        ))))
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
         Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))
