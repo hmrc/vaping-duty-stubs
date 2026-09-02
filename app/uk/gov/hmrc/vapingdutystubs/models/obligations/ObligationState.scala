@@ -20,9 +20,10 @@ import play.api.libs.json.{Json, OFormat}
 
 final case class ObligationState(
   vpdId: String,
-  obligations: Seq[ObligationItem]
+  obligations: Seq[ObligationItem],
+  simulateError: Boolean = false
 )
 
 object ObligationState {
-  given format: OFormat[ObligationState] = Json.format[ObligationState]
+  given format: OFormat[ObligationState] = Json.using[Json.WithDefaultValues].format[ObligationState]
 }

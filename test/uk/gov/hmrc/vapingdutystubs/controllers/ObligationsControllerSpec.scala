@@ -20,6 +20,7 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
+import uk.gov.hmrc.vapingdutystubs.models.DownstreamError
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
@@ -97,6 +98,24 @@ class ObligationsControllerSpec extends SpecBase {
       response.obligation.head.obligationDetails.head.openOrFulfilledStatus mustBe "O"
       response.obligation.head.obligationDetails(1).openOrFulfilledStatus mustBe "F"
       response.obligation.head.obligationDetails(1).periodKey mustBe testPeriodKey
+    }
+
+    "return 500 INTERNAL_SERVER_ERROR when the stored obligations have simulateError set" in {
+      when(mockObligationsRepository.get(eqTo(vpdId)))
+        .thenReturn(Future.successful(Some(testObligationState.copy(simulateError = true))))
+
+      val result: Future[Result] = controller.get()(fakeRequestWithParameters(
+        Map[String, String](
+          "displayRequest" -> "A",
+          "referenceNumber" -> vpdId
+        )
+      ))
+
+      status(result) mustBe INTERNAL_SERVER_ERROR
+      val errorResponse = contentAsJson(result).as[DownstreamError]
+      errorResponse.error.code mustBe "500"
+      errorResponse.error.message mustBe "Simulated obligations failure"
+      errorResponse.error.logID mustBe "ABCDEF1234567890ABCDEF1234567890"
     }
 
     "return 200 OK with generated obligations when none are stored" in {
