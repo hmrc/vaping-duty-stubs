@@ -17,7 +17,7 @@
 package uk.gov.hmrc.vapingdutystubs.config
 
 import play.api.Logging
-import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository, SubscriptionSummaryRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}

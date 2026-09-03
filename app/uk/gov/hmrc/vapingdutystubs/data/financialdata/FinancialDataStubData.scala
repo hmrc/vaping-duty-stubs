@@ -427,7 +427,6 @@ object FinancialDataStubData {
   // Demonstrates a single document with multiple line items representing both the outstanding
   // balance and the cleared payment portion.
   def partiallyPaid(vpdId: String): FinancialDataState = {
-    val today = LocalDate.now()
     val periodStart = LocalDate.of(2026, 10, 1)
     val netDueDate = LocalDate.of(2026, 11, 15)
     val clearingDate = LocalDate.of(2026, 11, 4)
