@@ -18,8 +18,8 @@ GET        /email-verification/verification-status/:credId                      
 GET        /etmp/RESTAdapter/cross-regime/taxpayer-obligations                               uk.gov.hmrc.vapingdutystubs.controllers.ObligationsController.get()
 
 ### Returns ###
-POST       /etmp/RESTAdapter/vpd/return                                                      uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
-GET        /etmp/RESTAdapter/vpd/return/:vpdReference/:periodKey                             uk.gov.hmrc.vapingdutystubs.controllers.returns.ViewReturnController.viewReturn(vpdReference: String, periodKey: String)
+POST       /etmp/RESTAdapter/vpd/returns                                                     uk.gov.hmrc.vapingdutystubs.controllers.returns.SubmitReturnController.submitReturn()
+GET        /etmp/RESTAdapter/vpd/returns/:vpdReference/:periodKey                            uk.gov.hmrc.vapingdutystubs.controllers.returns.ViewReturnController.viewReturn(vpdReference: String, periodKey: String)
 
 ### Financial Data ###
-POST       /RESTAdapter/cross-regime/taxpayer/financial-data/query                           uk.gov.hmrc.vapingdutystubs.controllers.FinancialDataController.query()
+POST       /etmp/RESTAdapter/cross-regime/taxpayer/financial-data/query                      uk.gov.hmrc.vapingdutystubs.controllers.FinancialDataController.query()

@@ -21,8 +21,8 @@ import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.financialdata.FinancialDataStubData
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.*
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamErrorsDetails, UnprocessableEntityError}
-import uk.gov.hmrc.vapingdutystubs.models.financialdata.{FinancialDataBody, FinancialDataQueryRequest, FinancialDataResponse, FinancialDataState, FinancialDataSuccessBody, Totalisation}
 import uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository
 
 import java.time.{Clock, Instant}

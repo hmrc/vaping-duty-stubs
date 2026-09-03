@@ -20,7 +20,7 @@ import org.mongodb.scala.model.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.vapingdutystubs.config.AppConfig
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationDetails, ObligationState}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.ObligationState
 
 import java.time.{Instant, LocalDate, ZoneId}
 import java.util.concurrent.TimeUnit
