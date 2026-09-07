@@ -423,6 +423,34 @@ object FinancialDataStubData {
   // BTA summary tile scenario - nothing owed. Reuses clearedOnly, which already nets to a zero balance.
   def nothingOwed(vpdId: String): FinancialDataState = clearedOnly(vpdId)
 
+  // Overpayment scenario - £66,000 charge fully cleared by £70,000 payment, with £4,000 overpayment
+  // appearing as a separate Payment on Account document.
+  def overpaymentWithPaymentOnAccount(vpdId: String): FinancialDataState = {
+    val periodStart = LocalDate.now().minusMonths(1)
+    val clearingDate = LocalDate.now().minusDays(5)
+    
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        clearedDocument(
+          vpdId = vpdId,
+          chargeReference = "XMVPD0000000013",
+          periodStart = periodStart,
+          clearingDate = clearingDate,
+          amount = BigDecimal("66000.00")
+        ),
+        unallocatedDocument(
+          vpdId = vpdId,
+          documentNumber = "3000000000100",
+          postingDate = clearingDate,
+          amount = BigDecimal("4000.00")
+        )
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
   // Partially paid charge - £10,000 return with £3,000 paid, £7,000 outstanding.
   // Demonstrates a single document with multiple line items representing both the outstanding
   // balance and the cleared payment portion.

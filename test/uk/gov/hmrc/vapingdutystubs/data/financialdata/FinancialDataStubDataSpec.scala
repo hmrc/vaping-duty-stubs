@@ -111,5 +111,40 @@ class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionVal
       lineItems(1).clearingReason mustBe Some("01")
       lineItems(1).clearingDocument mustBe Some("719283701921")
     }
+
+    "overpaymentWithPaymentOnAccount must produce two documents" in {
+      val state = FinancialDataStubData.overpaymentWithPaymentOnAccount(vpdId)
+
+      state.noDataIdentified mustBe false
+      state.documentDetails must have size 2
+    }
+
+    "overpaymentWithPaymentOnAccount must have a fully cleared charge of £66,000" in {
+      val state = FinancialDataStubData.overpaymentWithPaymentOnAccount(vpdId)
+      val clearedCharge = state.documentDetails.head
+
+      clearedCharge.documentType mustBe "TRM New Charge"
+      clearedCharge.documentTotalAmount mustBe BigDecimal("66000.00")
+      clearedCharge.documentClearedAmount mustBe BigDecimal("66000.00")
+      clearedCharge.documentOutstandingAmount mustBe BigDecimal("0.00")
+    }
+
+    "overpaymentWithPaymentOnAccount must have a Payment on Account of £4,000" in {
+      val state = FinancialDataStubData.overpaymentWithPaymentOnAccount(vpdId)
+      val paymentOnAccount = state.documentDetails(1)
+
+      paymentOnAccount.documentType mustBe "Payment on Account"
+      paymentOnAccount.documentTotalAmount mustBe BigDecimal("4000.00")
+      paymentOnAccount.documentClearedAmount mustBe BigDecimal("0.00")
+      paymentOnAccount.documentOutstandingAmount mustBe BigDecimal("4000.00")
+    }
+
+    "overpaymentWithPaymentOnAccount must produce a credit balance of £4,000" in {
+      val state = FinancialDataStubData.overpaymentWithPaymentOnAccount(vpdId)
+      val totalisation = FinancialDataStubData.calculateTotalisation(state.documentDetails).value.regimeTotalisation.value
+
+      totalisation.totalAccountCredit mustBe Some(BigDecimal("4000.00"))
+      totalisation.totalAccountBalance mustBe Some(BigDecimal("-4000.00"))
+    }
   }
 }
