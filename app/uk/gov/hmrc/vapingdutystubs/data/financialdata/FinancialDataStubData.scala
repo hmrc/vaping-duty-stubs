@@ -426,8 +426,8 @@ object FinancialDataStubData {
   // Overpayment scenario - £66,000 charge fully cleared by £70,000 payment, with £4,000 overpayment
   // appearing as a separate Payment on Account document.
   def overpaymentWithPaymentOnAccount(vpdId: String): FinancialDataState = {
-    val periodStart = LocalDate.now().minusMonths(1)
-    val clearingDate = LocalDate.now().minusDays(5)
+    val periodStart = LocalDate.now().minusMonths(1).withDayOfMonth(1)
+    val clearingDate = periodStart.plusMonths(1).withDayOfMonth(10)
     
     FinancialDataState(
       vpdId = vpdId,
