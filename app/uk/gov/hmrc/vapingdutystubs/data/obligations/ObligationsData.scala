@@ -48,20 +48,20 @@ object ObligationsData {
     )
 
   /**
-   * Generates 36 months of obligations from the current month going back 35 months.
+   * Generates 36 months of obligations from the previous month going back 35 months.
    * Distribution:
    * - 33 obligations: Fulfilled (completed on time)
-   * - 1 obligation: Due (previous month - not yet submitted, not overdue)
-   * - 1 obligation: Overdue (2 months ago - past due date)
-   * - 1 obligation: Open (current month - current period)
+   * - 3 obligations: Open (previous month, 2 months ago, 3 months ago - may be overdue based on due date)
+   * 
+   * Note: Current month obligation does not exist yet - it only appears from the 1st of next month.
    */
   def generate36MonthsObligations(vpdId: String): ObligationState = {
     val today = LocalDate.now()
-    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+    val previousMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1).minusMonths(1)
 
     val obligationDetails = (0 until MONTHS_TO_GENERATE).map { monthsBack =>
       // Calculate the year and month for this obligation
-      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val targetDate = previousMonthStart.minusMonths(monthsBack)
       val year = targetDate.getYear
       val month = targetDate.getMonthValue
 
@@ -75,7 +75,7 @@ object ObligationsData {
       val periodKey = returnPeriod.toPeriodKey
 
       monthsBack match {
-        // Current month - Current period (Open, not overdue)
+        // Previous month - Open (may be overdue if today > due date)
         case 0 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -85,7 +85,7 @@ object ObligationsData {
             periodKey = periodKey
           )
 
-        // Previous month - Due (not yet submitted, but not overdue)
+        // 2 months ago - Open (overdue)
         case 1 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -95,7 +95,7 @@ object ObligationsData {
             periodKey = periodKey
           )
 
-        // 2 months ago - Overdue (past due date)
+        // 3 months ago - Open (overdue)
         case 2 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -138,14 +138,15 @@ object ObligationsData {
   /**
    * Generates 36 months of obligations with ALL fulfilled (no open obligations).
    * All 36 obligations are marked as fulfilled with received dates.
+   * Starts from previous month (current month obligation does not exist yet).
    */
   def generate36MonthsAllFulfilled(vpdId: String): ObligationState = {
     val today = LocalDate.now()
-    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+    val previousMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1).minusMonths(1)
 
     val obligationDetails = (0 until MONTHS_TO_GENERATE).map { monthsBack =>
       // Calculate the year and month for this obligation
-      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val targetDate = previousMonthStart.minusMonths(monthsBack)
       val year = targetDate.getYear
       val month = targetDate.getMonthValue
 
@@ -204,16 +205,13 @@ object ObligationsData {
     val overdue1PeriodKey = ReturnPeriod.fromDateInPeriod(twoMonthsAgo).toPeriodKey
     val overdue2PeriodKey = ReturnPeriod.fromDateInPeriod(threeMonthsAgo).toPeriodKey
 
-    // For the "due" obligation, set due date to 5 days in the future to ensure it's not overdue
-    val dueDateInFuture = currentDate.plusDays(5)
-
     val obligationDetails = Seq(
-      // Open return - Due (not yet overdue - due date is in the future)
+      // Open return - Previous month (may be overdue if today > due date)
       createObligationDetails(
         status = STATUS_OPEN,
         fromDate = previousMonth,
         toDate = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth()),
-        dueDate = dueDateInFuture,
+        dueDate = previousMonth.plusMonths(1).withDayOfMonth(DUE_DATE_DAY),
         periodKey = duePeriodKey
       ),
       // Open return - Overdue (2 months ago)

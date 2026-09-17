@@ -27,6 +27,7 @@ import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState}
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
+import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
 import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
 
 import java.time.{Instant, LocalDate}
@@ -50,23 +51,28 @@ class TestObligationsControllerSpec extends SpecBase {
     mockReturnSubmissionRepository
   )
 
-  val testPeriodKey = "27AJ"
+  // Use relative dates based on current time for realistic test data
+  val today = LocalDate.now(clock)
+  val previousMonth = LocalDate.of(today.getYear, today.getMonthValue, 1).minusMonths(1)
+  val twoMonthsAgo = previousMonth.minusMonths(1)
+  
+  val testPeriodKey = ReturnPeriod.fromDateInPeriod(twoMonthsAgo).toPeriodKey
 
   val openObligationDetails = ObligationDetails(
     openOrFulfilledStatus = "O",
-    iCFromDate = LocalDate.of(2027, 12, 1),
-    iCToDate = LocalDate.of(2027, 12, 31),
+    iCFromDate = previousMonth,
+    iCToDate = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth()),
     iCDateReceived = None,
-    iCDueDate = LocalDate.of(2028, 1, 31),
-    periodKey = "27AL"
+    iCDueDate = previousMonth.plusMonths(1).withDayOfMonth(7),
+    periodKey = ReturnPeriod.fromDateInPeriod(previousMonth).toPeriodKey
   )
 
   val fulfilledObligationDetails = ObligationDetails(
     openOrFulfilledStatus = "F",
-    iCFromDate = LocalDate.of(2027, 10, 1),
-    iCToDate = LocalDate.of(2027, 10, 31),
-    iCDateReceived = Some(LocalDate.of(2027, 11, 15)),
-    iCDueDate = LocalDate.of(2027, 11, 30),
+    iCFromDate = twoMonthsAgo,
+    iCToDate = twoMonthsAgo.withDayOfMonth(twoMonthsAgo.lengthOfMonth()),
+    iCDateReceived = Some(twoMonthsAgo.plusMonths(1).withDayOfMonth(2)),
+    iCDueDate = twoMonthsAgo.plusMonths(1).withDayOfMonth(7),
     periodKey = testPeriodKey
   )
 
