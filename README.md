@@ -496,9 +496,16 @@ When a return is not found in the repository for the given VPD ID and period key
     "periodTo": "2027-12-31",
     "receiptDate": "2028-01-15T10:30:00Z"
   },
-  "vapingProducts": {
-    "nicotineProducts": 1000,
-    "nonNicotineProducts": 500
+  "vapingProductsProduced": {
+    "vapingProdManufactured": "1",
+    "returns": [
+      {
+        "taxType": "641",
+        "dutyRate": 10.50,
+        "amountProducedLiquid": 1500.25,
+        "dutyDue": 15752.63
+      }
+    ]
   },
   "totalDutyDue": {
     "totalDue": 1234.56
