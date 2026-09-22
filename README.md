@@ -175,6 +175,32 @@ To run the stub locally without using sm2, first:
 sbt run
 ```
 
+## Obligations API
+
+### **GET** `/etmp/obligations/:vpdId`
+
+This endpoint returns obligation data for a VPD ID.
+
+#### Test Error Responses (VPD ID Based)
+
+The last digit of the VPD ID (before the "WK" suffix) determines the response:
+
+| Last Digit | Status Code | Error Type | Description           | Example VPD ID |
+|------------|-------------|------------|-----------------------|----------------|
+| 5 | 422 | Unprocessable Entity | Simulated obligations unprocessable entity | `GBWK0000005WK` |
+
+**Example Error Response:**
+```json
+{
+  "code": "INVALID_REGIME",
+  "reason": "Simulated obligations unprocessable entity"
+}
+```
+
+For all other VPD IDs, the endpoint returns obligation data based on the configured scenario (see Test Support Endpoints section below).
+
+---
+
 ## Test Support Endpoints
 
 These endpoints are only available when running with test-only routes enabled:

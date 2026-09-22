@@ -45,6 +45,11 @@ class ObligationsController @Inject()(
         Future.successful(InternalServerError(Json.toJson(DownstreamError(
           DownstreamErrorDetails("500", "Simulated obligations failure", LOG_ID)
         ))))
+      case Some(obligationState) if params._2.takeRight(3).head == '5' =>
+        logger.warn(s"Simulating obligations failure for vpdId=${params._2}")
+        Future.successful(UnprocessableEntity(Json.toJson(DownstreamError(
+          DownstreamErrorDetails("422", "Simulated obligations unprocessable entity", LOG_ID)
+        ))))
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
         Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))

@@ -118,6 +118,24 @@ class ObligationsControllerSpec extends SpecBase {
       errorResponse.error.logID mustBe "ABCDEF1234567890ABCDEF1234567890"
     }
 
+    "return 422 UNPROCESSABLE_ENTITY last numeric digit in referenceNumber is a 5" in {
+      when(mockObligationsRepository.get(eqTo("XIWK5555555WK")))
+        .thenReturn(Future.successful(Some(testObligationState)))
+
+      val result: Future[Result] = controller.get()(fakeRequestWithParameters(
+        Map[String, String](
+          "displayRequest" -> "A",
+          "referenceNumber" -> "XIWK5555555WK"
+        )
+      ))
+
+      status(result) mustBe UNPROCESSABLE_ENTITY
+      val errorResponse = contentAsJson(result).as[DownstreamError]
+      errorResponse.error.code mustBe "422"
+      errorResponse.error.message mustBe "Simulated obligations unprocessable entity"
+      errorResponse.error.logID mustBe "ABCDEF1234567890ABCDEF1234567890"
+    }
+
     "return 200 OK with generated obligations when none are stored" in {
       when(mockObligationsRepository.get(eqTo(vpdId)))
         .thenReturn(Future.successful(None))
