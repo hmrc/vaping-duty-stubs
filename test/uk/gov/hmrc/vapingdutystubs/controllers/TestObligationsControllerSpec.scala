@@ -40,6 +40,10 @@ class TestObligationsControllerSpec extends SpecBase {
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
   private val SCENARIO_ERROR = "error"
+  private val SCENARIO_SINGLE_DUE = "single-due"
+  private val SCENARIO_SINGLE_DUE_WITH_COMPLETED = "single-due-with-completed"
+  private val SCENARIO_SINGLE_DUE_ONE_OVERDUE = "single-due-one-overdue"
+  private val SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE = "single-due-multiple-overdue"
   private val INVALID_SCENARIO = "invalid-scenario"
 
   val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
@@ -240,6 +244,86 @@ class TestObligationsControllerSpec extends SpecBase {
         (jsonResponse \ "obligationCount").as[Int] mustBe 0
 
         verify(mockObligationsRepository).set(eqTo(ObligationsData.simulatedError(vpdId)))
+      }
+
+      "must return OK when setting 'single-due' scenario" in {
+        when(mockObligationsRepository.set(any[ObligationState]()))
+          .thenReturn(Future.successful(testObligationState))
+
+        when(mockReturnSubmissionRepository.getAll(eqTo(vpdId)))
+          .thenReturn(Future.successful(Seq.empty))
+
+        val result: Future[Result] = controller.setScenario(vpdId, SCENARIO_SINGLE_DUE)(fakeRequest)
+
+        status(result) mustBe OK
+
+        val jsonResponse = contentAsJson(result)
+        (jsonResponse \ "message").as[String] must include(SCENARIO_SINGLE_DUE)
+        (jsonResponse \ "vpdId").as[String] mustBe vpdId
+        (jsonResponse \ "scenario").as[String] mustBe SCENARIO_SINGLE_DUE
+        (jsonResponse \ "obligationCount").as[Int] mustBe 1
+
+        verify(mockObligationsRepository).set(any[ObligationState]())
+      }
+
+      "must return OK when setting 'single-due-with-completed' scenario" in {
+        when(mockObligationsRepository.set(any[ObligationState]()))
+          .thenReturn(Future.successful(testObligationState))
+
+        when(mockReturnSubmissionRepository.set(any[ReturnSubmission]()))
+          .thenReturn(Future.successful(testReturnSubmission))
+
+        val result: Future[Result] = controller.setScenario(vpdId, SCENARIO_SINGLE_DUE_WITH_COMPLETED)(fakeRequest)
+
+        status(result) mustBe OK
+
+        val jsonResponse = contentAsJson(result)
+        (jsonResponse \ "message").as[String] must include(SCENARIO_SINGLE_DUE_WITH_COMPLETED)
+        (jsonResponse \ "vpdId").as[String] mustBe vpdId
+        (jsonResponse \ "scenario").as[String] mustBe SCENARIO_SINGLE_DUE_WITH_COMPLETED
+        (jsonResponse \ "obligationCount").as[Int] mustBe 4
+
+        verify(mockObligationsRepository).set(any[ObligationState]())
+      }
+
+      "must return OK when setting 'single-due-one-overdue' scenario" in {
+        when(mockObligationsRepository.set(any[ObligationState]()))
+          .thenReturn(Future.successful(testObligationState))
+
+        when(mockReturnSubmissionRepository.set(any[ReturnSubmission]()))
+          .thenReturn(Future.successful(testReturnSubmission))
+
+        val result: Future[Result] = controller.setScenario(vpdId, SCENARIO_SINGLE_DUE_ONE_OVERDUE)(fakeRequest)
+
+        status(result) mustBe OK
+
+        val jsonResponse = contentAsJson(result)
+        (jsonResponse \ "message").as[String] must include(SCENARIO_SINGLE_DUE_ONE_OVERDUE)
+        (jsonResponse \ "vpdId").as[String] mustBe vpdId
+        (jsonResponse \ "scenario").as[String] mustBe SCENARIO_SINGLE_DUE_ONE_OVERDUE
+        (jsonResponse \ "obligationCount").as[Int] mustBe 5
+
+        verify(mockObligationsRepository).set(any[ObligationState]())
+      }
+
+      "must return OK when setting 'single-due-multiple-overdue' scenario" in {
+        when(mockObligationsRepository.set(any[ObligationState]()))
+          .thenReturn(Future.successful(testObligationState))
+
+        when(mockReturnSubmissionRepository.set(any[ReturnSubmission]()))
+          .thenReturn(Future.successful(testReturnSubmission))
+
+        val result: Future[Result] = controller.setScenario(vpdId, SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE)(fakeRequest)
+
+        status(result) mustBe OK
+
+        val jsonResponse = contentAsJson(result)
+        (jsonResponse \ "message").as[String] must include(SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE)
+        (jsonResponse \ "vpdId").as[String] mustBe vpdId
+        (jsonResponse \ "scenario").as[String] mustBe SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE
+        (jsonResponse \ "obligationCount").as[Int] mustBe 7
+
+        verify(mockObligationsRepository).set(any[ObligationState]())
       }
 
       "must return BAD_REQUEST when scenario name is invalid" in {
