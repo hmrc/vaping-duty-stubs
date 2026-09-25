@@ -22,6 +22,8 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
+import uk.gov.hmrc.vapingdutystubs.data.financialdata.FinancialDataStubData
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamError, EtmpDownstreamErrorDetails}
 import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse, ReturnSubmittedResponse}
@@ -37,6 +39,7 @@ class SubmitReturnController @Inject()(
                                         cc: ControllerComponents,
                                         returnSubmissionRepository: ReturnSubmissionRepository,
                                         obligationsRepository: ObligationsRepository,
+                                        financialDataRepository: uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository,
                                         uuidGenerator: RandomUUIDGenerator,
                                         clock: Clock
                                       )(using ExecutionContext) extends BackendController(cc) with Logging {
@@ -119,6 +122,46 @@ class SubmitReturnController @Inject()(
       }
   }
 
+  private def generateFinancialData(submission: ReturnSubmission): Future[Unit] = {
+    submission.chargeReference match {
+      case Some(chargeRef) =>
+        logger.info(s"[SubmitReturn] Generating financial data for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}, chargeRef: $chargeRef")
+        
+        financialDataRepository.get(submission.vpdId).flatMap { existingStateOpt =>
+          val newDocument = FinancialDataStubData
+            .fromReturnSubmission(submission)
+            .documentDetails
+            .head
+          
+          val updatedState = existingStateOpt match {
+            case Some(existingState) =>
+              logger.info(s"[SubmitReturn] Appending to existing financial data for vpdId: ${submission.vpdId} (${existingState.documentDetails.size} existing documents)")
+              existingState.copy(
+                noDataIdentified = false,
+                documentDetails = existingState.documentDetails :+ newDocument,
+                lastUpdated = Instant.now(clock)
+              )
+            case None =>
+              logger.info(s"[SubmitReturn] Creating new financial data for vpdId: ${submission.vpdId}")
+              FinancialDataState(
+                vpdId = submission.vpdId,
+                noDataIdentified = false,
+                documentDetails = Seq(newDocument),
+                lastUpdated = Instant.now(clock)
+              )
+          }
+          
+          financialDataRepository.set(updatedState).map { _ =>
+            logger.info(s"[SubmitReturn] Successfully generated financial data for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
+          }
+        }
+        
+      case None =>
+        logger.info(s"[SubmitReturn] Skipping financial data generation (nil return) for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
+        Future.successful(())
+    }
+  }
+
   private def processReturnSubmission(vpdId: String, body: JsValue): Future[Result] = {
     body.validate[ReturnCreateRequest].fold(
       errors => {
@@ -168,6 +211,7 @@ class SubmitReturnController @Inject()(
               _ = logger.info(s"[SubmitReturn] Marking obligation as fulfilled for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
               obligationResult <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
               _ = logger.info(s"[SubmitReturn] Obligation marked as fulfilled: ${obligationResult.isDefined} for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+              _ <- generateFinancialData(savedSubmission)
             } yield {
               val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
 

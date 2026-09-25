@@ -41,6 +41,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
   val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
+  val mockFinancialDataRepository: uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository = mock[uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository]
   val mockUuidGenerator: RandomUUIDGenerator = mock[RandomUUIDGenerator]
   val fixedClock: Clock = Clock.fixed(Instant.parse("2026-05-28T10:30:00Z"), ZoneId.of("UTC"))
   override val cc: ControllerComponents = stubControllerComponents()
@@ -49,6 +50,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
     cc,
     mockReturnSubmissionRepository,
     mockObligationsRepository,
+    mockFinancialDataRepository,
     mockUuidGenerator,
     fixedClock
   )
@@ -103,6 +105,15 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       
       when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
       when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+      when(mockFinancialDataRepository.get(any())).thenReturn(Future.successful(None))
+      when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(
+        uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState(
+          vpdId = vpdId,
+          noDataIdentified = false,
+          documentDetails = Seq.empty,
+          lastUpdated = Instant.now(fixedClock)
+        )
+      ))
 
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
@@ -307,6 +318,15 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
         when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
         when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+        when(mockFinancialDataRepository.get(any())).thenReturn(Future.successful(None))
+        when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(
+          uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState(
+            vpdId = testVpdId,
+            noDataIdentified = false,
+            documentDetails = Seq.empty,
+            lastUpdated = Instant.now(fixedClock)
+          )
+        ))
 
         val result = controller.submitReturn()(
           fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
