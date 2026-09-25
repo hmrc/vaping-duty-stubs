@@ -211,4 +211,50 @@ object ReturnSubmissionData {
 
   def allSampleReturnSubmissions: Seq[ReturnSubmission] =
     sampleVpdIds.flatMap(generate33ReturnSubmissions)
+
+  /**
+   * Generate N return submissions starting from the oldest months
+   * Used for test scenarios with specific numbers of fulfilled obligations
+   */
+  def generateNReturnSubmissions(vpdId: String, count: Int): Seq[ReturnSubmission] = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+    val previousMonth = currentMonthStart.minusMonths(1)
+
+    // Generate N returns starting from the oldest months, working backwards
+    val startOffset = count + 1 // Skip the most recent months that are open
+    (startOffset until startOffset + count).map { monthsBack =>
+      val targetDate = previousMonth.minusMonths(monthsBack)
+      val year = targetDate.getYear
+      val month = targetDate.getMonthValue
+
+      val periodStart = LocalDate.of(year, month, 1)
+      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
+
+      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+      val periodKey = returnPeriod.toPeriodKey
+
+      val submissionDate = dueDate.minusDays(5)
+      val submittedAt = submissionDate.atTime(10, 30).toInstant(ZoneOffset.UTC)
+
+      val chargeReference = f"XMVPD${year}${month}%02d${vpdId.takeRight(4)}"
+      val submissionId = f"submission-${count - (monthsBack - startOffset)}%03d"
+
+      val isNilReturn = monthsBack % 5 == 0
+      val submittedReturn = if (isNilReturn) {
+        generateNilReturnRequest(periodKey)
+      } else {
+        generateRegularReturnRequest(periodKey)
+      }
+
+      ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = Some(chargeReference),
+        submittedReturn = submittedReturn,
+        submittedAt = submittedAt,
+        submissionId = submissionId
+      )
+    }
+  }
 }

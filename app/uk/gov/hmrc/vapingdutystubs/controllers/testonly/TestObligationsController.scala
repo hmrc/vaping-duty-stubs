@@ -39,8 +39,22 @@ import scala.concurrent.{ExecutionContext, Future}
   private val SCENARIO_MIXED = "mixed"
   private val SCENARIO_NONE = "none"
   private val SCENARIO_ERROR = "error"
+  private val SCENARIO_SINGLE_DUE = "single-due"
+  private val SCENARIO_SINGLE_DUE_WITH_COMPLETED = "single-due-with-completed"
+  private val SCENARIO_SINGLE_DUE_ONE_OVERDUE = "single-due-one-overdue"
+  private val SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE = "single-due-multiple-overdue"
 
-  private val validScenarios = Set(SCENARIO_ONLY_OPEN, SCENARIO_ONLY_COMPLETED, SCENARIO_MIXED, SCENARIO_NONE, SCENARIO_ERROR)
+  private val validScenarios = Set(
+    SCENARIO_ONLY_OPEN,
+    SCENARIO_ONLY_COMPLETED,
+    SCENARIO_MIXED,
+    SCENARIO_NONE,
+    SCENARIO_ERROR,
+    SCENARIO_SINGLE_DUE,
+    SCENARIO_SINGLE_DUE_WITH_COMPLETED,
+    SCENARIO_SINGLE_DUE_ONE_OVERDUE,
+    SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE
+  )
 
   def setScenario(vpdId: String, scenarioName: String): Action[AnyContent] = Action.async { implicit request =>
     if (!validScenarios.contains(scenarioName)) {
@@ -56,6 +70,10 @@ import scala.concurrent.{ExecutionContext, Future}
         case SCENARIO_MIXED => ObligationsData.generate36MonthsObligations(vpdId)
         case SCENARIO_NONE => ObligationsData.noObligations(vpdId)
         case SCENARIO_ERROR => ObligationsData.simulatedError(vpdId)
+        case SCENARIO_SINGLE_DUE => ObligationsData.singleDue(vpdId)
+        case SCENARIO_SINGLE_DUE_WITH_COMPLETED => ObligationsData.singleDueWithCompleted(vpdId)
+        case SCENARIO_SINGLE_DUE_ONE_OVERDUE => ObligationsData.singleDueOneOverdue(vpdId)
+        case SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE => ObligationsData.singleDueMultipleOverdue(vpdId)
       }
 
       // Seed returns for scenarios that have fulfilled obligations
@@ -72,8 +90,26 @@ import scala.concurrent.{ExecutionContext, Future}
           Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
             logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
           }
+        case SCENARIO_SINGLE_DUE_WITH_COMPLETED =>
+          // 3 fulfilled obligations, seed 3 returns
+          val returnSubmissions = ReturnSubmissionData.generateNReturnSubmissions(vpdId, 3)
+          Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
+            logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+          }
+        case SCENARIO_SINGLE_DUE_ONE_OVERDUE =>
+          // 3 fulfilled obligations, seed 3 returns
+          val returnSubmissions = ReturnSubmissionData.generateNReturnSubmissions(vpdId, 3)
+          Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
+            logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+          }
+        case SCENARIO_SINGLE_DUE_MULTIPLE_OVERDUE =>
+          // 3 fulfilled obligations, seed 3 returns
+          val returnSubmissions = ReturnSubmissionData.generateNReturnSubmissions(vpdId, 3)
+          Future.sequence(returnSubmissions.map(returnSubmissionRepository.set)).map { _ =>
+            logger.info(s"Seeded ${returnSubmissions.size} return submissions for vpdId=$vpdId in scenario '$scenarioName'")
+          }
         case _ =>
-          // For only-open and none scenarios, clear any existing returns
+          // For only-open, none, single-due, and error scenarios, clear any existing returns
           returnSubmissionRepository.getAll(vpdId).flatMap { submissions =>
             if (submissions.nonEmpty) {
               Future.sequence(submissions.map(sub => returnSubmissionRepository.delete(vpdId, sub.periodKey))).map { _ =>

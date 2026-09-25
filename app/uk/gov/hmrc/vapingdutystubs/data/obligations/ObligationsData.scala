@@ -48,20 +48,20 @@ object ObligationsData {
     )
 
   /**
-   * Generates 36 months of obligations from the current month going back 35 months.
+   * Generates 36 months of obligations from the previous month going back 35 months.
    * Distribution:
    * - 33 obligations: Fulfilled (completed on time)
-   * - 1 obligation: Due (previous month - not yet submitted, not overdue)
-   * - 1 obligation: Overdue (2 months ago - past due date)
-   * - 1 obligation: Open (current month - current period)
+   * - 3 obligations: Open (previous month, 2 months ago, 3 months ago - may be overdue based on due date)
+   * 
+   * Note: Current month obligation does not exist yet - it only appears from the 1st of next month.
    */
   def generate36MonthsObligations(vpdId: String): ObligationState = {
     val today = LocalDate.now()
-    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+    val previousMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1).minusMonths(1)
 
     val obligationDetails = (0 until MONTHS_TO_GENERATE).map { monthsBack =>
       // Calculate the year and month for this obligation
-      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val targetDate = previousMonthStart.minusMonths(monthsBack)
       val year = targetDate.getYear
       val month = targetDate.getMonthValue
 
@@ -75,7 +75,7 @@ object ObligationsData {
       val periodKey = returnPeriod.toPeriodKey
 
       monthsBack match {
-        // Current month - Current period (Open, not overdue)
+        // Previous month - Open (may be overdue if today > due date)
         case 0 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -85,7 +85,7 @@ object ObligationsData {
             periodKey = periodKey
           )
 
-        // Previous month - Due (not yet submitted, but not overdue)
+        // 2 months ago - Open (overdue)
         case 1 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -95,7 +95,7 @@ object ObligationsData {
             periodKey = periodKey
           )
 
-        // 2 months ago - Overdue (past due date)
+        // 3 months ago - Open (overdue)
         case 2 =>
           createObligationDetails(
             status = STATUS_OPEN,
@@ -138,14 +138,15 @@ object ObligationsData {
   /**
    * Generates 36 months of obligations with ALL fulfilled (no open obligations).
    * All 36 obligations are marked as fulfilled with received dates.
+   * Starts from previous month (current month obligation does not exist yet).
    */
   def generate36MonthsAllFulfilled(vpdId: String): ObligationState = {
     val today = LocalDate.now()
-    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+    val previousMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1).minusMonths(1)
 
     val obligationDetails = (0 until MONTHS_TO_GENERATE).map { monthsBack =>
       // Calculate the year and month for this obligation
-      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val targetDate = previousMonthStart.minusMonths(monthsBack)
       val year = targetDate.getYear
       val month = targetDate.getMonthValue
 
@@ -204,16 +205,13 @@ object ObligationsData {
     val overdue1PeriodKey = ReturnPeriod.fromDateInPeriod(twoMonthsAgo).toPeriodKey
     val overdue2PeriodKey = ReturnPeriod.fromDateInPeriod(threeMonthsAgo).toPeriodKey
 
-    // For the "due" obligation, set due date to 5 days in the future to ensure it's not overdue
-    val dueDateInFuture = currentDate.plusDays(5)
-
     val obligationDetails = Seq(
-      // Open return - Due (not yet overdue - due date is in the future)
+      // Open return - Previous month (may be overdue if today > due date)
       createObligationDetails(
         status = STATUS_OPEN,
         fromDate = previousMonth,
         toDate = previousMonth.withDayOfMonth(previousMonth.lengthOfMonth()),
-        dueDate = dueDateInFuture,
+        dueDate = previousMonth.plusMonths(1).withDayOfMonth(DUE_DATE_DAY),
         periodKey = duePeriodKey
       ),
       // Open return - Overdue (2 months ago)
@@ -285,4 +283,227 @@ object ObligationsData {
 
   def all36MonthsObligations: Seq[ObligationState] =
     sampleVpdIds.map(generate36MonthsObligations)
+
+  /**
+   * - 1 open obligation with due date in the future (not overdue)
+   * - No completed returns
+   */
+  def singleDue(vpdId: String): ObligationState = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+
+    val periodStart = currentMonthStart.minusMonths(1)
+    val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+    val dueDate = periodEnd
+    val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+    val periodKey = returnPeriod.toPeriodKey
+
+    val obligationDetails = Seq(
+      createObligationDetails(
+        status = STATUS_OPEN,
+        fromDate = periodStart,
+        toDate = periodEnd,
+        dueDate = dueDate,
+        periodKey = periodKey
+      )
+    )
+
+    val obligationItem = ObligationItem(
+      identification = Identification(
+        referenceType = REFERENCE_TYPE_VPD,
+        referenceNumber = vpdId,
+        incomeSourceType = None
+      ),
+      obligationDetails = obligationDetails
+    )
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(obligationItem)
+    )
+  }
+
+  /**
+   * - 1 open obligation with due date in the future (not overdue)
+   * - 3 fulfilled obligations (completed returns in the past)
+   */
+  def singleDueWithCompleted(vpdId: String): ObligationState = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+
+    val obligationDetails = (0 until 4).map { monthsBack =>
+      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val periodStart = LocalDate.of(targetDate.getYear, targetDate.getMonthValue, 1)
+      val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
+      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+      val periodKey = returnPeriod.toPeriodKey
+
+      if (monthsBack == 0) {
+        // Most recent month - open (due)
+        createObligationDetails(
+          status = STATUS_OPEN,
+          fromDate = periodStart,
+          toDate = periodEnd,
+          dueDate = periodEnd,
+          periodKey = periodKey
+        )
+      } else {
+        // Older months - fulfilled
+        val receivedDate = dueDate.minusDays(5)
+        createObligationDetails(
+          status = STATUS_FULFILLED,
+          fromDate = periodStart,
+          toDate = periodEnd,
+          dueDate = dueDate,
+          periodKey = periodKey,
+          receivedDate = Some(receivedDate)
+        )
+      }
+    }.reverse
+
+    val obligationItem = ObligationItem(
+      identification = Identification(
+        referenceType = REFERENCE_TYPE_VPD,
+        referenceNumber = vpdId,
+        incomeSourceType = None
+      ),
+      obligationDetails = obligationDetails
+    )
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(obligationItem)
+    )
+  }
+
+  /**
+   * - 1 open obligation with due date in the future (not overdue)
+   * - 1 open obligation that is overdue (due date in the past)
+   * - 3 fulfilled obligations (completed returns in the past)
+   */
+  def singleDueOneOverdue(vpdId: String): ObligationState = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+
+    val obligationDetails = (0 until 5).map { monthsBack =>
+      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val periodStart = LocalDate.of(targetDate.getYear, targetDate.getMonthValue, 1)
+      val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
+      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+      val periodKey = returnPeriod.toPeriodKey
+
+      monthsBack match {
+        case 0 =>
+          // Most recent month - open (due)
+          createObligationDetails(
+            status = STATUS_OPEN,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = periodEnd,
+            periodKey = periodKey
+          )
+        case 1 =>
+          // 2 months ago - open (overdue)
+          createObligationDetails(
+            status = STATUS_OPEN,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = dueDate,
+            periodKey = periodKey
+          )
+        case _ =>
+          // Older months - fulfilled
+          val receivedDate = dueDate.minusDays(5)
+          createObligationDetails(
+            status = STATUS_FULFILLED,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = dueDate,
+            periodKey = periodKey,
+            receivedDate = Some(receivedDate)
+          )
+      }
+    }.reverse
+
+    val obligationItem = ObligationItem(
+      identification = Identification(
+        referenceType = REFERENCE_TYPE_VPD,
+        referenceNumber = vpdId,
+        incomeSourceType = None
+      ),
+      obligationDetails = obligationDetails
+    )
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(obligationItem)
+    )
+  }
+
+  /**
+   * - 1 open obligation with due date in the future (not overdue)
+   * - 3 open obligations that are overdue (due dates in the past)
+   * - 3 fulfilled obligations (completed returns in the past)
+   */
+  def singleDueMultipleOverdue(vpdId: String): ObligationState = {
+    val today = LocalDate.now()
+    val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
+
+    val obligationDetails = (0 until 7).map { monthsBack =>
+      val targetDate = currentMonthStart.minusMonths(monthsBack)
+      val periodStart = LocalDate.of(targetDate.getYear, targetDate.getMonthValue, 1)
+      val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+      val dueDate = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
+      val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
+      val periodKey = returnPeriod.toPeriodKey
+
+      monthsBack match {
+        case 0 =>
+          // Most recent month - open (due)
+          createObligationDetails(
+            status = STATUS_OPEN,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = periodEnd,
+            periodKey = periodKey
+          )
+        case 1 | 2 | 3 =>
+          // 2-4 months ago - open (overdue)
+          createObligationDetails(
+            status = STATUS_OPEN,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = dueDate,
+            periodKey = periodKey
+          )
+        case _ =>
+          // Older months - fulfilled
+          val receivedDate = dueDate.minusDays(5)
+          createObligationDetails(
+            status = STATUS_FULFILLED,
+            fromDate = periodStart,
+            toDate = periodEnd,
+            dueDate = dueDate,
+            periodKey = periodKey,
+            receivedDate = Some(receivedDate)
+          )
+      }
+    }.reverse
+
+    val obligationItem = ObligationItem(
+      identification = Identification(
+        referenceType = REFERENCE_TYPE_VPD,
+        referenceNumber = vpdId,
+        incomeSourceType = None
+      ),
+      obligationDetails = obligationDetails
+    )
+
+    ObligationState(
+      vpdId = vpdId,
+      obligations = Seq(obligationItem)
+    )
+  }
 }
