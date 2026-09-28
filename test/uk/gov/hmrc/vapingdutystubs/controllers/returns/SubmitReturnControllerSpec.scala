@@ -55,7 +55,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
     fixedClock
   )
 
-  override val vpdId = "GBWK1234567WK"
+  override val vpdId = "GBWK1234467WK"  // Safe: 5th digit is "4", not "5"
   val periodKey = "24AL"
   override val submissionId = "123456789012"
   override val chargeReference = "XMVPD123456789012"

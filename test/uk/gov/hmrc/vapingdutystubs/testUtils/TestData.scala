@@ -43,9 +43,16 @@ trait TestData extends ModelGenerators {
 
   val dummyUUID = "01234567-89ab-cdef-0123-456789abcdef"
 
-  val vpdId                   = vpdIdGen.sample.get
+  val vpdId                   = "GBWK1234467WK"  // Safe: 5th digit (3rd from end) is "4", not "5"
   val submissionId: String    = submissionIdGen().sample.get
   val chargeReference: String = chargeReferenceGen().sample.get
+
+  // Safe VPD IDs (5th digit is NOT "5")
+  val safeVpdIdGB = "GBWK1234467WK"
+  val safeVpdIdXI = "XIWK1234467WK"
+
+  // VPD ID that triggers 422 (5th digit IS "5")
+  val vpdIdWith422Trigger = "GBWK1234567WK"
 
   def submitCorrelationIdHeader(): Seq[(String, String)] = Seq((correlationIdHeader, dummyUUID))
 

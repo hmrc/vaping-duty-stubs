@@ -26,7 +26,15 @@ import scala.language.reflectiveCalls
 trait ModelGenerators {
   val clock: Clock
 
-  def vpdIdGen: Gen[String] = Gen.listOfN(10, Gen.numChar).map(id => s"XMADP${id.mkString}")
+  def vpdIdGen: Gen[String] = for {
+    prefix <- Gen.oneOf("GB", "XI")
+    digits <- Gen.listOfN(7, Gen.numChar).map(_.mkString)
+  } yield s"${prefix}WK${digits}WK"
+
+  def safeVpdIdGen: Gen[String] = vpdIdGen.retryUntil { id =>
+    val thirdFromEnd = id.takeRight(3).headOption.map(_.toString)
+    !thirdFromEnd.contains("5")
+  }
 
     lazy val dummyDataGenerator = new DataGenerator(clock) {
     lazy val submissionId      = super.submissionIdGen()
