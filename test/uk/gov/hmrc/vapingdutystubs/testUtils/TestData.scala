@@ -43,9 +43,16 @@ trait TestData extends ModelGenerators {
 
   val dummyUUID = "01234567-89ab-cdef-0123-456789abcdef"
 
-  val vpdId                   = vpdIdGen.sample.get
+  val vpdId: String           = vpdIdGen.sample.get
   val submissionId: String    = submissionIdGen().sample.get
   val chargeReference: String = chargeReferenceGen().sample.get
+
+  // Safe VPD IDs (5th digit is NOT "5")
+  val safeVpdIdGB = "GBWK1234467WK"
+  val safeVpdIdXI = "XIWK1234467WK"
+
+  // VPD ID that triggers 422 (5th digit IS "5")
+  val vpdIdWith422Trigger = "GBWK1234567WK"
 
   def submitCorrelationIdHeader(): Seq[(String, String)] = Seq((correlationIdHeader, dummyUUID))
 
@@ -113,4 +120,16 @@ trait TestData extends ModelGenerators {
       locked = true
     )
   )
+
+  // Charge reference test data - UUID values for testing (format: XM + 14 alphanumeric = 16 chars total)
+  val testUuidForNegativeAmount = "xyz789ghi012345678901234"
+  val testChargeRefNegative     = "XMXYZ789GHI01234"
+  val testUuidForPositiveAmount = "abc123def456789012345678"
+  val testChargeRefPositive     = "XMABC123DEF45678"
+  val testUuidForFormat         = "1234567890abcdefghijklmn"
+  val testChargeRefFormat       = "XM1234567890ABCD"
+  val testUuidLong              = "abcdefghijklmnopqrstuvwxyz"
+  val testChargeRefLong         = "XMABCDEFGHIJKLMN"
+  val testUuidLowercase         = "abcdef12345678"
+  val testChargeRefUppercase    = "XMABCDEF12345678"
 }

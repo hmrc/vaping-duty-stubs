@@ -17,7 +17,8 @@
 package uk.gov.hmrc.vapingdutystubs.data.financialdata
 
 import uk.gov.hmrc.vapingdutystubs.models.ReturnPeriod
-import uk.gov.hmrc.vapingdutystubs.models.financialdata.{DocumentDetails, FinancialDataState, LineItemDetails, RegimeTotalisation, Totalisation}
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.*
+import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
 
 import java.time.{Instant, LocalDate}
 
@@ -492,4 +493,40 @@ object FinancialDataStubData {
     creditBalance(creditBalanceVpdId),
     nothingOwed(nothingOwedVpdId)
   )
+
+  /**
+   * Generates financial data from a submitted return.
+   * Creates an outstanding payment document matching the return's charge reference and amounts.
+   * 
+   * @param submission The return submission to generate financial data from
+   * @return FinancialDataState with a single outstanding document, or appended to existing documents
+   */
+  def fromReturnSubmission(submission: ReturnSubmission): FinancialDataState = {
+    
+    val returnPeriod = ReturnPeriod.fromPeriodKey(submission.periodKey)
+      .getOrElse(throw new IllegalArgumentException(s"Invalid period key: ${submission.periodKey}"))
+    val periodStart = returnPeriod.periodFromDate()
+    val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+    val netDueDate = periodEnd.plusMonths(1).withDayOfMonth(15)
+    val amount = submission.submittedReturn.totalDutyDue.totalDue
+    
+    val chargeRef = submission.chargeReference.getOrElse(
+      throw new IllegalArgumentException("Cannot generate financial data for submission without charge reference")
+    )
+    
+    val document = outstandingDocument(
+      vpdId = submission.vpdId,
+      chargeReference = chargeRef,
+      periodStart = periodStart,
+      netDueDate = netDueDate,
+      amount = amount
+    )
+    
+    FinancialDataState(
+      vpdId = submission.vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(document),
+      lastUpdated = Instant.now()
+    )
+  }
 }

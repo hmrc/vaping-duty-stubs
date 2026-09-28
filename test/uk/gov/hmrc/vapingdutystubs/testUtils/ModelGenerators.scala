@@ -26,21 +26,35 @@ import scala.language.reflectiveCalls
 trait ModelGenerators {
   val clock: Clock
 
-  def vpdIdGen: Gen[String] = Gen.listOfN(10, Gen.numChar).map(id => s"XMADP${id.mkString}")
-
-    lazy val dummyDataGenerator = new DataGenerator(clock) {
-    lazy val submissionId      = super.submissionIdGen()
-    lazy val chargeReference   = super.chargeReferenceGen()
-
-    override def submissionIdGen(): String      = submissionId
-    override def chargeReferenceGen(): String   = chargeReference
+  def vpdIdGen: Gen[String] = for {
+    prefix <- Gen.oneOf("GB", "XI")
+    digits <- {
+      Gen
+        .listOfN(7, Gen.numChar)
+        .filter(chars => chars.length == 7)
+        .filterNot(num => num.last == '5')
+        .map(_.mkString)
+        .retryUntil(_ => true)
+    }
+  } yield {
+    s"${prefix}WK${digits}WK"
   }
 
-  def submissionIdGen(): Gen[String]    = Gen.const(dummyDataGenerator.submissionIdGen())
+  lazy val dummyDataGenerator = new DataGenerator(clock) {
+    lazy val submissionId = super.submissionIdGen()
+    lazy val chargeReference = super.chargeReferenceGen()
+
+    override def submissionIdGen(): String = submissionId
+
+    override def chargeReferenceGen(): String = chargeReference
+  }
+
+  def submissionIdGen(): Gen[String] = Gen.const(dummyDataGenerator.submissionIdGen())
+
   def chargeReferenceGen(): Gen[String] = Gen.const(dummyDataGenerator.chargeReferenceGen())
 
   def periodKeyGen: Gen[String] = for {
-    year  <- Gen.chooseNum(23, 50)
+    year <- Gen.chooseNum(23, 50)
     month <- Gen.chooseNum(0, 11)
   } yield s"${year}A${(month + 'A').toChar}"
 

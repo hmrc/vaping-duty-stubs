@@ -254,7 +254,7 @@ class EmailContactPreferencesControllerSpec extends SpecBase {
     val emailContactPreferencesController = new EmailContactPreferencesController(errorData, clock, cc, mockRepository)
 
     def getVpdId(c: Char): String =
-      s"${vpdId.take(6)}$c${vpdId.drop(7)}"
+      s"GBWK0${c}00200WK"
 
   }
 }

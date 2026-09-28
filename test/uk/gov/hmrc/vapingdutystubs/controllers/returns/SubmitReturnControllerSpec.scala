@@ -29,7 +29,7 @@ import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.xZVPD
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.services.returns.ReturnSubmissionService
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.{Clock, Instant, ZoneId}
@@ -39,21 +39,18 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
   override implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.global
 
-  val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
-  val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
+  val mockReturnSubmissionService: ReturnSubmissionService = mock[ReturnSubmissionService]
   val mockUuidGenerator: RandomUUIDGenerator = mock[RandomUUIDGenerator]
   val fixedClock: Clock = Clock.fixed(Instant.parse("2026-05-28T10:30:00Z"), ZoneId.of("UTC"))
   override val cc: ControllerComponents = stubControllerComponents()
 
   val controller = new SubmitReturnController(
     cc,
-    mockReturnSubmissionRepository,
-    mockObligationsRepository,
-    mockUuidGenerator,
+    mockReturnSubmissionService,
     fixedClock
   )
 
-  override val vpdId = "GBWK1234567WK"
+  override val vpdId = "GBWK1234467WK"  // Safe: 5th digit is "4", not "5"
   val periodKey = "24AL"
   override val submissionId = "123456789012"
   override val chargeReference = "XMVPD123456789012"
@@ -90,7 +87,6 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
   "submitReturn" - {
     "must return CREATED with correct response when valid return is submitted" in {
       when(mockUuidGenerator.uuid).thenReturn(submissionId)
-      when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
       
       val submission = ReturnSubmission(
         vpdId = vpdId,
@@ -101,8 +97,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         submissionId = submissionId
       )
       
-      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
-      when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+      when(mockReturnSubmissionService.processSubmission(any(), any())).thenReturn(Future.successful(Right(submission)))
 
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
@@ -120,7 +115,6 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
     "must return CREATED with no charge reference when totalDue is zero" in {
       when(mockUuidGenerator.uuid).thenReturn(submissionId)
-      when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
 
       val nilReturnRequest = validReturnRequest.copy(
         vapingProductsProduced = VapingProductsProduced(
@@ -145,8 +139,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         submissionId = submissionId
       )
 
-      when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
-      when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+      when(mockReturnSubmissionService.processSubmission(any(), any())).thenReturn(Future.successful(Right(submission)))
 
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(nilReturnRequest))
@@ -171,6 +164,9 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         )
       )
 
+      when(mockReturnSubmissionService.processSubmission(any(), any()))
+        .thenReturn(Future.successful(Left("vapingProdManufactured is '1' but returns array is empty")))
+
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(invalidRequest))
           .withHeaders(
@@ -191,6 +187,9 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
           returns = Seq(VapingReturn("641", BigDecimal("10.50"), BigDecimal("100"), BigDecimal("1050")))
         )
       )
+
+      when(mockReturnSubmissionService.processSubmission(any(), any()))
+        .thenReturn(Future.successful(Left("vapingProdManufactured is '0' but returns array is not empty")))
 
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(invalidRequest))
@@ -294,7 +293,6 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       "must process normally when VPD ID ends with 0" in {
         val testVpdId = "GBWK1234560WK"
         when(mockUuidGenerator.uuid).thenReturn(submissionId)
-        when(mockUuidGenerator.uuidHyphenTrimmed).thenReturn("123456789012")
 
         val submission = ReturnSubmission(
           vpdId = testVpdId,
@@ -305,8 +303,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
           submissionId = submissionId
         )
 
-        when(mockReturnSubmissionRepository.set(any())).thenReturn(Future.successful(submission))
-        when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
+        when(mockReturnSubmissionService.processSubmission(any(), any())).thenReturn(Future.successful(Right(submission)))
 
         val result = controller.submitReturn()(
           fakeRequestWithJsonBody(Json.toJson(validReturnRequest))
