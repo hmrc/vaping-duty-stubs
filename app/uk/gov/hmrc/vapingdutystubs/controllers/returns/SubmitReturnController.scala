@@ -22,14 +22,10 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, ControllerComponents, Result}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.*
-import uk.gov.hmrc.vapingdutystubs.data.financialdata.FinancialDataStubData
-import uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamError, EtmpDownstreamErrorDetails}
-import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse, ReturnSubmittedResponse}
-import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.services.returns.ReturnSubmissionService
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
-import uk.gov.hmrc.vapingdutystubs.utils.{LogHeadersHelper, RandomUUIDGenerator}
 
 import java.time.{Clock, Instant, ZoneId}
 import javax.inject.Inject
@@ -37,10 +33,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SubmitReturnController @Inject()(
                                         cc: ControllerComponents,
-                                        returnSubmissionRepository: ReturnSubmissionRepository,
-                                        obligationsRepository: ObligationsRepository,
-                                        financialDataRepository: FinancialDataRepository,
-                                        uuidGenerator: RandomUUIDGenerator,
+                                        returnSubmissionService: ReturnSubmissionService,
                                         clock: Clock
                                       )(using ExecutionContext) extends BackendController(cc) with Logging {
 
@@ -122,46 +115,6 @@ class SubmitReturnController @Inject()(
       }
   }
 
-  private def generateFinancialData(submission: ReturnSubmission): Future[Unit] = {
-    submission.chargeReference match {
-      case Some(chargeRef) =>
-        logger.info(s"[SubmitReturn] Generating financial data for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}, chargeRef: $chargeRef")
-        
-        financialDataRepository.get(submission.vpdId).flatMap { existingStateOpt =>
-          val newDocument = FinancialDataStubData
-            .fromReturnSubmission(submission)
-            .documentDetails
-            .head
-          
-          val updatedState = existingStateOpt match {
-            case Some(existingState) =>
-              logger.info(s"[SubmitReturn] Appending to existing financial data for vpdId: ${submission.vpdId} (${existingState.documentDetails.size} existing documents)")
-              existingState.copy(
-                noDataIdentified = false,
-                documentDetails = existingState.documentDetails :+ newDocument,
-                lastUpdated = Instant.now(clock)
-              )
-            case None =>
-              logger.info(s"[SubmitReturn] Creating new financial data for vpdId: ${submission.vpdId}")
-              FinancialDataState(
-                vpdId = submission.vpdId,
-                noDataIdentified = false,
-                documentDetails = Seq(newDocument),
-                lastUpdated = Instant.now(clock)
-              )
-          }
-          
-          financialDataRepository.set(updatedState).map { _ =>
-            logger.info(s"[SubmitReturn] Successfully generated financial data for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
-          }
-        }
-        
-      case None =>
-        logger.info(s"[SubmitReturn] Skipping financial data generation (nil return) for vpdId: ${submission.vpdId}, periodKey: ${submission.periodKey}")
-        Future.successful(())
-    }
-  }
-
   private def processReturnSubmission(vpdId: String, body: JsValue): Future[Result] = {
     body.validate[ReturnCreateRequest].fold(
       errors => {
@@ -170,68 +123,31 @@ class SubmitReturnController @Inject()(
       },
       returnRequest => {
         logger.info(s"[SubmitReturn] JSON parsed successfully for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-        logger.debug(s"[SubmitReturn] Validating return request for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-        
-        // Validate the request
-        returnRequest.validate match {
+
+        returnSubmissionService.processSubmission(vpdId, returnRequest).map {
           case Left(validationError) =>
             logger.warn(s"[SubmitReturn] Business validation failed for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, error: $validationError")
-            Future.successful(BadRequest(Json.obj("error" -> validationError)))
+            BadRequest(Json.obj("error" -> validationError))
 
-          case Right(_) =>
-            logger.info(s"[SubmitReturn] Validation passed for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-            
-            val now = Instant.now(clock)
-            val submissionId = uuidGenerator.uuid
-            
-            // Only generate charge reference if totalDue is not zero
-            val chargeReference = if (returnRequest.totalDutyDue.totalDue != 0) {
-              val ref = s"XMVPD${uuidGenerator.uuidHyphenTrimmed.take(12)}".toUpperCase
-              logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, chargeReference: $ref")
-              Some(ref)
-            } else {
-              logger.debug(s"[SubmitReturn] Generated submissionId: $submissionId, no chargeReference (totalDue is zero)")
-              None
-            }
+          case Right(submission) =>
+            val paymentDueDate = submission.submittedAt.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
 
-            val submission = ReturnSubmission(
-              vpdId = vpdId,
-              periodKey = returnRequest.periodKey,
-              chargeReference = chargeReference,
-              submittedReturn = returnRequest,
-              submittedAt = now,
-              submissionId = submissionId
+            val response = ReturnCreateResponse(
+              ReturnSubmittedResponse(
+                processingDate = submission.submittedAt,
+                vpdReferenceNumber = vpdId,
+                submissionID = Some(submission.submissionId),
+                chargeReference = submission.chargeReference,
+                amount = returnRequest.totalDutyDue.totalDue,
+                paymentDueDate = Some(paymentDueDate),
+                declaration = returnRequest.declaration
+              )
             )
 
-            logger.info(s"[SubmitReturn] Saving submission to repository for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+            logger.info(s"[SubmitReturn] Successfully completed submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, submissionId: ${submission.submissionId}")
+            logger.debug(s"[SubmitReturn] Response: ${Json.toJson(response)}")
 
-            for {
-              savedSubmission <- returnSubmissionRepository.set(submission)
-              _ = logger.info(s"[SubmitReturn] Successfully saved submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, chargeRef: $chargeReference")
-              _ = logger.info(s"[SubmitReturn] Marking obligation as fulfilled for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-              obligationResult <- obligationsRepository.markAsFulfilled(vpdId, returnRequest.periodKey, now)
-              _ = logger.info(s"[SubmitReturn] Obligation marked as fulfilled: ${obligationResult.isDefined} for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-              _ <- generateFinancialData(savedSubmission)
-            } yield {
-              val paymentDueDate = now.atZone(ZoneId.systemDefault()).toLocalDate.plusMonths(1)
-
-              val response = ReturnCreateResponse(
-                ReturnSubmittedResponse(
-                  processingDate = now,
-                  vpdReferenceNumber = vpdId,
-                  submissionID = Some(submissionId),
-                  chargeReference = chargeReference,
-                  amount = returnRequest.totalDutyDue.totalDue,
-                  paymentDueDate = Some(paymentDueDate),
-                  declaration = returnRequest.declaration
-                )
-              )
-
-              logger.info(s"[SubmitReturn] Successfully completed submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}, submissionId: $submissionId")
-              logger.debug(s"[SubmitReturn] Response: ${Json.toJson(response)}")
-
-              Created(Json.toJson(response))
-            }
+            Created(Json.toJson(response))
         }
       }
     )

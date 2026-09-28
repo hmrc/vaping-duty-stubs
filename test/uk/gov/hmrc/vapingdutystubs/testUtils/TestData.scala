@@ -120,4 +120,16 @@ trait TestData extends ModelGenerators {
       locked = true
     )
   )
+
+  // Charge reference test data - UUID values for testing (format: XM + 14 alphanumeric = 16 chars total)
+  val testUuidForNegativeAmount = "xyz789ghi012345678901234"
+  val testChargeRefNegative     = "XMXYZ789GHI01234"
+  val testUuidForPositiveAmount = "abc123def456789012345678"
+  val testChargeRefPositive     = "XMABC123DEF45678"
+  val testUuidForFormat         = "1234567890abcdefghijklmn"
+  val testChargeRefFormat       = "XM1234567890ABCD"
+  val testUuidLong              = "abcdefghijklmnopqrstuvwxyz"
+  val testChargeRefLong         = "XMABCDEFGHIJKLMN"
+  val testUuidLowercase         = "abcdef12345678"
+  val testChargeRefUppercase    = "XMABCDEF12345678"
 }
