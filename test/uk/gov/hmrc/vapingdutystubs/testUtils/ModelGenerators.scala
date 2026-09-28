@@ -28,27 +28,33 @@ trait ModelGenerators {
 
   def vpdIdGen: Gen[String] = for {
     prefix <- Gen.oneOf("GB", "XI")
-    digits <- Gen.listOfN(7, Gen.numChar).map(_.mkString)
-  } yield s"${prefix}WK${digits}WK"
-
-  def safeVpdIdGen: Gen[String] = vpdIdGen.retryUntil { id =>
-    val thirdFromEnd = id.takeRight(3).headOption.map(_.toString)
-    !thirdFromEnd.contains("5")
+    digits <- {
+      Gen
+        .listOfN(7, Gen.numChar)
+        .filter(chars => chars.length == 7)
+        .filterNot(num => num.last == '5')
+        .map(_.mkString)
+        .retryUntil(_ => true)
+    }
+  } yield {
+    s"${prefix}WK${digits}WK"
   }
 
-    lazy val dummyDataGenerator = new DataGenerator(clock) {
-    lazy val submissionId      = super.submissionIdGen()
-    lazy val chargeReference   = super.chargeReferenceGen()
+  lazy val dummyDataGenerator = new DataGenerator(clock) {
+    lazy val submissionId = super.submissionIdGen()
+    lazy val chargeReference = super.chargeReferenceGen()
 
-    override def submissionIdGen(): String      = submissionId
-    override def chargeReferenceGen(): String   = chargeReference
+    override def submissionIdGen(): String = submissionId
+
+    override def chargeReferenceGen(): String = chargeReference
   }
 
-  def submissionIdGen(): Gen[String]    = Gen.const(dummyDataGenerator.submissionIdGen())
+  def submissionIdGen(): Gen[String] = Gen.const(dummyDataGenerator.submissionIdGen())
+
   def chargeReferenceGen(): Gen[String] = Gen.const(dummyDataGenerator.chargeReferenceGen())
 
   def periodKeyGen: Gen[String] = for {
-    year  <- Gen.chooseNum(23, 50)
+    year <- Gen.chooseNum(23, 50)
     month <- Gen.chooseNum(0, 11)
   } yield s"${year}A${(month + 'A').toChar}"
 

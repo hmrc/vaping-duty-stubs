@@ -43,7 +43,7 @@ trait TestData extends ModelGenerators {
 
   val dummyUUID = "01234567-89ab-cdef-0123-456789abcdef"
 
-  val vpdId                   = "GBWK1234467WK"  // Safe: 5th digit (3rd from end) is "4", not "5"
+  val vpdId: String           = vpdIdGen.sample.get
   val submissionId: String    = submissionIdGen().sample.get
   val chargeReference: String = chargeReferenceGen().sample.get
 

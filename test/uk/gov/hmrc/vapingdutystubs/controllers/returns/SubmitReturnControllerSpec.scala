@@ -29,7 +29,6 @@ import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.xZVPD
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
-import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository}
 import uk.gov.hmrc.vapingdutystubs.services.returns.ReturnSubmissionService
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
