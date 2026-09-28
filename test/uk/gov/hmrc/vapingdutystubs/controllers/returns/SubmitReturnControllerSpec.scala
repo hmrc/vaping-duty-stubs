@@ -26,10 +26,11 @@ import play.api.mvc.ControllerComponents
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status, stubControllerComponents}
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
 import uk.gov.hmrc.vapingdutystubs.config.Constants.Headers.xZVPD
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState
 import uk.gov.hmrc.vapingdutystubs.models.returns.*
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.ReturnCreateRequest
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, EtmpDownstreamError}
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository}
 import uk.gov.hmrc.vapingdutystubs.utils.RandomUUIDGenerator
 
 import java.time.{Clock, Instant, ZoneId}
@@ -41,7 +42,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
   val mockReturnSubmissionRepository: ReturnSubmissionRepository = mock[ReturnSubmissionRepository]
   val mockObligationsRepository: ObligationsRepository = mock[ObligationsRepository]
-  val mockFinancialDataRepository: uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository = mock[uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository]
+  val mockFinancialDataRepository: FinancialDataRepository = mock[FinancialDataRepository]
   val mockUuidGenerator: RandomUUIDGenerator = mock[RandomUUIDGenerator]
   val fixedClock: Clock = Clock.fixed(Instant.parse("2026-05-28T10:30:00Z"), ZoneId.of("UTC"))
   override val cc: ControllerComponents = stubControllerComponents()
@@ -107,7 +108,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
       when(mockFinancialDataRepository.get(any())).thenReturn(Future.successful(None))
       when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(
-        uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState(
+        FinancialDataState(
           vpdId = vpdId,
           noDataIdentified = false,
           documentDetails = Seq.empty,
@@ -320,7 +321,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
         when(mockObligationsRepository.markAsFulfilled(any(), any(), any())).thenReturn(Future.successful(None))
         when(mockFinancialDataRepository.get(any())).thenReturn(Future.successful(None))
         when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(
-          uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState(
+          FinancialDataState(
             vpdId = testVpdId,
             noDataIdentified = false,
             documentDetails = Seq.empty,

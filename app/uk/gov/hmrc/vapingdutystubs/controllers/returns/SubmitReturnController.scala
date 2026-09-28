@@ -27,7 +27,7 @@ import uk.gov.hmrc.vapingdutystubs.models.financialdata.FinancialDataState
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamError, EtmpDownstreamErrorDetails}
 import uk.gov.hmrc.vapingdutystubs.models.returns.ReturnSubmission
 import uk.gov.hmrc.vapingdutystubs.models.returns.submit.{ReturnCreateRequest, ReturnCreateResponse, ReturnSubmittedResponse}
-import uk.gov.hmrc.vapingdutystubs.repositories.{ObligationsRepository, ReturnSubmissionRepository}
+import uk.gov.hmrc.vapingdutystubs.repositories.{FinancialDataRepository, ObligationsRepository, ReturnSubmissionRepository}
 import uk.gov.hmrc.vapingdutystubs.utils.LogHeadersHelper.logHeaders
 import uk.gov.hmrc.vapingdutystubs.utils.{LogHeadersHelper, RandomUUIDGenerator}
 
@@ -39,7 +39,7 @@ class SubmitReturnController @Inject()(
                                         cc: ControllerComponents,
                                         returnSubmissionRepository: ReturnSubmissionRepository,
                                         obligationsRepository: ObligationsRepository,
-                                        financialDataRepository: uk.gov.hmrc.vapingdutystubs.repositories.FinancialDataRepository,
+                                        financialDataRepository: FinancialDataRepository,
                                         uuidGenerator: RandomUUIDGenerator,
                                         clock: Clock
                                       )(using ExecutionContext) extends BackendController(cc) with Logging {
