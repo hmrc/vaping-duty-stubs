@@ -1,6 +1,162 @@
 # Vaping Duty Stubs
 
-## Returning specific stubbed information
+This is the stub microservice for the Vaping Products Duty service, providing test endpoints that simulate external APIs for local development and testing.
+
+## Purpose
+
+This stub service simulates:
+- **ETMP (Enterprise Tax Management Platform)** endpoints for subscription, obligations, and returns
+- **Email verification** services
+- **Contact preference** management
+- **Financial data** for payments and balances
+
+## Related Services
+
+| Service | Repository | Purpose |
+|---------|-----------|---------|
+| Frontend | [vaping-duty-frontend](https://github.com/hmrc/vaping-duty-frontend) | User-facing web application |
+| Backend | [vaping-duty](https://github.com/hmrc/vaping-duty) | Returns and obligations API |
+| Account | [vaping-duty-account](https://github.com/hmrc/vaping-duty-account) | Subscription and account management |
+| Finance | [vaping-duty-finance](https://github.com/hmrc/vaping-duty-finance) | Payment processing |
+
+## Technology Stack
+
+- **Language**: Scala 3.3.6
+- **Framework**: Play Framework
+- **Database**: MongoDB (for stateful test scenarios)
+- **Port**: 8142
+
+## Requirements
+
+- JRE 21+
+- SBT
+- MongoDB
+- Service Manager 2 (for integration with other services)
+
+## Running the Stub
+
+### Running with Service Manager
+
+Start the stub as part of the full Vaping Duty service stack:
+```bash
+sm2 --start VAPING_DUTY_ALL
+```
+
+Or start just the stub:
+```bash
+sm2 --start VAPING_DUTY_STUBS
+```
+
+The stub will be available at: http://localhost:8142
+
+### Running Locally (Standalone)
+
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:hmrc/vaping-duty-stubs.git
+   cd vaping-duty-stubs
+   ```
+
+2. Start MongoDB (if not already running):
+   ```bash
+   brew services start mongodb-community  # macOS
+   ```
+
+3. Run the stub:
+   ```bash
+   sbt run
+   ```
+
+The stub will be available at: http://localhost:8142
+
+### Running with Test-Only Routes
+
+To enable test support endpoints for managing stub 
+```bash
+sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
+```
+
+## Testing
+
+### Run All Tests (Unit + Integration)
+
+```bash
+sbt runAllChecks
+```
+
+This executes:
+- Unit tests
+- Integration tests
+- Coverage analysis
+
+### Run Unit Tests Only
+
+```bash
+sbt runLocalChecks
+```
+
+### Test Structure
+
+- **Unit tests**: `test/` directory
+- **Integration tests**: `it/test/` directory
+- **Test data generators**: `test/uk/gov/hmrc/vapingdutystubs/testUtils/`
+
+## Architecture
+
+### Stub Behavior Patterns
+
+The stub uses **pattern-based routing** where VPD IDs and other identifiers contain digits that determine the response:
+
+- **Email Flag Digit** (first digit in VPD ID) → Controls email preferences and verification status
+- **Status Pattern Digit** (third-from-last digit) → Controls subscription approval and insolvency status
+- **Error Trigger Digit** (last digit before "WK") → Triggers specific error responses for testing
+
+This allows developers to test different scenarios by simply changing the VPD ID.
+
+### Data Storage
+
+- **MongoDB repositories** store stateful data (obligations, financial data, returns, subscriptions)
+- **Startup seeding** (`StartupSeeder`) pre-populates common test scenarios
+- **Test-only endpoints** allow dynamic data manipulation during testing
+
+### Key Components
+
+- **Controllers**: Handle HTTP requests and delegate to services
+- **Repositories**: MongoDB-backed storage for test data
+- **Data generators**: Create realistic test data
+- **Models**: JSON serialization for API requests/responses
+
+## API Documentation
+
+### Subscription API
+
+#### **GET** `/etmp/RESTAdapter/vpd/subscription/:vpdId`
+
+Returns subscription information for a VPD ID.
+
+**Example response** (for vpdId=`"XIWK1104205WK"`):
+
+```json
+{
+  "processingDate": "2026-02-25T10:44:26.089402Z",
+  "organisationName": "testAwNwaIL Ltd",
+  "paperlessPreference": "0",
+  "emailAddress": "john.doe@example.com",
+  "verifiedEmail": "1",
+  "bouncedEmail": "0",
+  "addressLine1": "Flat 123",
+  "addressLine2": "1 Example Road",
+  "postCode": "AB1 2CD",
+  "approvalStatus": "01",
+  "insolvencyFlag": "0"
+}
+```
+
+### VPD ID Pattern-Based Responses
+
+The stub uses specific digits in the VPD ID to determine response behavior:
+
+## Returning Specific Stubbed Information
 
 ### CredId Indication
 
@@ -538,4 +694,99 @@ existing test-only endpoints:
 POST /test-only/financial-data/:vpdId/scenario/:scenario
 POST /test-only/financial-data/:vpdId/custom
 ```
+
+## Troubleshooting
+
+### Common Issues
+
+**MongoDB Connection Errors**
+- Ensure MongoDB is running: `brew services start mongodb-community` (macOS)
+- Check MongoDB is accessible on default port 27017
+- Verify connection string in `application.conf`
+
+**Port Already in Use (8142)**
+- Check if another instance is running: `lsof -i :8142`
+- Stop any conflicting service: `sm2 --stop VAPING_DUTY_STUBS`
+- Kill the process if needed: `kill -9 <PID>`
+
+**Test-Only Routes Not Available**
+- Ensure you're running with the test router:
+  ```bash
+  sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
+  ```
+- Test-only routes are at `/test-only/*` endpoints
+
+**Stub Returning Unexpected Responses**
+- Check the VPD ID pattern - specific digits trigger specific behaviors
+- Review the pattern tables in this README for digit meanings
+- Use test-only endpoints to set custom scenarios if needed
+- Clear and reseed data using test-only endpoints
+
+**Data Not Persisting Between Restarts**
+- This is expected behavior - stub data is seeded at startup
+- Use test-only endpoints to set up required scenarios after restart
+- For persistent test scenarios, consider using Service Manager
+
+**Integration with Other Services**
+- Ensure all required services are running via Service Manager
+- Check service URLs in `application.conf` match your setup
+- Verify the stub is accessible at http://localhost:8142
+- Check logs for connection errors to MongoDB
+
+### Debugging Tips
+
+**View Stub Logs**
+```bash
+# When running locally
+# Logs appear in console output
+
+# When running via Service Manager
+sm2 --logs VAPING_DUTY_STUBS
+```
+
+**Test Endpoint Availability**
+```bash
+# Ping endpoint
+curl http://localhost:8142/ping/ping
+
+# Check subscription endpoint
+curl http://localhost:8142/etmp/RESTAdapter/vpd/subscription/GBWK0000200WK
+```
+
+**Clear All Test Data**
+```bash
+# Clear obligations
+curl -X POST http://localhost:8142/test-only/obligations/clear-all
+
+# Clear financial data (if endpoint exists)
+curl -X POST http://localhost:8142/test-only/financial-data/clear-all
+```
+
+## Quick Reference
+
+### Common VPD ID Patterns
+
+| VPD ID | Purpose | Behavior |
+|--------|---------|----------|
+| `GBWK0000200WK` | Standard approved | Digital preference, not insolvent |
+| `GBWK1000300WK` | Insolvent scenario | Postal preference, insolvent |
+| `GBWK0000001WK` | Error testing | Triggers 400 Bad Request on returns |
+| `GBWK0000005WK` | Error testing | Triggers 422 Unprocessable Entity |
+| `GBWK0900906WK` | Payment scenario | Outstanding charge not yet due |
+
+### Key Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/ping/ping` | GET | Health check |
+| `/etmp/RESTAdapter/vpd/subscription/:vpdId` | GET | Get subscription |
+| `/etmp/obligations/:vpdId` | GET | Get obligations |
+| `/vaping-products-duty/returns/:periodKey` | POST | Submit return |
+| `/vaping-products-duty/returns/:vpdId/:periodKey` | GET | View return |
+| `/test-only/obligations/:vpdId/scenario/:scenario` | POST | Set obligation scenario |
+| `/test-only/obligations/clear-all` | POST | Clear all obligations |
+
+## License
+
+This code is open source software licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).
 
