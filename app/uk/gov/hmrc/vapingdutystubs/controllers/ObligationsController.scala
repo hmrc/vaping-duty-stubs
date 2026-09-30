@@ -21,10 +21,12 @@ import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
-import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails}
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamErrorDetails, ObligationsDownstreamErrors}
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationState, ObligationStatus, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
+import java.time.{Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,8 +49,8 @@ class ObligationsController @Inject()(
         ))))
       case Some(obligationState) if params._2.takeRight(3).head == '5' =>
         logger.warn(s"Simulating obligations failure for vpdId=${params._2}")
-        Future.successful(UnprocessableEntity(Json.toJson(DownstreamError(
-          DownstreamErrorDetails("422", "Simulated obligations unprocessable entity", LOG_ID)
+        Future.successful(UnprocessableEntity(Json.toJson(ObligationsDownstreamErrors(
+          EtmpDownstreamErrorDetails("025", "No associated data found", Instant.now().atOffset(ZoneOffset.UTC).format(ISO_OFFSET_DATE_TIME))
         ))))
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
