@@ -5,7 +5,7 @@ This is the stub microservice for the Vaping Products Duty service, providing te
 ## Purpose
 
 This stub service simulates:
-- **ETMP stubbed endpoints for subscription, obligations, financial data and returns
+- **ETMP** stubbed endpoints for subscription, obligations, financial data and returns
 - **Email verification** services
 - **Contact preference** management
 - **Financial data** for payments and balances
@@ -105,17 +105,10 @@ The stub will be available at: http://localhost:8142
 
 3. Run the stub:
    ```bash
-   sbt run
+   sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
    ```
 
 The stub will be available at: http://localhost:8142
-
-### Running with Test-Only Routes
-
-To enable test support endpoints for managing stub data:
-```bash
-sbt run -Dapplication.router=testOnlyDoNotUseInAppConf.Routes
-```
 
 ## Testing
 
@@ -233,14 +226,13 @@ This stub service provides the following APIs for testing Vaping Products Duty s
 
 | Endpoint | Method | Purpose | Documentation |
 |----------|--------|---------|---------------|
-| `/ping/ping` | GET | Health check | - |
-| `/etmp/RESTAdapter/vpd/subscription/:vpdId` | GET | Get subscription | [Subscription API](docs/SUBSCRIPTION-API.md) |
-| `/etmp/obligations/:vpdId` | GET | Get obligations | [Obligations API](docs/OBLIGATIONS-API.md) |
-| `/enterprise/financial-data/:regimeType/:idType/:idValue` | GET | Get financial data | [Financial Data API](docs/FINANCIAL-DATA-API.md) |
-| `/vaping-products-duty/returns/:periodKey` | POST | Submit return | [Returns API](docs/RETURNS-API.md) |
-| `/vaping-products-duty/returns/:vpdId/:periodKey` | GET | View return | [Returns API](docs/RETURNS-API.md) |
+| `/etmp/RESTAdapter/vpd/subscription/:idValue` | GET | Get subscription | [Subscription API](docs/SUBSCRIPTION-API.md) |
+| `/etmp/RESTAdapter/cross-regime/taxpayer-obligations` | GET | Get obligations | [Obligations API](docs/OBLIGATIONS-API.md) |
+| `/etmp/RESTAdapter/cross-regime/taxpayer/financial-data/query` | POST | Get financial data | [Financial Data API](docs/FINANCIAL-DATA-API.md) |
+| `/etmp/RESTAdapter/vpd/returns` | POST | Submit return | [Returns API](docs/RETURNS-API.md) |
+| `/etmp/RESTAdapter/vpd/returns/:vpdReference/:periodKey` | GET | View return | [Returns API](docs/RETURNS-API.md) |
 | `/email-verification/verification-status/:credId` | GET | Get email verification status | [Email Verification API](docs/EMAIL-VERIFICATION-API.md) |
-| `/vaping-products-duty/subscription/contact-preference/:vpdId` | GET | Get contact preferences | [Email Contact Preferences API](docs/EMAIL-CONTACT-PREFERENCES-API.md) |
+| `/etmp/RESTAdapter/email-contact-preference/:regime/:idType/:idValue` | PUT | Update contact preferences | [Email Contact Preferences API](docs/EMAIL-CONTACT-PREFERENCES-API.md) |
 
 ### Test-Only Endpoints (require test router)
 
