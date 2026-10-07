@@ -292,11 +292,11 @@ object ObligationsData {
     val today = LocalDate.now()
     val currentMonthStart = LocalDate.of(today.getYear, today.getMonthValue, 1)
 
-    val periodStart = currentMonthStart.minusMonths(1)
-    val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
-    val dueDate = periodEnd
+    val periodStart  = currentMonthStart.minusMonths(1)
+    val periodEnd    = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
+    val dueDate      = periodStart.plusMonths(1).withDayOfMonth(DUE_DATE_DAY)
     val returnPeriod = ReturnPeriod.fromDateInPeriod(periodStart)
-    val periodKey = returnPeriod.toPeriodKey
+    val periodKey    = returnPeriod.toPeriodKey
 
     val obligationDetails = Seq(
       createObligationDetails(
