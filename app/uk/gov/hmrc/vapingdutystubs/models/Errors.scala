@@ -50,6 +50,12 @@ object DownstreamError {
   implicit val downstreamErrorWrites: OFormat[DownstreamError] = Json.format[DownstreamError]
 }
 
+case class ObligationsDownstreamErrors(errors: EtmpDownstreamErrorDetails)
+
+object ObligationsDownstreamErrors {
+  implicit val obligationsDownstreamErrorsWrites: OFormat[ObligationsDownstreamErrors] = Json.format[ObligationsDownstreamErrors]
+}
+
 case class EtmpDownstreamError(error: EtmpDownstreamErrorDetails)
 
 object EtmpDownstreamError {

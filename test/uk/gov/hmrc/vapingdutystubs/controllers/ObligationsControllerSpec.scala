@@ -20,11 +20,11 @@ import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import play.api.mvc.Result
 import uk.gov.hmrc.vapingdutystubs.base.SpecBase
-import uk.gov.hmrc.vapingdutystubs.models.DownstreamError
+import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, ObligationsDownstreamErrors}
 import uk.gov.hmrc.vapingdutystubs.models.obligations.{Identification, ObligationDetails, ObligationItem, ObligationState, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
-import java.time.LocalDate
+import java.time.{Instant, LocalDate}
 import scala.concurrent.Future
 
 class ObligationsControllerSpec extends SpecBase {
@@ -130,10 +130,10 @@ class ObligationsControllerSpec extends SpecBase {
       ))
 
       status(result) mustBe UNPROCESSABLE_ENTITY
-      val errorResponse = contentAsJson(result).as[DownstreamError]
-      errorResponse.error.code mustBe "422"
-      errorResponse.error.message mustBe "Simulated obligations unprocessable entity"
-      errorResponse.error.logID mustBe "ABCDEF1234567890ABCDEF1234567890"
+      val errorResponse = contentAsJson(result).as[ObligationsDownstreamErrors]
+      errorResponse.errors.code mustBe "025"
+      errorResponse.errors.text mustBe "No associated data found"
+      Instant.parse(errorResponse.errors.processingDate) mustBe a[Instant]
     }
 
     "return 200 OK with generated obligations when none are stored" in {
