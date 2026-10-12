@@ -33,7 +33,7 @@ class ObligationsRepositorySpec
   )
 
   val testVpdId = "GBWK0000000001WK"
-  val testPeriodKey = "27AJ"
+  val testPeriodKey = "27KJ"
   val currentDate = LocalDate.now()
 
   val openObligationDetails = ObligationDetails(
@@ -42,7 +42,7 @@ class ObligationsRepositorySpec
     iCToDate = LocalDate.of(2027, 12, 31),
     iCDateReceived = None,
     iCDueDate = currentDate.plusDays(10),
-    periodKey = "27AL"
+    periodKey = "27KL"
   )
 
   val fulfilledObligationDetails = ObligationDetails(

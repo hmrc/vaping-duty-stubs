@@ -25,7 +25,7 @@ import scala.util.matching.Regex
 case class ReturnPeriod(period: YearMonth) {
   private val dueDateOfMonth = 25
 
-  def toPeriodKey                 = s"${period.getYear - 2000}A${(period.getMonthValue + 64).toChar}"
+  def toPeriodKey                 = s"${period.getYear - 2000}K${(period.getMonthValue + 64).toChar}"
   def dueDate(): LocalDate        = period.plusMonths(1).atDay(dueDateOfMonth)
   def periodFromDate(): LocalDate = period.atDay(1)
   def periodToDate(): LocalDate   = period.atEndOfMonth()
@@ -42,7 +42,7 @@ case class ReturnPeriod(period: YearMonth) {
 }
 
 object ReturnPeriod {
-  val returnPeriodPattern: Regex = """^(\d{2}A[A-L])$""".r
+  val returnPeriodPattern: Regex = """^(\d{2}K[A-L])$""".r
 
   def fromPeriodKey(periodKey: String): Option[ReturnPeriod] =
     periodKey match {

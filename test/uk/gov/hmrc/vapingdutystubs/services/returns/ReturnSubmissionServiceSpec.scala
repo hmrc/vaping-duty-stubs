@@ -60,7 +60,7 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
   )
 
   override val vpdId = "GBWK1234467WK"
-  private val periodKey = "24AA"
+  private val periodKey = "24KA"
   override val chargeReference = "XMVPD123456789012"
   override val submissionId = "123456789012"
 
