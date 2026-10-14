@@ -56,7 +56,7 @@ trait ModelGenerators {
   def periodKeyGen: Gen[String] = for {
     year <- Gen.chooseNum(23, 50)
     month <- Gen.chooseNum(0, 11)
-  } yield s"${year}A${(month + 'A').toChar}"
+  } yield s"${year}K${(month + 'A').toChar}"
 
   def invalidPeriodKeyGen: Gen[String] = Gen.alphaStr
     .retryUntil(s => s.nonEmpty && !s.matches(ReturnPeriod.returnPeriodPattern.toString))

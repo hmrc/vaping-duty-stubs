@@ -69,21 +69,21 @@ class ReturnPeriodSpec extends SpecBase {
 
       "return a correct ReturnPeriod when" - {
         "a valid period key is passed" in {
-          ReturnPeriod.fromPeriodKey("24AA") mustBe Some(ReturnPeriod(YearMonth.of(2024, 1)))
-          ReturnPeriod.fromPeriodKey("24AL") mustBe Some(ReturnPeriod(YearMonth.of(2024, 12)))
-          ReturnPeriod.fromPeriodKey("28AC") mustBe Some(ReturnPeriod(YearMonth.of(2028, 3)))
+          ReturnPeriod.fromPeriodKey("24KA") mustBe Some(ReturnPeriod(YearMonth.of(2024, 1)))
+          ReturnPeriod.fromPeriodKey("24KL") mustBe Some(ReturnPeriod(YearMonth.of(2024, 12)))
+          ReturnPeriod.fromPeriodKey("28KC") mustBe Some(ReturnPeriod(YearMonth.of(2028, 3)))
         }
       }
     }
 
     "convert a date to a ReturnPeriod" in {
-      ReturnPeriod.fromDateInPeriod(LocalDate.of(2024, 1, 13)).toPeriodKey mustBe "24AA"
+      ReturnPeriod.fromDateInPeriod(LocalDate.of(2024, 1, 13)).toPeriodKey mustBe "24KA"
     }
 
     "parse ReturnPeriod with the right json value" in {
       val returnPeriod = ReturnPeriod(YearMonth.of(2024, 1))
       val result       = Json.toJson(returnPeriod)
-      result mustBe JsString("24AA")
+      result mustBe JsString("24KA")
     }
 
     "transform a valid Period Key json string into a Return Period" in {

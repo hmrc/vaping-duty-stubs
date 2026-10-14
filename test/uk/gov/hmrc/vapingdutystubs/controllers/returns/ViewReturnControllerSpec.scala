@@ -48,7 +48,7 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
     .thenReturn(Future.successful(None))
 
   override val vpdId = "GBWK1234467WK"  // Safe: 5th digit is "4", not "5"
-  val periodKey = "24AL"
+  val periodKey = "24KL"
   override val submissionId = "123456789012"
 
   val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(

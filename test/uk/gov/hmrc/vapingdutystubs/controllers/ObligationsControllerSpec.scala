@@ -36,7 +36,7 @@ class ObligationsControllerSpec extends SpecBase {
     mockObligationsRepository
   )
 
-  val testPeriodKey = "27AJ"
+  val testPeriodKey = "27KJ"
   val currentDate: LocalDate = LocalDate.now(clock)
 
   val openObligationDetails = ObligationDetails(
@@ -45,7 +45,7 @@ class ObligationsControllerSpec extends SpecBase {
     iCToDate = LocalDate.of(2027, 12, 31),
     iCDateReceived = None,
     iCDueDate = currentDate.plusDays(10),
-    periodKey = "27AL"
+    periodKey = "27KL"
   )
 
   val fulfilledObligationDetails = ObligationDetails(
