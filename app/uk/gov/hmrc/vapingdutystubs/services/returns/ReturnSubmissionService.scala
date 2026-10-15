@@ -48,7 +48,6 @@ class ReturnSubmissionService @Inject()(
   def processSubmission(vpdId: String, returnRequest: ReturnCreateRequest): Future[Either[String, ReturnSubmission]] = {
     logger.info(s"[ReturnSubmissionService] Processing submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
     logger.debug(s"[ReturnSubmissionService] Validating return request for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-
     // Validate the request
     returnRequest.validate match {
       case Left(validationError) =>
@@ -72,7 +71,15 @@ class ReturnSubmissionService @Inject()(
           vpdId = vpdId,
           periodKey = returnRequest.periodKey,
           chargeReference = chargeReference,
-          submittedReturn = returnRequest,
+          submittedReturn = returnRequest.copy(
+            vapingProductsProduced = returnRequest.vapingProductsProduced.copy(
+              returns = if (returnRequest.vapingProductsProduced.returns.contains(Seq.empty)) {
+                None
+              } else {
+                returnRequest.vapingProductsProduced.returns
+              }
+            )
+          ),
           submittedAt = now,
           submissionId = submissionId
         )

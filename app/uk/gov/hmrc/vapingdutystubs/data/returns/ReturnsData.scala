@@ -36,10 +36,10 @@ object ReturnsData {
     IdDetails(vpdReference, Some(submissionId))
 
   def nilReturn(): VapingProductsProduced =
-    VapingProductsProduced(vapingProdManufactured = "0", returns = Seq.empty)
+    VapingProductsProduced(vapingProdManufactured = "0", returns = None)
 
   def regularReturn(items: Seq[VapingReturn]): VapingProductsProduced =
-    VapingProductsProduced(vapingProdManufactured = "1", returns = items)
+    VapingProductsProduced(vapingProdManufactured = "1", returns = Some(items))
 
   private val totalDutyDue = TotalDutyDue(
     totalDutyDueVapingProducts = BigDecimal("15752.63"),

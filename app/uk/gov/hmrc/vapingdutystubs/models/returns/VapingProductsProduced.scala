@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 
 final case class VapingProductsProduced(
                                          vapingProdManufactured: String,
-                                         returns: Seq[VapingReturn]
+                                         returns: Option[Seq[VapingReturn]]
                                        )
 
 object VapingProductsProduced {

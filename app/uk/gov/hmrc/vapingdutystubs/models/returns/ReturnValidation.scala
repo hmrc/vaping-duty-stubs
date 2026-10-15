@@ -40,9 +40,9 @@ object ReturnValidation {
 
   private def validateVapingProductsProduced(vpp: VapingProductsProduced): Either[String, Unit] = {
     vpp.vapingProdManufactured match {
-      case FLAG_YES if vpp.returns.isEmpty =>
+      case FLAG_YES if vpp.returns.contains(Seq.empty) =>
         Left("vapingProdManufactured is '1' but returns array is empty")
-      case FLAG_NO if vpp.returns.nonEmpty =>
+      case FLAG_NO if vpp.returns.getOrElse(Seq.empty).nonEmpty =>
         Left("vapingProdManufactured is '0' but returns array is not empty")
       case FLAG_YES | FLAG_NO => Right(())
       case other => Left(s"vapingProdManufactured must be '0' or '1', got: $other")
