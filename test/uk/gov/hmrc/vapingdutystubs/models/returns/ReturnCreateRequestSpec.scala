@@ -24,7 +24,7 @@ class ReturnCreateRequestSpec extends SpecBase {
   val returnCreateRequest: ReturnCreateRequest =
     ReturnCreateRequest(
       periodKey = "24KL",
-      vapingProductsProduced = VapingProductsProduced("0", Seq()),
+      vapingProductsProduced = VapingProductsProduced("0", Some(Seq.empty)),
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,

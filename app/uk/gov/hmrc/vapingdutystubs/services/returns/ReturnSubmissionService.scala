@@ -48,7 +48,6 @@ class ReturnSubmissionService @Inject()(
   def processSubmission(vpdId: String, returnRequest: ReturnCreateRequest): Future[Either[String, ReturnSubmission]] = {
     logger.info(s"[ReturnSubmissionService] Processing submission for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
     logger.debug(s"[ReturnSubmissionService] Validating return request for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
-
     // Validate the request
     returnRequest.validate match {
       case Left(validationError) =>
@@ -68,14 +67,7 @@ class ReturnSubmissionService @Inject()(
           logger.debug(s"[ReturnSubmissionService] Generated submissionId: $submissionId, no chargeReference (totalDue is zero)")
         }
 
-        val submission = ReturnSubmission(
-          vpdId = vpdId,
-          periodKey = returnRequest.periodKey,
-          chargeReference = chargeReference,
-          submittedReturn = returnRequest,
-          submittedAt = now,
-          submissionId = submissionId
-        )
+        val submission: ReturnSubmission = buildSubmission(vpdId, returnRequest, now, submissionId, chargeReference)
 
         logger.info(s"[ReturnSubmissionService] Saving submission to repository for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
 
@@ -91,6 +83,36 @@ class ReturnSubmissionService @Inject()(
           Right(submission)
         }
     }
+  }
+
+  private def buildSubmission(vpdId: String,
+                              returnRequest: ReturnCreateRequest,
+                              now: Instant,
+                              submissionId: String,
+                              chargeReference: Option[String]) = {
+
+    // This is required to simulate the API response, submitting an empty array will return a None when retrieving the data.
+    def emtpyReturnsToNone = {
+      returnRequest.vapingProductsProduced.copy(
+        returns = if (returnRequest.vapingProductsProduced.returns.contains(Seq.empty)) {
+          None
+        } else {
+          returnRequest.vapingProductsProduced.returns
+        }
+      )
+    }
+
+    val submission = ReturnSubmission(
+      vpdId = vpdId,
+      periodKey = returnRequest.periodKey,
+      chargeReference = chargeReference,
+      submittedReturn = returnRequest.copy(
+        vapingProductsProduced = emtpyReturnsToNone
+      ),
+      submittedAt = now,
+      submissionId = submissionId
+    )
+    submission
   }
 
   /**

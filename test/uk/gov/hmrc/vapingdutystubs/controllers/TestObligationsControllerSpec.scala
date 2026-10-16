@@ -112,7 +112,7 @@ class TestObligationsControllerSpec extends SpecBase {
     periodKey = testPeriodKey,
     vapingProductsProduced = VapingProductsProduced(
       vapingProdManufactured = "0",
-      returns = Seq.empty
+      returns = Some(Seq.empty)
     ),
     overDeclaration = None,
     underDeclaration = None,

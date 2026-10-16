@@ -71,7 +71,7 @@ object ReturnSubmissionData {
       periodKey = periodKey,
       vapingProductsProduced = VapingProductsProduced(
         vapingProdManufactured = "0",
-        returns = Seq.empty
+        returns = Some(Seq.empty)
       ),
       overDeclaration = None,
       underDeclaration = None,
@@ -88,7 +88,7 @@ object ReturnSubmissionData {
       periodKey = periodKey,
       vapingProductsProduced = VapingProductsProduced(
         vapingProdManufactured = "1",
-        returns = returns
+        returns = Some(returns)
       ),
       overDeclaration = None,
       underDeclaration = None,

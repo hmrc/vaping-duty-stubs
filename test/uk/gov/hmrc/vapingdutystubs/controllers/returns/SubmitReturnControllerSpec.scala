@@ -59,12 +59,12 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
     periodKey = periodKey,
     vapingProductsProduced = VapingProductsProduced(
       vapingProdManufactured = "1",
-      returns = Seq(VapingReturn(
+      returns = Some(Seq(VapingReturn(
         taxType = "641",
         dutyRate = BigDecimal("10.50"),
         amountProducedLiquid = BigDecimal("1500.25"),
         dutyDue = BigDecimal("15752.63")
-      ))
+      )))
     ),
     overDeclaration = None,
     underDeclaration = None,
@@ -119,7 +119,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       val nilReturnRequest = validReturnRequest.copy(
         vapingProductsProduced = VapingProductsProduced(
           vapingProdManufactured = "0",
-          returns = Seq.empty
+          returns = Some(Seq.empty)
         ),
         totalDutyDue = TotalDutyDue(
           totalDutyDueVapingProducts = BigDecimal("0.00"),
@@ -160,7 +160,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       val invalidRequest = validReturnRequest.copy(
         vapingProductsProduced = VapingProductsProduced(
           vapingProdManufactured = "1",
-          returns = Seq.empty
+          returns = Some(Seq.empty)
         )
       )
 
@@ -184,7 +184,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
       val invalidRequest = validReturnRequest.copy(
         vapingProductsProduced = VapingProductsProduced(
           vapingProdManufactured = "0",
-          returns = Seq(VapingReturn("641", BigDecimal("10.50"), BigDecimal("100"), BigDecimal("1050")))
+          returns = Some(Seq(VapingReturn("641", BigDecimal("10.50"), BigDecimal("100"), BigDecimal("1050"))))
         )
       )
 

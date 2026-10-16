@@ -48,12 +48,12 @@ class ReturnSubmissionRepositorySpec
     periodKey = periodKey,
     vapingProductsProduced = VapingProductsProduced(
       vapingProdManufactured = "1",
-      returns = Seq(VapingReturn(
+      returns = Some(Seq(VapingReturn(
         taxType = "641",
         dutyRate = BigDecimal("10.50"),
         amountProducedLiquid = BigDecimal("1500.25"),
         dutyDue = BigDecimal("15752.63")
-      ))
+      )))
     ),
     overDeclaration = None,
     underDeclaration = None,

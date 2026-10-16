@@ -60,8 +60,6 @@ class EmailVerificationStateRepositorySpec
 
     "upsert if the credId already exists in the cache" in {
       repository.set(stateDataToCache).futureValue
-
-      val now = Clock.systemDefaultZone().instant()
       
       val expectedSavedStateData = EmailVerificationState(testCredId, returnAllUnverified = true)
 
