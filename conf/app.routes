@@ -23,3 +23,6 @@ GET        /etmp/RESTAdapter/vpd/returns/:vpdReference/:periodKey               
 
 ### Financial Data ###
 POST       /etmp/RESTAdapter/cross-regime/taxpayer/financial-data/query                      uk.gov.hmrc.vapingdutystubs.controllers.FinancialDataController.query()
+
+### NRS Orchestrator ###
+POST       /nrs-orchestrator/submission                                                      uk.gov.hmrc.vapingdutystubs.controllers.nrs.NrsSubmissionController.submit()

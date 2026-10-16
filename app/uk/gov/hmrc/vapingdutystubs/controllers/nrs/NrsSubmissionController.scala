@@ -42,7 +42,7 @@ class NrsSubmissionController @Inject()(
     val apiKeyOpt = request.headers.get(API_KEY_HEADER)
     if (apiKeyOpt.isEmpty) {
       logger.warn(s"[NRS] Submission rejected - $MISSING_API_KEY_MESSAGE")
-      return Future.successful(Unauthorized(Json.toJson(
+      Future.successful(Unauthorized(Json.toJson(
         NrsApiErrorMessage(List(MISSING_API_KEY_MESSAGE))
       )))
     }
@@ -51,7 +51,7 @@ class NrsSubmissionController @Inject()(
     val correlationIdOpt = request.headers.get(CORRELATION_ID_HEADER)
     if (correlationIdOpt.isEmpty) {
       logger.warn(s"[NRS] Submission rejected - $MISSING_CORRELATION_ID_MESSAGE")
-      return Future.successful(Unauthorized(Json.toJson(
+      Future.successful(Unauthorized(Json.toJson(
         NrsApiErrorMessage(List(MISSING_CORRELATION_ID_MESSAGE))
       )))
     }
@@ -68,10 +68,7 @@ class NrsSubmissionController @Inject()(
       },
       nrsRequest => {
         // Extract VPD ID for logging
-        val vpdId = nrsRequest.metadata.searchKeys
-          .get("approvalId")
-          .orElse(nrsRequest.metadata.searchKeys.get("vpdReference"))
-          .getOrElse("unknown")
+        val vpdId = nrsRequest.metadata.searchKeys.getOrElse("approvalId", "unknown")
 
         // Log request details
         logger.info(
