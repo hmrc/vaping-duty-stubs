@@ -55,11 +55,12 @@ class ObligationsController @Inject()(
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
 
-        val fromDate = LocalDate.parse(params._3).minusDays(1)
-        val toDate = LocalDate.parse(params._4).plusDays(1)
+        val fromDate = LocalDate.parse(params._3)
+        val toDate = LocalDate.parse(params._4)
 
+        // Inclusive overlap, as the real API behaves: any day of the obligation within the query range
         val filteredObligationResponse = obligationState.obligations.head.obligationDetails.filter(
-          detail => detail.iCFromDate.isAfter(fromDate) && detail.iCFromDate.isBefore(toDate)
+          detail => !detail.iCFromDate.isAfter(toDate) && !detail.iCToDate.isBefore(fromDate)
         )
 
         val identification = obligationState.obligations.head.identification

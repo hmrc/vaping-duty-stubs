@@ -84,7 +84,9 @@ class ObligationsControllerSpec extends SpecBase {
       val result: Future[Result] = controller.get()(fakeRequestWithParameters(
         Map[String, String](
           "displayRequest" -> "A",
-          "referenceNumber" -> vpdId
+          "referenceNumber" -> vpdId,
+          "fromDate" -> "2027-01-01",
+          "toDate" -> "2027-12-31"
         )
       ))
 
@@ -107,7 +109,9 @@ class ObligationsControllerSpec extends SpecBase {
       val result: Future[Result] = controller.get()(fakeRequestWithParameters(
         Map[String, String](
           "displayRequest" -> "A",
-          "referenceNumber" -> vpdId
+          "referenceNumber" -> vpdId,
+          "fromDate" -> "2027-01-01",
+          "toDate" -> "2027-12-31"
         )
       ))
 
@@ -125,7 +129,9 @@ class ObligationsControllerSpec extends SpecBase {
       val result: Future[Result] = controller.get()(fakeRequestWithParameters(
         Map[String, String](
           "displayRequest" -> "A",
-          "referenceNumber" -> "XIWK5555555WK"
+          "referenceNumber" -> "XIWK5555555WK",
+          "fromDate" -> "2027-01-01",
+          "toDate" -> "2027-12-31"
         )
       ))
 
@@ -146,7 +152,9 @@ class ObligationsControllerSpec extends SpecBase {
       val result: Future[Result] = controller.get()(fakeRequestWithParameters(
         Map[String, String](
           "displayRequest" -> "A",
-          "referenceNumber" -> vpdId
+          "referenceNumber" -> vpdId,
+          "fromDate" -> "2027-01-01",
+          "toDate" -> "2027-12-31"
         )
       ))
 
@@ -155,6 +163,72 @@ class ObligationsControllerSpec extends SpecBase {
       val response = contentAsJson(result).as[ObligationsResponse]
       response.obligation.size mustBe 1
       response.obligation.head.obligationDetails.size mustBe 36
+    }
+
+    "filter stored obligations by date range" - {
+      def monthObligation(year: Int, month: Int, periodKey: String): ObligationDetails = {
+        val periodStart = LocalDate.of(year, month, 1)
+        fulfilledObligationDetails.copy(
+          iCFromDate = periodStart,
+          iCToDate   = periodStart.withDayOfMonth(periodStart.lengthOfMonth),
+          periodKey  = periodKey
+        )
+      }
+
+      def stateWith(details: ObligationDetails*): ObligationState =
+        testObligationState.copy(obligations = Seq(testObligationItem.copy(obligationDetails = details)))
+
+      def getPeriodKeys(fromDate: String, toDate: String): Seq[String] = {
+        val result = controller.get()(fakeRequestWithParameters(
+          Map[String, String](
+            "displayRequest"  -> "A",
+            "referenceNumber" -> vpdId,
+            "fromDate"        -> fromDate,
+            "toDate"          -> toDate
+          )
+        ))
+
+        status(result) mustBe OK
+        contentAsJson(result).as[ObligationsResponse].obligation.head.obligationDetails.map(_.periodKey)
+      }
+
+      // Results observed by querying the Obligations API in QA with a single October obligation
+      val october = monthObligation(2020, 10, "20AJ")
+
+      val qaScenarios = Seq(
+        ("2020-01-01", "2020-12-31", Seq("20AJ")),
+        ("2020-10-13", "2020-12-31", Seq("20AJ")),
+        ("2020-10-13", "2020-10-31", Seq("20AJ")),
+        ("2020-10-13", "2020-10-30", Seq("20AJ")),
+        ("2020-10-31", "2020-11-10", Seq("20AJ")),
+        ("2020-10-10", "2020-10-11", Seq("20AJ")),
+        ("2020-11-01", "2020-11-10", Seq.empty),
+        ("2020-09-30", "2020-10-01", Seq("20AJ")),
+        ("2020-09-20", "2020-09-30", Seq.empty)
+      )
+
+      qaScenarios.foreach { case (fromDate, toDate, expected) =>
+        val outcome = if (expected.isEmpty) "exclude" else "include"
+        s"must $outcome an October obligation when querying $fromDate to $toDate" in {
+          when(mockObligationsRepository.get(eqTo(vpdId)))
+            .thenReturn(Future.successful(Some(stateWith(october))))
+
+          getPeriodKeys(fromDate, toDate) mustBe expected
+        }
+      }
+
+      "must include the months at both ends of the range used by vaping-duty, and exclude the current month" in {
+        when(mockObligationsRepository.get(eqTo(vpdId)))
+          .thenReturn(Future.successful(Some(stateWith(
+            monthObligation(2023, 9, "23AI"),
+            monthObligation(2023, 10, "23AJ"),
+            monthObligation(2026, 9, "26AI"),
+            monthObligation(2026, 10, "26AJ")
+          ))))
+
+        // vaping-duty's range when today is 2026-10-16
+        getPeriodKeys("2023-10-31", "2026-09-01") mustBe Seq("23AJ", "26AI")
+      }
     }
   }
 }
