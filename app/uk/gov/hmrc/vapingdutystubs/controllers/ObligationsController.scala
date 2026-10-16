@@ -22,19 +22,19 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents, Request}
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.vapingdutystubs.data.obligations.ObligationsData
 import uk.gov.hmrc.vapingdutystubs.models.{DownstreamError, DownstreamErrorDetails, EtmpDownstreamErrorDetails, ObligationsDownstreamErrors}
-import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationState, ObligationStatus, ObligationsResponse}
+import uk.gov.hmrc.vapingdutystubs.models.obligations.{ObligationItem, ObligationState, ObligationStatus, ObligationsResponse}
 import uk.gov.hmrc.vapingdutystubs.repositories.ObligationsRepository
 
-import java.time.{Instant, ZoneOffset}
+import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton()
 class ObligationsController @Inject()(
-  cc: ControllerComponents,
-  obligationsRepository: ObligationsRepository
-)(using ExecutionContext) extends BackendController(cc) with Logging {
+                                       cc: ControllerComponents,
+                                       obligationsRepository: ObligationsRepository
+                                     )(using ExecutionContext) extends BackendController(cc) with Logging {
 
   private val LOG_ID = "ABCDEF1234567890ABCDEF1234567890"
 
@@ -54,7 +54,22 @@ class ObligationsController @Inject()(
         ))))
       case Some(obligationState) =>
         logger.info(s"Found obligations for vpdId=${params._2}")
-        Future.successful(Ok(Json.toJson(ObligationsResponse(obligation = obligationState.obligations))))
+
+        val fromDate = LocalDate.parse(params._3)
+        val toDate = LocalDate.parse(params._4)
+
+        // Inclusive overlap, as the real API behaves: any day of the obligation within the query range
+        val filteredObligationResponse = obligationState.obligations.head.obligationDetails.filter(
+          detail => !detail.iCFromDate.isAfter(toDate) && !detail.iCToDate.isBefore(fromDate)
+        )
+
+        val identification = obligationState.obligations.head.identification
+
+        Future.successful(Ok(Json.toJson(ObligationsResponse(
+          obligation = Seq(ObligationItem(
+            identification = identification,
+            obligationDetails = filteredObligationResponse))
+        ))))
       case None =>
         logger.info(s"No obligations found for vpdId=${params._2} - returning generated data")
         val sampleState = ObligationsData.generate36MonthsObligations(params._2)
@@ -79,6 +94,10 @@ class ObligationsController @Inject()(
 
     val vpdId = params.getOrElse("referenceNumber", throw new IllegalArgumentException("Expected referenceNumber in parameters"))
 
-    (status, vpdId)
+    val fromDate = params.getOrElse("fromDate", throw new IllegalArgumentException("Expected fromDate in parameters"))
+
+    val toDate = params.getOrElse("toDate", throw new IllegalArgumentException("Expected toDate in parameters"))
+
+    (status, vpdId, fromDate, toDate)
   }
 }
