@@ -229,6 +229,52 @@ class ObligationsControllerSpec extends SpecBase {
         // vaping-duty's range when today is 2026-10-16
         getPeriodKeys("2023-10-31", "2026-09-01") mustBe Seq("23AJ", "26AI")
       }
+
+      val september = monthObligation(2020, 9, "20AI")
+      val november  = monthObligation(2020, 11, "20AK")
+
+      val multiObligationScenarios = Seq(
+        ("2020-01-01", "2020-12-31", Seq("20AI", "20AJ", "20AK")),
+        ("2020-09-01", "2020-11-30", Seq("20AI", "20AJ", "20AK")),
+        ("2020-10-01", "2020-10-31", Seq("20AJ")),
+        ("2020-10-10", "2020-10-20", Seq("20AJ")),
+        ("2020-09-30", "2020-10-01", Seq("20AI", "20AJ")),
+        ("2020-10-31", "2020-11-01", Seq("20AJ", "20AK")),
+        ("2020-09-15", "2020-11-15", Seq("20AI", "20AJ", "20AK")),
+        ("2020-08-01", "2020-08-31", Seq.empty),
+        ("2020-12-01", "2020-12-31", Seq.empty)
+      )
+
+      multiObligationScenarios.foreach { case (fromDate, toDate, expected) =>
+        val outcome = if (expected.isEmpty) "no obligations" else expected.mkString(", ")
+        s"must return $outcome from September to November obligations when querying $fromDate to $toDate" in {
+          when(mockObligationsRepository.get(eqTo(vpdId)))
+            .thenReturn(Future.successful(Some(stateWith(september, october, november))))
+
+          getPeriodKeys(fromDate, toDate) mustBe expected
+        }
+      }
+
+      "must not return obligations when the range falls in a gap between them" in {
+        when(mockObligationsRepository.get(eqTo(vpdId)))
+          .thenReturn(Future.successful(Some(stateWith(september, november))))
+
+        getPeriodKeys("2020-10-01", "2020-10-31") mustBe Seq.empty
+      }
+
+      "must return obligations either side of a gap when the range touches both" in {
+        when(mockObligationsRepository.get(eqTo(vpdId)))
+          .thenReturn(Future.successful(Some(stateWith(september, november))))
+
+        getPeriodKeys("2020-09-30", "2020-11-01") mustBe Seq("20AI", "20AK")
+      }
+
+      "must preserve the stored order of matching obligations" in {
+        when(mockObligationsRepository.get(eqTo(vpdId)))
+          .thenReturn(Future.successful(Some(stateWith(november, september, october))))
+
+        getPeriodKeys("2020-01-01", "2020-12-31") mustBe Seq("20AK", "20AI", "20AJ")
+      }
     }
   }
 }
