@@ -234,13 +234,31 @@ class ObligationsControllerSpec extends SpecBase {
       val november  = monthObligation(2020, 11, "20AK")
 
       val multiObligationScenarios = Seq(
+        // Query range contains all obligations
         ("2020-01-01", "2020-12-31", Seq("20AI", "20AJ", "20AK")),
-        ("2020-09-01", "2020-11-30", Seq("20AI", "20AJ", "20AK")),
-        ("2020-10-01", "2020-10-31", Seq("20AJ")),
+        ("2020-09-01", "2020-11-30", Seq("20AI", "20AJ", "20AK")), // exactly the obligation bounds
+        ("2020-08-31", "2020-12-01", Seq("20AI", "20AJ", "20AK")), // one day either side
+
+        // Query range inside the obligations
         ("2020-10-10", "2020-10-20", Seq("20AJ")),
-        ("2020-09-30", "2020-10-01", Seq("20AI", "20AJ")),
-        ("2020-10-31", "2020-11-01", Seq("20AJ", "20AK")),
-        ("2020-09-15", "2020-11-15", Seq("20AI", "20AJ", "20AK")),
+        ("2020-10-01", "2020-10-31", Seq("20AJ")),                 // exactly one month
+        ("2020-09-30", "2020-10-01", Seq("20AI", "20AJ")),         // straddles month boundary
+        ("2020-10-31", "2020-11-01", Seq("20AJ", "20AK")),         // straddles month boundary
+        ("2020-09-02", "2020-11-29", Seq("20AI", "20AJ", "20AK")), // one day in from each end
+
+        // Query range starts inside the obligations and ends after them
+        ("2020-10-15", "2020-12-31", Seq("20AJ", "20AK")),
+        ("2020-10-01", "2020-12-31", Seq("20AJ", "20AK")),         // starts on first day of month
+        ("2020-09-30", "2020-12-31", Seq("20AI", "20AJ", "20AK")), // starts on last day of month
+        ("2020-11-30", "2020-12-31", Seq("20AK")),                 // starts on last obligation day
+
+        // Query range starts before the obligations and ends inside them
+        ("2020-08-01", "2020-10-15", Seq("20AI", "20AJ")),
+        ("2020-08-01", "2020-10-31", Seq("20AI", "20AJ")),         // ends on last day of month
+        ("2020-08-01", "2020-11-01", Seq("20AI", "20AJ", "20AK")), // ends on first day of month
+        ("2020-08-01", "2020-09-01", Seq("20AI")),                 // ends on first obligation day
+
+        // Query range entirely outside the obligations
         ("2020-08-01", "2020-08-31", Seq.empty),
         ("2020-12-01", "2020-12-31", Seq.empty)
       )
@@ -253,20 +271,6 @@ class ObligationsControllerSpec extends SpecBase {
 
           getPeriodKeys(fromDate, toDate) mustBe expected
         }
-      }
-
-      "must not return obligations when the range falls in a gap between them" in {
-        when(mockObligationsRepository.get(eqTo(vpdId)))
-          .thenReturn(Future.successful(Some(stateWith(september, november))))
-
-        getPeriodKeys("2020-10-01", "2020-10-31") mustBe Seq.empty
-      }
-
-      "must return obligations either side of a gap when the range touches both" in {
-        when(mockObligationsRepository.get(eqTo(vpdId)))
-          .thenReturn(Future.successful(Some(stateWith(september, november))))
-
-        getPeriodKeys("2020-09-30", "2020-11-01") mustBe Seq("20AI", "20AK")
       }
 
       "must preserve the stored order of matching obligations" in {
