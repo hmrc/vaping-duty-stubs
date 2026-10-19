@@ -1,0 +1,45 @@
+/*
+ * Copyright 2025 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.vapingdutystubs.models.nrs
+
+import play.api.libs.json.{JsValue, Json, OFormat}
+
+final case class NrsSubmissionRequest(
+  payload: String,
+  metadata: NrsSubmissionMetadata
+)
+
+object NrsSubmissionRequest {
+  implicit val format: OFormat[NrsSubmissionRequest] = Json.format[NrsSubmissionRequest]
+}
+
+final case class NrsSubmissionMetadata(
+  businessId: String,
+  notableEvent: String,
+  payloadContentType: String,
+  userSubmissionTimestamp: String,
+  identityData: JsValue,
+  userAuthToken: Option[String],
+  headerData: Map[String, String],
+  searchKeys: Map[String, String],
+  payloadSha256Checksum: String,
+  attachmentIds: Option[List[String]] = None
+)
+
+object NrsSubmissionMetadata {
+  implicit val format: OFormat[NrsSubmissionMetadata] = Json.format[NrsSubmissionMetadata]
+}
