@@ -70,17 +70,17 @@ class NrsSubmissionControllerSpec extends SpecBase {
     "submit must" - {
 
       "return 202 Accepted with a submission ID when request is valid" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val result: Future[Result] = controller.submit()(fakeRequestWithJsonBody(validNrsRequest))
 
         status(result) mustBe ACCEPTED
         
         val responseBody = contentAsJson(result).as[NrsSubmissionResponse]
-        responseBody.nrSubmissionId mustBe fakeUUIDGenerator.uuid
+        responseBody.nrSubmissionId mustBe uuidGenerator.uuid
       }
 
       "return 401 Unauthorized when X-API-KEY header is missing" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val requestWithoutApiKey = FakeRequest("POST", "/nrs-orchestrator/submission")
           .withHeaders(CORRELATION_ID_HEADER -> TEST_CORRELATION_ID)
           .withBody(validNrsRequest)
@@ -94,7 +94,7 @@ class NrsSubmissionControllerSpec extends SpecBase {
       }
 
       "return 401 Unauthorized when X-Correlation-Id header is missing" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val requestWithoutCorrelationId = FakeRequest("POST", "/nrs-orchestrator/submission")
           .withHeaders(API_KEY_HEADER -> TEST_API_KEY)
           .withBody(validNrsRequest)
@@ -108,7 +108,7 @@ class NrsSubmissionControllerSpec extends SpecBase {
       }
 
       "return 400 Bad Request when request body is invalid JSON" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val invalidRequest = Json.obj("invalid" -> "structure")
         val result: Future[Result] = controller.submit()(fakeRequestWithJsonBody(invalidRequest))
 
@@ -119,7 +119,7 @@ class NrsSubmissionControllerSpec extends SpecBase {
       }
 
       "return 400 Bad Request when metadata is missing required fields" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val incompleteRequest = Json.obj(
           "payload" -> "encoded-payload-string",
           "metadata" -> Json.obj(
@@ -136,7 +136,7 @@ class NrsSubmissionControllerSpec extends SpecBase {
       }
 
       "extract VPD ID from searchKeys approvalId" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val result: Future[Result] = controller.submit()(fakeRequestWithJsonBody(validNrsRequest))
 
         status(result) mustBe ACCEPTED
@@ -144,9 +144,9 @@ class NrsSubmissionControllerSpec extends SpecBase {
         // but the request succeeds, confirming the extraction logic works
       }
 
-      "extract VPD ID from searchKeys vpdReference when approvalId is not present" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
-        val requestWithVpdReference = Json.obj(
+      "extract VPD ID from searchKeys with different approvalId" in {
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
+        val requestWithDifferentApprovalId = Json.obj(
           "payload" -> "encoded-payload-string",
           "metadata" -> Json.obj(
             "businessId" -> "XMVPD0000100110",
@@ -155,17 +155,17 @@ class NrsSubmissionControllerSpec extends SpecBase {
             "userSubmissionTimestamp" -> "2025-01-15T10:30:00Z",
             "identityData" -> Json.obj("credId" -> "test-cred-id"),
             "headerData" -> Json.obj("Host" -> "localhost"),
-            "searchKeys" -> Json.obj("vpdReference" -> "XIWK0000300WK"),
+            "searchKeys" -> Json.obj("approvalId" -> "XIWK0000300WK"),
             "payloadSha256Checksum" -> "abc123def456"
           )
         )
-        val result: Future[Result] = controller.submit()(fakeRequestWithJsonBody(requestWithVpdReference))
+        val result: Future[Result] = controller.submit()(fakeRequestWithJsonBody(requestWithDifferentApprovalId))
 
         status(result) mustBe ACCEPTED
       }
 
       "handle request with optional fields missing" in {
-        val controller = new NrsSubmissionController(cc, fakeUUIDGenerator)
+        val controller = new NrsSubmissionController(cc, uuidGenerator)
         val requestWithoutOptionals = Json.obj(
           "payload" -> "encoded-payload-string",
           "metadata" -> Json.obj(
@@ -185,7 +185,7 @@ class NrsSubmissionControllerSpec extends SpecBase {
         status(result) mustBe ACCEPTED
         
         val responseBody = contentAsJson(result).as[NrsSubmissionResponse]
-        responseBody.nrSubmissionId mustBe fakeUUIDGenerator.uuid
+        responseBody.nrSubmissionId mustBe uuidGenerator.uuid
       }
     }
   }

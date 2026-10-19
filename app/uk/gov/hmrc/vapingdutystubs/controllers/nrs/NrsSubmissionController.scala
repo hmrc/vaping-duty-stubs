@@ -39,55 +39,53 @@ class NrsSubmissionController @Inject()(
 
   def submit(): Action[JsValue] = Action.async(parse.json) { implicit request =>
     // Validate X-API-KEY header
-    val apiKeyOpt = request.headers.get(API_KEY_HEADER)
-    if (apiKeyOpt.isEmpty) {
-      logger.warn(s"[NRS] Submission rejected - $MISSING_API_KEY_MESSAGE")
-      Future.successful(Unauthorized(Json.toJson(
-        NrsApiErrorMessage(List(MISSING_API_KEY_MESSAGE))
-      )))
-    }
-
-    // Validate X-Correlation-Id header
-    val correlationIdOpt = request.headers.get(CORRELATION_ID_HEADER)
-    if (correlationIdOpt.isEmpty) {
-      logger.warn(s"[NRS] Submission rejected - $MISSING_CORRELATION_ID_MESSAGE")
-      Future.successful(Unauthorized(Json.toJson(
-        NrsApiErrorMessage(List(MISSING_CORRELATION_ID_MESSAGE))
-      )))
-    }
-
-    val correlationId = correlationIdOpt.get
-
-    // Parse and validate request body
-    request.body.validate[NrsSubmissionRequest].fold(
-      errors => {
-        logger.warn(s"[NRS] Submission rejected - $INVALID_REQUEST_BODY_MESSAGE: $errors")
-        Future.successful(BadRequest(Json.toJson(
-          NrsApiErrorMessage(List(INVALID_REQUEST_BODY_MESSAGE))
+    request.headers.get(API_KEY_HEADER) match {
+      case None =>
+        logger.warn(s"[NRS] Submission rejected - $MISSING_API_KEY_MESSAGE")
+        Future.successful(Unauthorized(Json.toJson(
+          NrsApiErrorMessage(List(MISSING_API_KEY_MESSAGE))
         )))
-      },
-      nrsRequest => {
-        // Extract VPD ID for logging
-        val vpdId = nrsRequest.metadata.searchKeys.getOrElse("approvalId", "unknown")
+      case Some(_) =>
+        // Validate X-Correlation-Id header
+        request.headers.get(CORRELATION_ID_HEADER) match {
+          case None =>
+            logger.warn(s"[NRS] Submission rejected - $MISSING_CORRELATION_ID_MESSAGE")
+            Future.successful(Unauthorized(Json.toJson(
+              NrsApiErrorMessage(List(MISSING_CORRELATION_ID_MESSAGE))
+            )))
+          case Some(correlationId) =>
+            // Parse and validate request body
+            request.body.validate[NrsSubmissionRequest].fold(
+              errors => {
+                logger.warn(s"[NRS] Submission rejected - $INVALID_REQUEST_BODY_MESSAGE: $errors")
+                Future.successful(BadRequest(Json.toJson(
+                  NrsApiErrorMessage(List(INVALID_REQUEST_BODY_MESSAGE))
+                )))
+              },
+              nrsRequest => {
+                // Extract VPD ID for logging
+                val vpdId = nrsRequest.metadata.searchKeys.getOrElse("approvalId", "unknown")
 
-        // Log request details
-        logger.info(
-          s"[NRS] Submission received - " +
-          s"CorrelationId: $correlationId, " +
-          s"VPD: $vpdId, " +
-          s"NotableEvent: ${nrsRequest.metadata.notableEvent}, " +
-          s"BusinessId: ${nrsRequest.metadata.businessId}"
-        )
-        logger.debug(s"[NRS] Full request body: ${Json.toJson(nrsRequest)}")
+                // Log request details
+                logger.info(
+                  s"[NRS] Submission received - " +
+                  s"CorrelationId: $correlationId, " +
+                  s"VPD: $vpdId, " +
+                  s"NotableEvent: ${nrsRequest.metadata.notableEvent}, " +
+                  s"BusinessId: ${nrsRequest.metadata.businessId}"
+                )
+                logger.debug(s"[NRS] Full request body: ${Json.toJson(nrsRequest)}")
 
-        // Generate submission ID and return 202 Accepted
-        val submissionId = uuidGenerator.uuid
-        logger.info(s"[NRS] Submission accepted - SubmissionId: $submissionId, CorrelationId: $correlationId")
+                // Generate submission ID and return 202 Accepted
+                val submissionId = uuidGenerator.uuid
+                logger.info(s"[NRS] Submission accepted - SubmissionId: $submissionId, CorrelationId: $correlationId")
 
-        Future.successful(Accepted(Json.toJson(
-          NrsSubmissionResponse(nrSubmissionId = submissionId)
-        )))
-      }
-    )
+                Future.successful(Accepted(Json.toJson(
+                  NrsSubmissionResponse(nrSubmissionId = submissionId)
+                )))
+              }
+            )
+        }
+    }
   }
 }
