@@ -138,7 +138,10 @@ class SubmitReturnController @Inject()(
                 vpdReferenceNumber = vpdId,
                 submissionID = Some(submission.submissionId),
                 chargeReference = submission.chargeReference,
-                amount = returnRequest.totalDutyDue.totalDue,
+                amount = returnRequest.totalDutyDue match {
+                  case Some(td) => td.totalDue
+                  case None => BigDecimal("0")
+                },
                 paymentDueDate = Some(paymentDueDate),
                 declaration = returnRequest.declaration
               )

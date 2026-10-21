@@ -76,7 +76,7 @@ object ReturnSubmissionData {
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,
-      totalDutyDue = generateTotalDutyDue(isNil = true),
+      totalDutyDue = None,
       otherOptions = None,
       declaration = generateDeclaration()
     )
@@ -93,7 +93,7 @@ object ReturnSubmissionData {
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,
-      totalDutyDue = generateTotalDutyDue(isNil = false),
+      totalDutyDue = Some(generateTotalDutyDue(isNil = false)),
       otherOptions = None,
       declaration = generateDeclaration()
     )

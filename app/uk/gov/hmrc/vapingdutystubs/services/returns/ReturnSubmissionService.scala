@@ -57,17 +57,35 @@ class ReturnSubmissionService @Inject()(
       case Right(_) =>
         logger.info(s"[ReturnSubmissionService] Validation passed for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
 
+        // Normalize totalDutyDue: if all values are zero, treat as None (true nil return)
+        // This ensures MongoDB storage matches the real API behavior
+        val normalizedRequest = returnRequest.totalDutyDue match {
+          case Some(tdd) if tdd.totalDutyDueVapingProducts == 0 &&
+                             tdd.totalDutyOverDeclaration == 0 &&
+                             tdd.totalDutyUnderDeclaration == 0 &&
+                             tdd.totalDutySpoiltProduct == 0 &&
+                             tdd.totalDue == 0 =>
+            logger.info(s"[ReturnSubmissionService] Normalizing all-zero totalDutyDue to None for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
+            returnRequest.copy(totalDutyDue = None)
+          case _ =>
+            returnRequest
+        }
+
         val now = Instant.now(clock)
         val submissionId = uuidGenerator.uuid
-        val chargeReference = chargeReferenceGenerator.generate(returnRequest.totalDutyDue.totalDue)
-
+        
+        // totalDutyDue is None for true nil returns (no declarations submitted or all zeros)
+        // totalDutyDue is Some(TotalDutyDue(...)) only when there are non-zero duty values
+        val chargeReference = normalizedRequest.totalDutyDue.flatMap(tdd =>
+          chargeReferenceGenerator.generate(tdd.totalDue)
+        )
         if (chargeReference.isDefined) {
           logger.debug(s"[ReturnSubmissionService] Generated submissionId: $submissionId, chargeReference: ${chargeReference.get}")
         } else {
           logger.debug(s"[ReturnSubmissionService] Generated submissionId: $submissionId, no chargeReference (totalDue is zero)")
         }
 
-        val submission: ReturnSubmission = buildSubmission(vpdId, returnRequest, now, submissionId, chargeReference)
+        val submission: ReturnSubmission = buildSubmission(vpdId, normalizedRequest, now, submissionId, chargeReference)
 
         logger.info(s"[ReturnSubmissionService] Saving submission to repository for vpdId: $vpdId, periodKey: ${returnRequest.periodKey}")
 

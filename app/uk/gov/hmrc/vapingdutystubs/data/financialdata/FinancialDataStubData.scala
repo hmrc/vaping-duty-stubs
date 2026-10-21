@@ -508,7 +508,7 @@ object FinancialDataStubData {
     val periodStart = returnPeriod.periodFromDate()
     val periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth())
     val netDueDate = periodEnd.plusMonths(1).withDayOfMonth(15)
-    val amount = submission.submittedReturn.totalDutyDue.totalDue
+    val amount = submission.submittedReturn.totalDutyDue.map(_.totalDue)
     
     val chargeRef = submission.chargeReference.getOrElse(
       throw new IllegalArgumentException("Cannot generate financial data for submission without charge reference")
@@ -519,7 +519,7 @@ object FinancialDataStubData {
       chargeReference = chargeRef,
       periodStart = periodStart,
       netDueDate = netDueDate,
-      amount = amount
+      amount = amount.getOrElse(BigDecimal("0"))
     )
     
     FinancialDataState(

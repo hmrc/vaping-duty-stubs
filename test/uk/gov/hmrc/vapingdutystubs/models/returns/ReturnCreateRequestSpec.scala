@@ -28,7 +28,7 @@ class ReturnCreateRequestSpec extends SpecBase {
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,
-      totalDutyDue = TotalDutyDue(1, 1, 1, 1, 1),
+      totalDutyDue = Some(TotalDutyDue(1, 1, 1, 1, 1)),
       otherOptions = None,
       declaration = sampleDeclarationDetails
     )

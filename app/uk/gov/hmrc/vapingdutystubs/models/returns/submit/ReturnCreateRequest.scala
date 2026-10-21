@@ -26,7 +26,7 @@ final case class ReturnCreateRequest(
                                       overDeclaration: Option[OverDeclaration],
                                       underDeclaration: Option[UnderDeclaration],
                                       spoiltProduct: Option[SpoiltProduct],
-                                      totalDutyDue: TotalDutyDue,
+                                      totalDutyDue: Option[TotalDutyDue],
                                       otherOptions: Option[OtherOptions],
                                       declaration: DeclarationDetails
                                     ) {
