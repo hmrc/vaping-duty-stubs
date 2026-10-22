@@ -146,5 +146,24 @@ class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionVal
       totalisation.totalAccountCredit mustBe Some(BigDecimal("4000.00"))
       totalisation.totalAccountBalance mustBe Some(BigDecimal("-4000.00"))
     }
+
+    "refund must produce a positive and a negative outstanding charge" in {
+      val state = FinancialDataStubData.refund(vpdId)
+
+      state.noDataIdentified mustBe false
+      state.documentDetails must have size 2
+      state.documentDetails.head.documentOutstandingAmount mustBe BigDecimal("500.00")
+      state.documentDetails(1).documentType mustBe "TRM New Charge"
+      state.documentDetails(1).documentOutstandingAmount mustBe BigDecimal("-2577.44")
+    }
+
+    "refund must produce a credit balance of £2,077.44" in {
+      val state = FinancialDataStubData.refund(vpdId)
+      val totalisation = FinancialDataStubData.calculateTotalisation(state.documentDetails).value.regimeTotalisation.value
+
+      totalisation.totalAccountNotYetDue mustBe Some(BigDecimal("500.00"))
+      totalisation.totalAccountCredit mustBe Some(BigDecimal("2577.44"))
+      totalisation.totalAccountBalance mustBe Some(BigDecimal("-2077.44"))
+    }
   }
 }

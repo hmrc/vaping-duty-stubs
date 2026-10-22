@@ -44,6 +44,7 @@ import scala.concurrent.{ExecutionContext, Future}
   private val SCENARIO_INTEREST_PAYMENT = "interest-payment"
   private val SCENARIO_PARTIALLY_PAID = "partially-paid"
   private val SCENARIO_OVERPAYMENT_WITH_PAYMENT_ON_ACCOUNT = "overpayment-with-payment-on-account"
+  private val SCENARIO_REFUND = "refund"
 
   private val validScenarios =
     Set(
@@ -58,7 +59,8 @@ import scala.concurrent.{ExecutionContext, Future}
       SCENARIO_NOTHING_OWED,
       SCENARIO_INTEREST_PAYMENT,
       SCENARIO_PARTIALLY_PAID,
-      SCENARIO_OVERPAYMENT_WITH_PAYMENT_ON_ACCOUNT
+      SCENARIO_OVERPAYMENT_WITH_PAYMENT_ON_ACCOUNT,
+      SCENARIO_REFUND
     )
 
   def setScenario(vpdId: String, scenarioName: String): Action[AnyContent] = Action.async { implicit request =>
@@ -82,6 +84,7 @@ import scala.concurrent.{ExecutionContext, Future}
         case SCENARIO_INTEREST_PAYMENT => FinancialDataStubData.interestPayment(vpdId)
         case SCENARIO_PARTIALLY_PAID => FinancialDataStubData.partiallyPaid(vpdId)
         case SCENARIO_OVERPAYMENT_WITH_PAYMENT_ON_ACCOUNT => FinancialDataStubData.overpaymentWithPaymentOnAccount(vpdId)
+        case SCENARIO_REFUND => FinancialDataStubData.refund(vpdId)
       }
 
       financialDataRepository.set(state).map { _ =>

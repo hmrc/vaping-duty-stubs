@@ -479,6 +479,21 @@ object FinancialDataStubData {
     )
   }
 
+  // A normal outstanding charge alongside a negative outstanding charge (e.g. an amended return
+  // reducing duty) - proves the frontend renders the negative one as a "Refund" row.
+  def refund(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        outstandingDocument(vpdId, "XMVPD0000000013", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
+        outstandingDocument(vpdId, "XMVPD0000000014", today.minusMonths(2), today.minusMonths(1).withDayOfMonth(15), BigDecimal("-2577.44"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
   // Fixed VPD IDs for the BTA summary tile payments scenarios, seeded at startup (see StartupSeeder).
   // Digits 1-5 and 8 are reserved by the returns/obligations error-simulation and sample-obligations
   // sets (see README.md), so these use the remaining unused digits.
