@@ -117,13 +117,13 @@ class TestObligationsControllerSpec extends SpecBase {
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-    totalDutyDue = TotalDutyDue(
+    totalDutyDue = Some(TotalDutyDue(
       totalDutyDueVapingProducts = zeroAmount,
       totalDutyOverDeclaration = zeroAmount,
       totalDutyUnderDeclaration = zeroAmount,
       totalDutySpoiltProduct = zeroAmount,
       totalDue = zeroAmount
-    ),
+    )),
     otherOptions = None,
     declaration = sampleDeclarationDetails
   )

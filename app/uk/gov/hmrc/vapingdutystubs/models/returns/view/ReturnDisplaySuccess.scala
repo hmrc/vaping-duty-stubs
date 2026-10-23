@@ -29,7 +29,7 @@ final case class ReturnDisplaySuccess(
   overDeclaration: Option[OverDeclaration],
   underDeclaration: Option[UnderDeclaration],
   spoiltProduct: Option[SpoiltProduct],
-  totalDutyDue: TotalDutyDue,
+  totalDutyDue: Option[TotalDutyDue],
   otherOptions: Option[OtherOptions],
   declaration: DeclarationDetails
 )

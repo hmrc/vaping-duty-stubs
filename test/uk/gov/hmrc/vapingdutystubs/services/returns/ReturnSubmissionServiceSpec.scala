@@ -78,13 +78,13 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-    totalDutyDue = TotalDutyDue(
+    totalDutyDue = Some(TotalDutyDue(
       totalDutyDueVapingProducts = BigDecimal("15752.63"),
       totalDutyOverDeclaration = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDue = BigDecimal("15752.63")
-    ),
+    )),
     otherOptions = None,
     declaration = DeclarationDetails(
       fullName = "John Smith",
@@ -142,17 +142,10 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
             vapingProdManufactured = "0",
             returns = None
           ),
-          totalDutyDue = TotalDutyDue(
-            totalDutyDueVapingProducts = BigDecimal("0.00"),
-            totalDutyOverDeclaration = BigDecimal("0.00"),
-            totalDutyUnderDeclaration = BigDecimal("0.00"),
-            totalDutySpoiltProduct = BigDecimal("0.00"),
-            totalDue = BigDecimal("0.00")
-          )
+          totalDutyDue = None
         )
 
         when(mockUuidGenerator.uuid).thenReturn(submissionId)
-        when(mockChargeReferenceGenerator.generate(any[BigDecimal])).thenReturn(None)
 
         val expectedSubmission = ReturnSubmission(
           vpdId = vpdId,
@@ -172,7 +165,6 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
 
         whenReady(result) { response =>
           response shouldBe Right(expectedSubmission)
-          verify(mockChargeReferenceGenerator).generate(eqTo(BigDecimal("0.00")))
           verify(mockReturnSubmissionRepository).set(any[ReturnSubmission])
           verify(mockObligationsRepository).markAsFulfilled(eqTo(vpdId), eqTo(periodKey), any[Instant])
         }
@@ -254,17 +246,10 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
             vapingProdManufactured = "0",
             returns = None
           ),
-          totalDutyDue = TotalDutyDue(
-            totalDutyDueVapingProducts = BigDecimal("0.00"),
-            totalDutyOverDeclaration = BigDecimal("0.00"),
-            totalDutyUnderDeclaration = BigDecimal("0.00"),
-            totalDutySpoiltProduct = BigDecimal("0.00"),
-            totalDue = BigDecimal("0.00")
-          )
+          totalDutyDue = None
         )
 
         when(mockUuidGenerator.uuid).thenReturn(submissionId)
-        when(mockChargeReferenceGenerator.generate(any[BigDecimal])).thenReturn(None)
 
         val expectedSubmission = ReturnSubmission(
           vpdId = vpdId,
@@ -284,6 +269,86 @@ class ReturnSubmissionServiceSpec extends SpecBase with ScalaFutures with org.sc
 
         whenReady(result) { response =>
           response shouldBe Right(expectedSubmission)
+        }
+      }
+
+      "normalize all-zero totalDutyDue to None" in {
+        val allZeroRequest = validReturnRequest.copy(
+          vapingProductsProduced = VapingProductsProduced(
+            vapingProdManufactured = "0",
+            returns = None
+          ),
+          totalDutyDue = Some(TotalDutyDue(
+            totalDutyDueVapingProducts = BigDecimal("0.00"),
+            totalDutyOverDeclaration = BigDecimal("0.00"),
+            totalDutyUnderDeclaration = BigDecimal("0.00"),
+            totalDutySpoiltProduct = BigDecimal("0.00"),
+            totalDue = BigDecimal("0.00")
+          ))
+        )
+
+        when(mockUuidGenerator.uuid).thenReturn(submissionId)
+
+        // Capture the submission to verify totalDutyDue was normalized to None
+        var capturedSubmission: Option[ReturnSubmission] = None
+        when(mockReturnSubmissionRepository.set(any[ReturnSubmission]))
+          .thenAnswer((invocation: org.mockito.invocation.InvocationOnMock) => {
+            capturedSubmission = Some(invocation.getArgument[ReturnSubmission](0))
+            Future.successful(capturedSubmission.get)
+          })
+        when(mockObligationsRepository.markAsFulfilled(any[String], any[String], any[Instant]))
+          .thenReturn(Future.successful(None))
+
+        val result = service.processSubmission(vpdId, allZeroRequest)
+
+        whenReady(result) { response =>
+          response.isRight shouldBe true
+          capturedSubmission shouldBe defined
+          capturedSubmission.get.submittedReturn.totalDutyDue shouldBe None
+          capturedSubmission.get.chargeReference shouldBe None
+        }
+      }
+
+      "not normalize totalDutyDue when it has non-zero values" in {
+        val nonZeroRequest = validReturnRequest.copy(
+          totalDutyDue = Some(TotalDutyDue(
+            totalDutyDueVapingProducts = BigDecimal("100.00"),
+            totalDutyOverDeclaration = BigDecimal("0.00"),
+            totalDutyUnderDeclaration = BigDecimal("0.00"),
+            totalDutySpoiltProduct = BigDecimal("0.00"),
+            totalDue = BigDecimal("100.00")
+          ))
+        )
+
+        when(mockUuidGenerator.uuid).thenReturn(submissionId)
+        when(mockChargeReferenceGenerator.generate(any[BigDecimal])).thenReturn(Some(chargeReference))
+
+        var capturedSubmission: Option[ReturnSubmission] = None
+        when(mockReturnSubmissionRepository.set(any[ReturnSubmission]))
+          .thenAnswer((invocation: org.mockito.invocation.InvocationOnMock) => {
+            capturedSubmission = Some(invocation.getArgument[ReturnSubmission](0))
+            Future.successful(capturedSubmission.get)
+          })
+        when(mockObligationsRepository.markAsFulfilled(any[String], any[String], any[Instant]))
+          .thenReturn(Future.successful(None))
+        when(mockFinancialDataRepository.get(any[String]))
+          .thenReturn(Future.successful(None))
+        when(mockFinancialDataRepository.set(any[FinancialDataState]))
+          .thenReturn(Future.successful(FinancialDataState(
+            vpdId = vpdId,
+            noDataIdentified = false,
+            documentDetails = Seq.empty,
+            lastUpdated = Instant.now(fixedClock)
+          )))
+
+        val result = service.processSubmission(vpdId, nonZeroRequest)
+
+        whenReady(result) { response =>
+          response.isRight shouldBe true
+          capturedSubmission shouldBe defined
+          capturedSubmission.get.submittedReturn.totalDutyDue shouldBe defined
+          capturedSubmission.get.submittedReturn.totalDutyDue.get.totalDue shouldBe BigDecimal("100.00")
+          capturedSubmission.get.chargeReference shouldBe Some(chargeReference)
         }
       }
     }

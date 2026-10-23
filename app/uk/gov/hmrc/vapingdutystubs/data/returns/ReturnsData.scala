@@ -72,7 +72,7 @@ object ReturnsData {
       overDeclaration = None,
       underDeclaration = None,
       spoiltProduct = None,
-      totalDutyDue = totalDutyDue,
+      totalDutyDue = Some(totalDutyDue),
       otherOptions = None,
       declaration = sampleDeclarationDetails
     )

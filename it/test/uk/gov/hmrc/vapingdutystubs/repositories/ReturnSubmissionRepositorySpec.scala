@@ -43,6 +43,14 @@ class ReturnSubmissionRepositorySpec
 
   val vpdId = "GBWK1234567WK"
   val periodKey = "24KA"
+  val submissionId = "123456789012"
+  val now = Instant.parse("2026-05-28T10:30:00Z")
+
+  val sampleDeclaration: DeclarationDetails = DeclarationDetails(
+    fullName = "John Smith",
+    capacityInWhichSigned = "Director",
+    signeesEmailAddress = "john.smith@example.com"
+  )
 
   val sampleReturnRequest: ReturnCreateRequest = ReturnCreateRequest(
     periodKey = periodKey,
@@ -58,31 +66,110 @@ class ReturnSubmissionRepositorySpec
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-    totalDutyDue = TotalDutyDue(
+    totalDutyDue = Some(TotalDutyDue(
       totalDutyDueVapingProducts = BigDecimal("15752.63"),
       totalDutyOverDeclaration = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDue = BigDecimal("15752.63")
-    ),
+    )),
     otherOptions = None,
-    declaration = DeclarationDetails(
-      fullName = "John Smith",
-      capacityInWhichSigned = "Director",
-      signeesEmailAddress = "john.smith@example.com"
-    )
+    declaration = sampleDeclaration
   )
 
   val sampleSubmission: ReturnSubmission = ReturnSubmission(
-    vpdId = "GBWK1234567WK",
-    periodKey = "24KA",
+    vpdId = vpdId,
+    periodKey = periodKey,
     chargeReference = Some("XMVPD123456789012"),
     submittedReturn = sampleReturnRequest,
-    submittedAt = Instant.parse("2026-05-28T10:30:00Z"),
-    submissionId = "123456789012"
+    submittedAt = now,
+    submissionId = submissionId
   )
 
   "ReturnSubmissionRepository" - {
+    
+    "must handle all-zero totalDutyDue correctly" in {
+      val allZeroReturn = ReturnCreateRequest(
+        periodKey = periodKey,
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = None
+        ),
+        overDeclaration = None,
+        underDeclaration = None,
+        spoiltProduct = None,
+        totalDutyDue = Some(TotalDutyDue(
+          totalDutyDueVapingProducts = BigDecimal("0.00"),
+          totalDutyOverDeclaration = BigDecimal("0.00"),
+          totalDutyUnderDeclaration = BigDecimal("0.00"),
+          totalDutySpoiltProduct = BigDecimal("0.00"),
+          totalDue = BigDecimal("0.00")
+        )),
+        otherOptions = None,
+        declaration = sampleDeclaration
+      )
+
+      val submission = ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = None,
+        submittedReturn = allZeroReturn,
+        submittedAt = now,
+        submissionId = submissionId
+      )
+
+      val result = for {
+        _ <- repository.set(submission)
+        retrieved <- repository.get(vpdId, periodKey)
+      } yield retrieved
+
+      whenReady(result) { maybeSubmission =>
+        maybeSubmission shouldBe defined
+        maybeSubmission.get.submittedReturn.totalDutyDue shouldBe Some(TotalDutyDue(
+          totalDutyDueVapingProducts = BigDecimal("0.00"),
+          totalDutyOverDeclaration = BigDecimal("0.00"),
+          totalDutyUnderDeclaration = BigDecimal("0.00"),
+          totalDutySpoiltProduct = BigDecimal("0.00"),
+          totalDue = BigDecimal("0.00")
+        ))
+      }
+    }
+
+    "must preserve None totalDutyDue" in {
+      val noneReturn = ReturnCreateRequest(
+        periodKey = periodKey,
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = None
+        ),
+        overDeclaration = None,
+        underDeclaration = None,
+        spoiltProduct = None,
+        totalDutyDue = None,
+        otherOptions = None,
+        declaration = sampleDeclaration
+      )
+
+      val submission = ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = None,
+        submittedReturn = noneReturn,
+        submittedAt = now,
+        submissionId = submissionId
+      )
+
+      val result = for {
+        _ <- repository.set(submission)
+        retrieved <- repository.get(vpdId, periodKey)
+      } yield retrieved
+
+      whenReady(result) { maybeSubmission =>
+        maybeSubmission shouldBe defined
+        maybeSubmission.get.submittedReturn.totalDutyDue shouldBe None
+      }
+    }
+
     "set" - {
       "must store a return submission" in {
         val result = repository.set(sampleSubmission).futureValue

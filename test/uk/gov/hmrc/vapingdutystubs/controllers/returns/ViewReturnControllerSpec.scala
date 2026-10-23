@@ -65,13 +65,13 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-    totalDutyDue = TotalDutyDue(
+    totalDutyDue = Some(TotalDutyDue(
       totalDutyDueVapingProducts = BigDecimal("15752.63"),
       totalDutyOverDeclaration = BigDecimal("0.00"),
       totalDutyUnderDeclaration = BigDecimal("0.00"),
       totalDutySpoiltProduct = BigDecimal("0.00"),
       totalDue = BigDecimal("15752.63")
-    ),
+    )),
     otherOptions = None,
     declaration = DeclarationDetails(
       fullName = "John Smith",
@@ -109,12 +109,12 @@ class ViewReturnControllerSpec extends SpecBase with MockitoSugar {
           vapingProdManufactured = "0",
           returns = Some(Seq.empty)
         ),
-        totalDutyDue = TotalDutyDue(
+        totalDutyDue = Some(TotalDutyDue(
           totalDutyDueVapingProducts = BigDecimal("0.00"),
           totalDutyOverDeclaration = BigDecimal("0.00"),
           totalDutyUnderDeclaration = BigDecimal("0.00"),
           totalDutySpoiltProduct = BigDecimal("0.00"),
-          totalDue = BigDecimal("0.00")
+          totalDue = BigDecimal("0.00"))
         )
       )
 

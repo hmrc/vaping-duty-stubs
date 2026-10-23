@@ -69,13 +69,13 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
     overDeclaration = None,
     underDeclaration = None,
     spoiltProduct = None,
-      totalDutyDue = TotalDutyDue(
+      totalDutyDue = Some(TotalDutyDue(
         totalDutyDueVapingProducts = BigDecimal("15752.63"),
         totalDutyOverDeclaration = BigDecimal("1050.00"),
         totalDutyUnderDeclaration = BigDecimal("2100.00"),
         totalDutySpoiltProduct = BigDecimal("525.00"),
         totalDue = BigDecimal("16277.63")
-      ),
+      )),
     otherOptions = None,
     declaration = DeclarationDetails(
       fullName = "John Smith",
@@ -121,13 +121,7 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
           vapingProdManufactured = "0",
           returns = Some(Seq.empty)
         ),
-        totalDutyDue = TotalDutyDue(
-          totalDutyDueVapingProducts = BigDecimal("0.00"),
-          totalDutyOverDeclaration = BigDecimal("0.00"),
-          totalDutyUnderDeclaration = BigDecimal("0.00"),
-          totalDutySpoiltProduct = BigDecimal("0.00"),
-          totalDue = BigDecimal("0.00")
-        )
+        totalDutyDue = None
       )
 
       val submission = ReturnSubmission(
@@ -143,6 +137,50 @@ class SubmitReturnControllerSpec extends SpecBase with MockitoSugar {
 
       val result = controller.submitReturn()(
         fakeRequestWithJsonBody(Json.toJson(nilReturnRequest))
+          .withHeaders(
+            xZVPD -> vpdId,
+            "Content-Type" -> "application/json"
+          )
+      )
+
+      status(result) shouldBe CREATED
+      val responseJson = contentAsJson(result)
+      (responseJson \ "success" \ "vpdReferenceNumber").as[String] shouldBe vpdId
+      (responseJson \ "success" \ "chargeReference").asOpt[String] shouldBe None
+      (responseJson \ "success" \ "amount").as[BigDecimal] shouldBe BigDecimal("0.00")
+    }
+
+    "must normalize all-zero totalDutyDue to None and return CREATED" in {
+      when(mockUuidGenerator.uuid).thenReturn(submissionId)
+
+      val allZeroRequest = validReturnRequest.copy(
+        vapingProductsProduced = VapingProductsProduced(
+          vapingProdManufactured = "0",
+          returns = Some(Seq.empty)
+        ),
+        totalDutyDue = Some(TotalDutyDue(
+          totalDutyDueVapingProducts = BigDecimal("0.00"),
+          totalDutyOverDeclaration = BigDecimal("0.00"),
+          totalDutyUnderDeclaration = BigDecimal("0.00"),
+          totalDutySpoiltProduct = BigDecimal("0.00"),
+          totalDue = BigDecimal("0.00")
+        ))
+      )
+
+      // Service will normalize this to None
+      val submission = ReturnSubmission(
+        vpdId = vpdId,
+        periodKey = periodKey,
+        chargeReference = None,
+        submittedReturn = allZeroRequest.copy(totalDutyDue = None),
+        submittedAt = Instant.now(fixedClock),
+        submissionId = submissionId
+      )
+
+      when(mockReturnSubmissionService.processSubmission(any(), any())).thenReturn(Future.successful(Right(submission)))
+
+      val result = controller.submitReturn()(
+        fakeRequestWithJsonBody(Json.toJson(allZeroRequest))
           .withHeaders(
             xZVPD -> vpdId,
             "Content-Type" -> "application/json"
