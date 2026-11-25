@@ -41,6 +41,29 @@ Returns financial data including charges, payments, and balances for a VPD regis
 curl "http://localhost:8142/enterprise/financial-data/VPD/ZVPD/GBWK0000200WK?onlyOpenItems=true"
 ```
 
+### Date Range Filtering
+
+The ETMP query endpoint (`POST /etmp/RESTAdapter/cross-regime/taxpayer/financial-data/query`) filters the stored documents by `selectionCriteria.dateRange` before returning them:
+
+- `dateType: BILLING` compares each document's `issueDate`; `POSTING` (or any other value) compares `postingDate`.
+- `dateFrom` and `dateTo` are both inclusive.
+- If no documents fall in the range the response is still `201 Created` with an empty `documentDetails` (the `none` scenario is the only way to get the `422`/`018` response).
+- `totalisation` is calculated from the filtered documents only.
+- If `selectionCriteria` is omitted, all stored documents are returned.
+
+`vaping-duty-finance` requests `BILLING` from 12 months ago to today by default. The `date-range-filtering` scenario stores six documents to prove this:
+
+| Document | issueDate | Amount | Returned? |
+|---|---|---|---|
+| Outstanding, period 1 month ago | end of that month | £500.00 | Yes |
+| Cleared, period 3 months ago | end of that month | £750.00 | Yes |
+| Unallocated, posted exactly 12 months ago | today - 1 year | £100.00 | Yes |
+| Unallocated, posted 12 months and 1 day ago | today - 1 year - 1 day | £333.33 | No |
+| Cleared, period 15 months ago | end of that month | £1,111.11 | No |
+| Outstanding, period 18 months ago | end of that month | £2,222.22 | No |
+
+The expected balance is £400.00 (£500 not yet due less £100 credit). Dates are fixed when the scenario is set, so re-set it if you query on a later day.
+
 ---
 
 ## Pre-Seeded Payment Scenarios
@@ -202,6 +225,8 @@ For complete details on test-only endpoints, see [Test-Only Endpoints](TEST-ONLY
 | `interest-payment` | Charges with interest applied | Interest scenarios |
 | `partially-paid` | Charges that have been partially paid | Partial payment testing |
 | `overpayment-with-payment-on-account` | Overpayment scenario with payment on account | Overpayment scenarios |
+| `refund` | Outstanding charge plus a negative (refund) outstanding charge | Refund row on view payments |
+| `date-range-filtering` | 3 documents inside and 3 outside the default 12-month window | Proving date range filtering (see [Date Range Filtering](#date-range-filtering)) |
 
 ---
 

@@ -42,6 +42,7 @@ class TestFinancialDataControllerSpec extends SpecBase {
   private val SCENARIO_INTEREST_PAYMENT = "interest-payment"
   private val SCENARIO_PARTIALLY_PAID = "partially-paid"
   private val SCENARIO_REFUND = "refund"
+  private val SCENARIO_DATE_RANGE_FILTERING = "date-range-filtering"
   private val INVALID_SCENARIO = "invalid-scenario"
 
   val mockFinancialDataRepository: FinancialDataRepository = mock[FinancialDataRepository]
@@ -76,7 +77,8 @@ class TestFinancialDataControllerSpec extends SpecBase {
         SCENARIO_NOTHING_OWED,
         SCENARIO_INTEREST_PAYMENT,
         SCENARIO_PARTIALLY_PAID,
-        SCENARIO_REFUND
+        SCENARIO_REFUND,
+        SCENARIO_DATE_RANGE_FILTERING
       ).foreach { scenario =>
         s"must return OK when setting '$scenario' scenario" in {
           when(mockFinancialDataRepository.set(any())).thenReturn(Future.successful(testState))

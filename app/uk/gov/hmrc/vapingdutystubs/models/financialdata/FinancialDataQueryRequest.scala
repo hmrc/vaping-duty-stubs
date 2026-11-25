@@ -18,10 +18,12 @@ package uk.gov.hmrc.vapingdutystubs.models.financialdata
 
 import play.api.libs.json.{Json, Reads}
 
+import java.time.LocalDate
+
 // Only models the fields the stub needs to read from the incoming HIP "Get Financial Data"
-// query request (taxRegime + taxpayerInformation.idNumber, used as the vpdId lookup key).
-// selectionCriteria/dataEnrichment/targetedSearch are ignored - this iteration serves a single
-// stored dataset per vpdId regardless of what selection criteria were requested.
+// query request: taxRegime + taxpayerInformation.idNumber (used as the vpdId lookup key) and
+// selectionCriteria.dateRange (used to filter the stored documents returned).
+// The rest of selectionCriteria, dataEnrichment and targetedSearch are ignored.
 
 final case class TaxpayerInformation(idType: String, idNumber: String)
 
@@ -29,7 +31,23 @@ object TaxpayerInformation {
   given reads: Reads[TaxpayerInformation] = Json.reads[TaxpayerInformation]
 }
 
-final case class FinancialDataQueryRequest(taxRegime: String, taxpayerInformation: TaxpayerInformation)
+final case class DateRange(dateType: String, dateFrom: LocalDate, dateTo: LocalDate)
+
+object DateRange {
+  given reads: Reads[DateRange] = Json.reads[DateRange]
+}
+
+final case class SelectionCriteria(dateRange: DateRange)
+
+object SelectionCriteria {
+  given reads: Reads[SelectionCriteria] = Json.reads[SelectionCriteria]
+}
+
+final case class FinancialDataQueryRequest(
+  taxRegime: String,
+  taxpayerInformation: TaxpayerInformation,
+  selectionCriteria: Option[SelectionCriteria]
+)
 
 object FinancialDataQueryRequest {
   given reads: Reads[FinancialDataQueryRequest] = Json.reads[FinancialDataQueryRequest]

@@ -33,11 +33,16 @@ class FinancialDataControllerSpec extends SpecBase {
 
   val controller = new FinancialDataController(cc, mockFinancialDataRepository, clock)
 
-  private def queryRequestJson(idNumber: String) = Json.obj(
+  private def queryRequestJson(
+    idNumber: String,
+    dateType: String = "POSTING",
+    dateFrom: String = "2026-10-01",
+    dateTo: String = "2026-12-31"
+  ) = Json.obj(
     "taxRegime" -> "VPD",
     "taxpayerInformation" -> Json.obj("idType" -> "ZVPD", "idNumber" -> idNumber),
     "selectionCriteria" -> Json.obj(
-      "dateRange" -> Json.obj("dateType" -> "POSTING", "dateFrom" -> "2026-10-01", "dateTo" -> "2026-12-31"),
+      "dateRange" -> Json.obj("dateType" -> dateType, "dateFrom" -> dateFrom, "dateTo" -> dateTo),
       "includeClearedItems" -> true,
       "includeStatisticalItems" -> false,
       "includePaymentOnAccount" -> false
@@ -131,6 +136,48 @@ class FinancialDataControllerSpec extends SpecBase {
 
       status(result) mustBe CREATED
       verify(mockFinancialDataRepository).set(any())
+    }
+
+    "return only documents inside the requested date range, totalised from those documents" in {
+      val olderDocument = testDocument.copy(
+        documentNumber = "1000000000002",
+        chargeReferenceNumber = Some("XMVPD0000000002"),
+        postingDate = LocalDate.of(2025, 10, 31),
+        issueDate = LocalDate.of(2025, 10, 31),
+        documentTotalAmount = BigDecimal("2222.22"),
+        documentOutstandingAmount = BigDecimal("2222.22")
+      )
+      when(mockFinancialDataRepository.get(eqTo(vpdId)))
+        .thenReturn(Future.successful(Some(testState.copy(documentDetails = Seq(testDocument, olderDocument)))))
+
+      val result: Future[Result] =
+        controller.query()(fakeRequestWithJsonBody(queryRequestJson(vpdId, "BILLING", "2025-11-25", "2026-11-25")))
+
+      status(result) mustBe CREATED
+      val financialData = contentAsJson(result).as[FinancialDataResponse].success.financialData
+      financialData.documentDetails.map(_.chargeReferenceNumber) mustBe Seq(Some("XMVPD0000000001"))
+      financialData.totalisation.flatMap(_.regimeTotalisation).flatMap(_.totalAccountBalance) mustBe Some(BigDecimal("500.00"))
+    }
+
+    "return 201 Created with no documents when none fall inside the requested date range" in {
+      when(mockFinancialDataRepository.get(eqTo(vpdId))).thenReturn(Future.successful(Some(testState)))
+
+      val result: Future[Result] =
+        controller.query()(fakeRequestWithJsonBody(queryRequestJson(vpdId, "BILLING", "2024-01-01", "2024-12-31")))
+
+      status(result) mustBe CREATED
+      val financialData = contentAsJson(result).as[FinancialDataResponse].success.financialData
+      financialData.documentDetails mustBe empty
+      financialData.totalisation mustBe None
+    }
+
+    "return all stored documents when no selection criteria are sent" in {
+      when(mockFinancialDataRepository.get(eqTo(vpdId))).thenReturn(Future.successful(Some(testState)))
+
+      val result: Future[Result] = controller.query()(fakeRequestWithJsonBody(queryRequestJson(vpdId) - "selectionCriteria"))
+
+      status(result) mustBe CREATED
+      contentAsJson(result).as[FinancialDataResponse].success.financialData.documentDetails.size mustBe 1
     }
 
     "return 400 Bad Request when the request body cannot be parsed" in {

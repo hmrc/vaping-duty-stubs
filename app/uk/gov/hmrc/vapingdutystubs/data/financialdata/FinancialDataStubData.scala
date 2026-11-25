@@ -75,6 +75,16 @@ object FinancialDataStubData {
     }
   }
 
+  private val dateTypeBilling = "BILLING"
+
+  // Mirrors ETMP's selectionCriteria.dateRange: BILLING filters on issueDate, POSTING (and anything
+  // else) on postingDate. Both bounds are inclusive.
+  def filterByDateRange(documentDetails: Seq[DocumentDetails], dateRange: DateRange): Seq[DocumentDetails] =
+    documentDetails.filter { doc =>
+      val date = if (dateRange.dateType == dateTypeBilling) doc.issueDate else doc.postingDate
+      !date.isBefore(dateRange.dateFrom) && !date.isAfter(dateRange.dateTo)
+    }
+
   private def periodKeyFor(date: LocalDate): String = ReturnPeriod.fromDateInPeriod(date).toPeriodKey
 
   private def outstandingDocument(
@@ -489,6 +499,32 @@ object FinancialDataStubData {
       documentDetails = Seq(
         outstandingDocument(vpdId, "XMVPD0000000013", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
         outstandingDocument(vpdId, "XMVPD0000000014", today.minusMonths(2), today.minusMonths(1).withDayOfMonth(15), BigDecimal("-2577.44"))
+      ),
+      lastUpdated = Instant.now()
+    )
+  }
+
+  // Three documents inside and three outside the 12-month (today - 1 year -> today) window that
+  // vaping-duty-finance requests by default, including either side of the window start boundary.
+  // Only the inside documents (£500 outstanding, £750 cleared, £100 unallocated) should be returned.
+  // Dates are fixed when the scenario is set, so querying on a later day drops the boundary document.
+  def dateRangeFiltering(vpdId: String): FinancialDataState = {
+    val today = LocalDate.now()
+    val windowStart = today.minusYears(1)
+    val insideClearedPeriodStart = today.minusMonths(3)
+    val outsideClearedPeriodStart = today.minusMonths(15)
+    FinancialDataState(
+      vpdId = vpdId,
+      noDataIdentified = false,
+      documentDetails = Seq(
+        // Inside the window
+        outstandingDocument(vpdId, "XMVPD0000000015", today.minusMonths(1), today.plusMonths(1).withDayOfMonth(15), BigDecimal("500.00")),
+        clearedDocument(vpdId, "XMVPD0000000016", insideClearedPeriodStart, insideClearedPeriodStart.plusMonths(1).withDayOfMonth(10), BigDecimal("750.00")),
+        unallocatedDocument(vpdId, "3000000000101", windowStart, BigDecimal("100.00")),
+        // Outside the window
+        unallocatedDocument(vpdId, "3000000000102", windowStart.minusDays(1), BigDecimal("333.33")),
+        clearedDocument(vpdId, "XMVPD0000000017", outsideClearedPeriodStart, outsideClearedPeriodStart.plusMonths(1).withDayOfMonth(10), BigDecimal("1111.11")),
+        outstandingDocument(vpdId, "XMVPD0000000018", today.minusMonths(18), today.minusMonths(17).withDayOfMonth(15), BigDecimal("2222.22"))
       ),
       lastUpdated = Instant.now()
     )
