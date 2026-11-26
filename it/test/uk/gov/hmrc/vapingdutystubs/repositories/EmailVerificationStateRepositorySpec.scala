@@ -21,8 +21,6 @@ import uk.gov.hmrc.mongo.test.PlayMongoRepositorySupport
 import uk.gov.hmrc.vapingdutystubs.base.ISpecBase
 import uk.gov.hmrc.vapingdutystubs.models.contactPreference.EmailVerificationState
 
-import java.time.Clock
-
 class EmailVerificationStateRepositorySpec
     extends ISpecBase
     with PlayMongoRepositorySupport[EmailVerificationState] {
