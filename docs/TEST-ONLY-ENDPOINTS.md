@@ -213,6 +213,8 @@ Sets a predefined financial data scenario for a VPD ID.
 | `interest-payment` | Charges with interest applied | Interest scenarios |
 | `partially-paid` | Charges that have been partially paid | Partial payment testing |
 | `overpayment-with-payment-on-account` | Overpayment scenario with payment on account | Overpayment scenarios |
+| `refund` | Outstanding charge plus a negative (refund) outstanding charge | Refund row on view payments |
+| `date-range-filtering` | 3 documents inside and 3 outside the default 12-month window | Proving date range filtering |
 
 **Example:**
 ```bash

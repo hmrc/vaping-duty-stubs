@@ -46,6 +46,7 @@ class FinancialDataController @Inject()(
 
       case JsSuccess(queryRequest, _) =>
         val vpdId = queryRequest.taxpayerInformation.idNumber
+        val dateRange = queryRequest.selectionCriteria.map(_.dateRange)
 
         financialDataRepository.get(vpdId).flatMap {
           case Some(state) if state.noDataIdentified =>
@@ -55,27 +56,31 @@ class FinancialDataController @Inject()(
             ))))
 
           case Some(state) =>
-            logger.info(s"Returning ${state.documentDetails.size} document(s) for vpdId=$vpdId")
-            Future.successful(Created(Json.toJson(successResponse(state))))
+            val documents = filterDocuments(state.documentDetails, dateRange)
+            logger.info(s"Returning ${documents.size} of ${state.documentDetails.size} document(s) for vpdId=$vpdId")
+            Future.successful(Created(Json.toJson(successResponse(documents))))
 
           case None =>
             logger.info(s"No financial data scenario set for vpdId=$vpdId - generating default data")
             val sampleState = FinancialDataStubData.defaultData(vpdId)
             financialDataRepository.set(sampleState).map { _ =>
-              Created(Json.toJson(successResponse(sampleState)))
+              Created(Json.toJson(successResponse(filterDocuments(sampleState.documentDetails, dateRange))))
             }
         }
     }
   }
 
-  private def successResponse(state: FinancialDataState): FinancialDataResponse = {
+  private def filterDocuments(documentDetails: Seq[DocumentDetails], dateRange: Option[DateRange]): Seq[DocumentDetails] =
+    dateRange.fold(documentDetails)(FinancialDataStubData.filterByDateRange(documentDetails, _))
+
+  private def successResponse(documentDetails: Seq[DocumentDetails]): FinancialDataResponse = {
 
     FinancialDataResponse(
       success = FinancialDataSuccessBody(
         processingDate = Instant.now(clock),
         financialData = FinancialDataBody(
-          documentDetails = state.documentDetails,
-          totalisation = FinancialDataStubData.calculateTotalisation(state.documentDetails)
+          documentDetails = documentDetails,
+          totalisation = FinancialDataStubData.calculateTotalisation(documentDetails)
         )
       )
     )

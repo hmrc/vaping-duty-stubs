@@ -19,6 +19,9 @@ package uk.gov.hmrc.vapingdutystubs.data.financialdata
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import uk.gov.hmrc.vapingdutystubs.models.financialdata.DateRange
+
+import java.time.LocalDate
 
 class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionValues {
 
@@ -164,6 +167,67 @@ class FinancialDataStubDataSpec extends AnyFreeSpec with Matchers with OptionVal
       totalisation.totalAccountNotYetDue mustBe Some(BigDecimal("500.00"))
       totalisation.totalAccountCredit mustBe Some(BigDecimal("2577.44"))
       totalisation.totalAccountBalance mustBe Some(BigDecimal("-2077.44"))
+    }
+
+    "filterByDateRange" - {
+      val base = FinancialDataStubData.outstandingOnly(vpdId).documentDetails.head
+      val from = LocalDate.of(2025, 11, 25)
+      val to = LocalDate.of(2026, 11, 25)
+
+      def doc(posting: LocalDate, issue: LocalDate) = base.copy(postingDate = posting, issueDate = issue)
+
+      "must filter on issueDate for BILLING" in {
+        val inside = doc(posting = from.minusDays(10), issue = from.plusDays(1))
+        val outside = doc(posting = from.plusDays(1), issue = from.minusDays(10))
+
+        FinancialDataStubData.filterByDateRange(Seq(inside, outside), DateRange("BILLING", from, to)) mustBe Seq(inside)
+      }
+
+      "must filter on postingDate for POSTING" in {
+        val inside = doc(posting = from.plusDays(1), issue = from.minusDays(10))
+        val outside = doc(posting = from.minusDays(10), issue = from.plusDays(1))
+
+        FinancialDataStubData.filterByDateRange(Seq(inside, outside), DateRange("POSTING", from, to)) mustBe Seq(inside)
+      }
+
+      "must include documents on both bounds and exclude those either side" in {
+        val onFrom = doc(from, from)
+        val onTo = doc(to, to)
+        val dayBefore = doc(from.minusDays(1), from.minusDays(1))
+        val dayAfter = doc(to.plusDays(1), to.plusDays(1))
+
+        FinancialDataStubData.filterByDateRange(Seq(dayBefore, onFrom, onTo, dayAfter), DateRange("BILLING", from, to)) mustBe Seq(onFrom, onTo)
+      }
+
+      "must return nothing for no documents" in {
+        FinancialDataStubData.filterByDateRange(Seq.empty, DateRange("BILLING", from, to)) mustBe empty
+      }
+    }
+
+    "dateRangeFiltering" - {
+      val state = FinancialDataStubData.dateRangeFiltering(vpdId)
+      val today = LocalDate.now()
+      val twelveMonths = DateRange("BILLING", today.minusYears(1), today)
+
+      "must store six documents" in {
+        state.noDataIdentified mustBe false
+        state.documentDetails must have size 6
+      }
+
+      "must only keep the three documents inside the 12 month window" in {
+        val filtered = FinancialDataStubData.filterByDateRange(state.documentDetails, twelveMonths)
+
+        filtered.map(_.documentTotalAmount) mustBe Seq(BigDecimal("500.00"), BigDecimal("750.00"), BigDecimal("100.00"))
+      }
+
+      "must produce a balance of £400 from the filtered documents" in {
+        val filtered = FinancialDataStubData.filterByDateRange(state.documentDetails, twelveMonths)
+        val totalisation = FinancialDataStubData.calculateTotalisation(filtered).value.regimeTotalisation.value
+
+        totalisation.totalAccountNotYetDue mustBe Some(BigDecimal("500.00"))
+        totalisation.totalAccountCredit mustBe Some(BigDecimal("100.00"))
+        totalisation.totalAccountBalance mustBe Some(BigDecimal("400.00"))
+      }
     }
   }
 }
